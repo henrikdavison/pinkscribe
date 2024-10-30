@@ -1,3 +1,14 @@
+import React from 'react';
+import MantinePrototype from './prototype/MantinePrototype';
+
+function App() {
+  return <MantinePrototype />;
+}
+
+export default App;
+
+
+/*
 import { useEffect, useState } from 'react'
 import BounceLoader from 'react-spinners/BounceLoader'
 import 'react-tooltip/dist/react-tooltip.css'
@@ -283,4 +294,4 @@ function App() {
   )
 }
 
-export default App
+export default App */
