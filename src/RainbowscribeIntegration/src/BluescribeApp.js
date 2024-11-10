@@ -1,17 +1,8 @@
-import { useEffect, useState } from 'react'
-import BounceLoader from 'react-spinners/BounceLoader'
-import 'react-tooltip/dist/react-tooltip.css'
-import { Tooltip } from 'react-tooltip'
-import useStorage from 'squirrel-gill'
-import { ErrorBoundary } from 'react-error-boundary'
-import path from 'path-browserify'
-
-import '@picocss/pico'
-import './App.css'
-import { readFiles } from './repo'
-import SelectSystem from './repo/SelectSystem'
-import Roster from './Roster'
-import { saveRoster, downloadRoster } from './repo/rosters'
+// Correct imports to point to core BlueScribe files in root `src`
+import { readFiles } from '../../repo'
+import SelectSystem from '../../repo/SelectSystem'
+import Roster from '../../Roster'
+import { saveRoster, downloadRoster } from '../../repo/rosters'
 import {
   GameContext,
   OpenCategoriesContext,
@@ -24,13 +15,15 @@ import {
   usePath,
   useRoster,
   useSystem,
-} from './Context'
-import SelectionModal from './Force/SelectionModal'
-import SelectForce from './Force/SelectForce'
-import ViewRoster from './ViewRoster'
-import { refreshRoster } from './utils'
-import EditSystem from './repo/EditSystem'
-import { pathToForce, validateRoster } from './validate'
+} from '../../Context'
+import SelectionModal from '../../Force/SelectionModal'
+import SelectForce from '../../Force/SelectForce'
+import ViewRoster from '../../ViewRoster'
+import { refreshRoster } from '../../utils'
+import EditSystem from '../../repo/EditSystem'
+import { pathToForce, validateRoster } from '../../validate'
+import discordIcon from '../../discord-icon.png'
+import githubIcon from '../../github-icon.png'
 
 const Body = ({ children, systemInfo, setSystemInfo }) => {
   const [roster, setRoster] = useRoster()
@@ -50,6 +43,23 @@ const Body = ({ children, systemInfo, setSystemInfo }) => {
       <header>
         <nav>
           <ul>
+            <li>
+              <strong
+                data-tooltip-id="tooltip"
+                data-tooltip-html="BlueScribe is an army list builder for tabletop wargames; it is heavily inspired by and 100% compatible with BattleScribe, reading the same format datafiles and writing rosters in the same format.<br /><br />No tracking, no subscription, no paid features. BlueScribe is GNU GPL 3.0 licensed."
+              >
+                BlueScribe
+              </strong>
+              <a href="https://discord.gg/m4q2BbxDQV" target="discord">
+                <img className="icon" src={discordIcon} alt="Discord" title="Discord" />
+              </a>
+              <a href="https://github.com/BlueWinds/bluescribe" target="github">
+                <img className="icon" src={githubIcon} alt="Github" title="Github" />
+              </a>
+              <div>
+                <small>{packageJson.version}</small>
+              </div>
+            </li>
             {roster && (
               <li>
                 <SelectForce value={pathToForce(path)} onChange={setPath}>
