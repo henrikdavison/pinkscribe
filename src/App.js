@@ -15,7 +15,7 @@ function App() {
 
   // Toggle function for light/dark mode
   const toggleDarkMode = () => {
-    setMode((prevMode) => (prevMode === 'light' ? 'dark' : 'dark'))
+    setMode((prevMode) => (prevMode === 'light' ? 'dark' : 'light'))
   }
 
   const [systemInfo, setSystemInfo] = useState(JSON.parse(localStorage.system || '{}'))

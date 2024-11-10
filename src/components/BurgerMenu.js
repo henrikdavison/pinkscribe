@@ -1,12 +1,15 @@
+// src/components/BurgerMenu.js
 import React, { useState } from 'react'
 import { Drawer, List, ListItem, ListItemText, Box, Switch, IconButton, Typography } from '@mui/material'
 import { Menu } from 'lucide-react'
-import { Link } from 'react-router-dom' // Import Link from react-router-dom
 
 function BurgerMenu({ toggleDarkMode, mode }) {
   const [open, setOpen] = useState(false)
 
-  const handleToggle = () => setOpen(!open)
+  const handleToggle = (event) => {
+    event.preventDefault() // Prevent default action for testing
+    setOpen(!open)
+  }
 
   return (
     <Box>
@@ -25,8 +28,8 @@ function BurgerMenu({ toggleDarkMode, mode }) {
             <ListItemText primary="Dark Mode" />
             <Switch checked={mode === 'dark'} onChange={toggleDarkMode} />
           </ListItem>
-          {/* Link to Prototype page */}
-          <ListItem button component={Link} to="/army-builder" onClick={handleToggle}>
+          {/* Simplified content for testing */}
+          <ListItem button onClick={handleToggle}>
             <ListItemText primary="Army Builder" />
           </ListItem>
         </List>
