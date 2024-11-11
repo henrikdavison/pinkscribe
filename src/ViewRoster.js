@@ -1,6 +1,18 @@
 import { Fragment, useEffect } from 'react'
 import _ from 'lodash'
 import useStorage from 'squirrel-gill'
+import {
+  Box,
+  Typography,
+  Button,
+  FormControlLabel,
+  Radio,
+  RadioGroup,
+  Checkbox,
+  FormGroup,
+  Container,
+  Tooltip,
+} from '@mui/material'
 
 import { useRoster, useSystem } from './Context'
 import { costString, findId, sumCosts } from './utils'
@@ -14,11 +26,6 @@ const ViewRoster = () => {
   const [type, setType] = useStorage(localStorage, 'viewRosterType', 'full')
   const [options, setOptions] = useStorage(localStorage, 'viewRosterOptions', {})
 
-  // <label>
-  //   <input type="radio" checked={type === 'compact'} onChange={() => setType('compact')} />
-  //   Compact
-  // </label>
-
   useEffect(() => {
     const listener = () => {
       document.body.querySelectorAll('details').forEach((details) => {
@@ -30,86 +37,88 @@ const ViewRoster = () => {
     return () => {
       window.removeEventListener('beforeprint', listener)
     }
-  })
+  }, [])
 
   let rules = roster.forces?.force.map((force) => (
-    <Rules catalogue={gameData.catalogues[force.catalogueId]} rules={collectRules(force)} />
+    <Rules catalogue={gameData.catalogues[force.catalogueId]} rules={collectRules(force)} key={force.id} />
   ))
 
   return (
-    <>
-      <div className="grid print ">
-        <fieldset>
-          <span>View roster as</span>
-          <label>
-            <input type="radio" checked={type === 'full'} onChange={() => setType('full')} />
-            Full
-          </label>
-          <label>
-            <input type="radio" checked={type === 'text'} onChange={() => setType('text')} />
-            Text
-          </label>
-        </fieldset>
-        <fieldset>
+    <Container>
+      <Box display="flex" justifyContent="space-between" mb={4}>
+        <Box component="fieldset">
+          <Typography variant="subtitle1">View roster as</Typography>
+          <RadioGroup value={type} onChange={(e) => setType(e.target.value)} row>
+            <FormControlLabel value="full" control={<Radio />} label="Full" />
+            <FormControlLabel value="text" control={<Radio />} label="Text" />
+          </RadioGroup>
+        </Box>
+        <Box component="fieldset">
           {type === 'full' && (
-            <label>
-              <input
-                type="checkbox"
-                checked={!!options.onePerPage}
-                onChange={() => setOptions({ ...options, onePerPage: !options.onePerPage })}
+            <FormGroup>
+              <FormControlLabel
+                control={
+                  <Checkbox
+                    checked={!!options.onePerPage}
+                    onChange={() => setOptions({ ...options, onePerPage: !options.onePerPage })}
+                  />
+                }
+                label="One entry per page"
               />
-              One entry per page
-            </label>
-          )}
-          {type === 'full' && (
-            <label>
-              <input
-                type="checkbox"
-                checked={!!options.printRules}
-                onChange={() => setOptions({ ...options, printRules: !options.printRules })}
+              <FormControlLabel
+                control={
+                  <Checkbox
+                    checked={!!options.printRules}
+                    onChange={() => setOptions({ ...options, printRules: !options.printRules })}
+                  />
+                }
+                label="Print rules text"
               />
-              Print rules text
-            </label>
+            </FormGroup>
           )}
-          <button className="outline" onClick={() => window.print()}>
+          <Button variant="outlined" onClick={() => window.print()} sx={{ mt: 2 }}>
             Print
-          </button>
-        </fieldset>
-      </div>
+          </Button>
+        </Box>
+      </Box>
       {type === 'text' && (
-        <code className="text-roster">
+        <Box component="code" className="text-roster">
           +++ {roster.name} ({roster.gameSystemName}) [{costString(sumCosts(roster))}] +++
           {roster.forces?.force.map((force) => (
             <ViewForceText force={force} key={force.id} />
           ))}
-        </code>
+        </Box>
       )}
       {type === 'full' && (
-        <div className={'view-roster ' + Object.keys(_.pickBy(options, Boolean)).join(' ')}>
-          <h4>
+        <Box className={'view-roster ' + Object.keys(_.pickBy(options, Boolean)).join(' ')}>
+          <Typography variant="h4" gutterBottom>
             {roster.name} ({roster.gameSystemName}) [{costString(sumCosts(roster))}]
-          </h4>
+          </Typography>
           {roster.forces?.force.map((force) => (
             <ViewForce force={force} key={force.id} />
           ))}
-          {options.printRules && <article className="print-open">{rules}</article>}
-        </div>
+          {options.printRules && (
+            <Box component="article" className="print-open">
+              {rules}
+            </Box>
+          )}
+        </Box>
       )}
-    </>
+    </Container>
   )
 }
 
 const ViewForce = ({ force }) => {
   const gameData = useSystem()
   return (
-    <>
-      <h5>
+    <Box mb={4}>
+      <Typography variant="h5" gutterBottom>
         {force.name} ({force.catalogueName}){maybeCost(force)}
-      </h5>
+      </Typography>
       {force.selections?.selection.map((selection) => (
         <ViewSelection key={selection.id} selection={selection} catalogue={gameData.catalogues[force.catalogueId]} />
       ))}
-    </>
+    </Box>
   )
 }
 
@@ -117,14 +126,14 @@ const ViewSelection = ({ catalogue, selection }) => {
   const gameData = useSystem()
 
   return (
-    <article>
-      <header>
-        <h6>{selection.name}</h6>
-      </header>
+    <Box component="article" mb={3}>
+      <Typography variant="h6" gutterBottom>
+        {selection.name}
+      </Typography>
       <Categories categories={collectCategories(selection, gameData, catalogue)} />
       <Profiles profiles={collectSelectionProfiles(selection, gameData)} number={selection.number} />
       <Rules catalogue={catalogue} rules={collectRules(selection)} />
-    </article>
+    </Box>
   )
 }
 

@@ -1,5 +1,17 @@
 import _ from 'lodash'
-
+import {
+  Box,
+  Button,
+  Table,
+  TableBody,
+  TableCell,
+  TableRow,
+  Typography,
+  Select,
+  MenuItem,
+  TextField,
+  Tooltip,
+} from '@mui/material'
 import { findId } from '../../utils'
 import { Comment, Hidden, Id, Modifiers, Name, Publication, ReferenceSelect } from './fields'
 import { useFile, useSystem, gatherFiles } from '../EditSystem'
@@ -14,32 +26,35 @@ const Profile = ({ filename, on, profile }) => {
   const type = findId(gameData, file, profile.typeId)
 
   return (
-    <details>
-      <summary>{profile.name || profile.typeName}</summary>
-      <table>
-        <tbody>
-          <Name entry={profile} updateFile={updateFile}>
-            <button
-              className="add-entry outline"
-              onClick={() => {
-                if (on.profiles.length === 1) {
-                  delete on.profiles
-                } else {
-                  on.profiels = _.pull(on.profiles, [profile])
-                }
-                updateFile()
-              }}
-            >
-              -
-            </button>
-          </Name>
+    <Box mb={2}>
+      <Box display="flex" alignItems="center" mb={2}>
+        <Typography variant="h6">{profile.name || profile.typeName}</Typography>
+        <Button
+          variant="outlined"
+          color="secondary"
+          onClick={() => {
+            if (on.profiles.length === 1) {
+              delete on.profiles
+            } else {
+              on.profiles = _.pull(on.profiles, profile)
+            }
+            updateFile()
+          }}
+          sx={{ ml: 2 }}
+        >
+          -
+        </Button>
+      </Box>
+      <Table>
+        <TableBody>
+          <Name entry={profile} updateFile={updateFile} />
           <Id entry={profile} updateFile={updateFile} />
           <Comment entry={profile} updateFile={updateFile} />
-          <tr>
-            <td>
+          <TableRow>
+            <TableCell>
               <label htmlFor="profileType">Profile Type</label>
-            </td>
-            <td>
+            </TableCell>
+            <TableCell>
               <ReferenceSelect
                 isClearable={false}
                 value={findId(gameData, file, profile.typeId)}
@@ -51,24 +66,26 @@ const Profile = ({ filename, on, profile }) => {
                   updateFile()
                 }}
               />
-            </td>
-          </tr>
+            </TableCell>
+          </TableRow>
           <Hidden entry={profile} updateFile={updateFile} />
           <Publication file={file} entry={profile} updateFile={updateFile} />
-          <tr>
-            <th colSpan="2">Characteristics</th>
-          </tr>
+          <TableRow>
+            <TableCell colSpan={2}>
+              <Typography variant="subtitle1">Characteristics</Typography>
+            </TableCell>
+          </TableRow>
           {type.characteristicTypes.map((ct) => {
             const characteristic = profile.characteristics?.find((c) => c.typeId === ct.id)
             return (
-              <tr data-indent="2">
-                <td>
+              <TableRow key={ct.id}>
+                <TableCell>
                   <label data-tooltip-id="tooltip" data-tooltip-html={ct.comment} htmlFor={ct.typeId}>
                     {ct.name}
                   </label>
-                </td>
-                <td>
-                  <input
+                </TableCell>
+                <TableCell>
+                  <TextField
                     value={characteristic ? characteristic['#text'] : ''}
                     name={ct.typeId}
                     onChange={(e) => {
@@ -84,15 +101,16 @@ const Profile = ({ filename, on, profile }) => {
                       }
                       updateFile()
                     }}
+                    fullWidth
                   />
-                </td>
-              </tr>
+                </TableCell>
+              </TableRow>
             )
           })}
           <Modifiers file={file} entry={profile} updateFile={updateFile} />
-        </tbody>
-      </table>
-    </details>
+        </TableBody>
+      </Table>
+    </Box>
   )
 }
 

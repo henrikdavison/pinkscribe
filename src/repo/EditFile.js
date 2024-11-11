@@ -1,12 +1,16 @@
 import { useFile, useSystem, useSetSystem } from './EditSystem'
 import FileContents from './FileContents'
+import { Box, Typography, TextField, Checkbox, Button, Collapse, IconButton } from '@mui/material'
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
+import ExpandLessIcon from '@mui/icons-material/ExpandLess'
+import { useState } from 'react'
 
 const EditFile = ({ filename, setSelectedFile }) => {
   return (
-    <article>
+    <Box component="article">
       <FileDetails filename={filename} setSelectedFile={setSelectedFile} />
       <FileContents filename={filename} />
-    </article>
+    </Box>
   )
 }
 
@@ -16,20 +20,32 @@ const FileDetails = ({ filename, setSelectedFile }) => {
   const [file, updateFile] = useFile(filename)
   const system = useSystem()
   const setSystem = useSetSystem()
+  const [open, setOpen] = useState(false)
 
   return (
-    <details open={false}>
-      <summary>
-        {filename}
-        <span data-tooltip-id="tooltip" data-tooltip-html="Revision is automatically updated when a file is saved">
+    <Box mb={2}>
+      <Box display="flex" alignItems="center">
+        <Typography variant="h6" onClick={() => setOpen(!open)} sx={{ cursor: 'pointer' }}>
+          {filename}
+          <IconButton size="small" onClick={() => setOpen(!open)}>
+            {open ? <ExpandLessIcon /> : <ExpandMoreIcon />}
+          </IconButton>
+        </Typography>
+        <Typography
+          variant="body2"
+          ml={2}
+          data-tooltip-id="tooltip"
+          data-tooltip-html="Revision is automatically updated when a file is saved"
+        >
           Revision {file.revision}
-        </span>
-      </summary>
-      <div className="grid">
-        <div>
-          <label>
-            Filename
-            <input
+        </Typography>
+      </Box>
+      <Collapse in={open} timeout="auto" unmountOnExit>
+        <Box display="grid" gap={2} mt={2}>
+          <Box>
+            <Typography variant="subtitle1">Filename</Typography>
+            <TextField
+              fullWidth
               value={filename}
               onChange={(e) => {
                 delete system[filename]
@@ -42,75 +58,76 @@ const FileDetails = ({ filename, setSelectedFile }) => {
                 setSelectedFile(e.target.value)
               }}
             />
-          </label>
-          <label>
-            {file.type === 'gameSystem' ? (
-              'Game System'
-            ) : (
-              <>
-                Catalogue - Library?{' '}
-                <input
-                  type="checkbox"
-                  value={file.library}
+          </Box>
+          <Box>
+            <Typography variant="subtitle1">{file.type === 'gameSystem' ? 'Game System' : 'Catalogue'}</Typography>
+            {file.type !== 'gameSystem' && (
+              <Box display="flex" alignItems="center" gap={1}>
+                <Checkbox
+                  checked={file.library}
                   onChange={(e) => {
                     file.library = e.target.checked
                     updateFile()
                   }}
                 />
-              </>
+                <Typography>Library?</Typography>
+              </Box>
             )}
-            <input
+            <TextField
+              fullWidth
               value={file.name}
               onChange={(e) => {
                 file.name = e.target.value
                 updateFile()
               }}
             />
-          </label>
-          <label>
-            Readme
-            <input
+          </Box>
+          <Box>
+            <Typography variant="subtitle1">Readme</Typography>
+            <TextField
+              fullWidth
               value={file.readme}
               onChange={(e) => {
                 file.readme = e.target.value
                 updateFile()
               }}
             />
-          </label>
-        </div>
-        <div>
-          <label>
-            Author Name
-            <input
+          </Box>
+          <Box>
+            <Typography variant="subtitle1">Author Details</Typography>
+            <TextField
+              fullWidth
+              label="Author Name"
               value={file.authorName}
               onChange={(e) => {
                 file.authorName = e.target.value
                 updateFile()
               }}
+              sx={{ mt: 2 }}
             />
-          </label>
-          <label>
-            Author Contact
-            <input
+            <TextField
+              fullWidth
+              label="Author Contact"
               value={file.authorContact}
               onChange={(e) => {
                 file.authorContact = e.target.value
                 updateFile()
               }}
+              sx={{ mt: 2 }}
             />
-          </label>
-          <label>
-            Author Url
-            <input
+            <TextField
+              fullWidth
+              label="Author URL"
               value={file.authorUrl}
               onChange={(e) => {
                 file.authorUrl = e.target.value
                 updateFile()
               }}
+              sx={{ mt: 2 }}
             />
-          </label>
-        </div>
-      </div>
-    </details>
+          </Box>
+        </Box>
+      </Collapse>
+    </Box>
   )
 }

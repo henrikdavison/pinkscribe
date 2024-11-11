@@ -17,6 +17,7 @@ import {
 import Roster from './Roster'
 import SelectSystem from './repo/SelectSystem'
 import Body from './Body'
+import { Box, CircularProgress, Typography, Container } from '@mui/material'
 
 function RosterManager({ systemInfo, setSystemInfo, setMode }) {
   const [loading, setLoading] = useState(false)
@@ -46,31 +47,14 @@ function RosterManager({ systemInfo, setSystemInfo, setMode }) {
     }
   }, [systemInfo, fs, gameSystemPath, readFilesNative, setSystemInfo])
 
-  useEffect(() => {
-    const load = async () => {
-      try {
-        const systemPath = path.join(gameSystemPath, systemInfo.name)
-        const dataPath = systemInfo.externalPath || systemPath
-        setGameData(await readFiles(dataPath, fs, systemPath, readFilesNative))
-      } catch (e) {
-        console.log(e)
-        setSystemInfo({})
-      }
-      setLoading(false)
-    }
-
-    if (systemInfo.battleScribeVersion) {
-      setLoading(true)
-      load()
-    }
-  }, [systemInfo, fs, gameSystemPath, readFilesNative, setSystemInfo])
-
   const errors = validateRoster(roster, gameData)
 
   if (loading) {
     return (
       <Body systemInfo={systemInfo} setSystemInfo={setSystemInfo}>
-        <BounceLoader color="#36d7b7" className="loading" />
+        <Box display="flex" justifyContent="center" alignItems="center" minHeight="100vh">
+          <CircularProgress color="primary" />
+        </Box>
       </Body>
     )
   }
@@ -90,7 +74,21 @@ function RosterManager({ systemInfo, setSystemInfo, setMode }) {
           <OpenCategoriesContext.Provider value={[openCategories, setOpenCategories]}>
             <PathContext.Provider value={[currentPath, setCurrentPath]}>
               <Body systemInfo={systemInfo} setSystemInfo={setSystemInfo}>
-                <ErrorBoundary>
+                <ErrorBoundary
+                  fallbackRender={({ error, resetErrorBoundary }) => (
+                    <Box>
+                      <Typography variant="h6" color="error">
+                        Something went wrong:
+                      </Typography>
+                      <Typography variant="body1" color="textSecondary">
+                        {error.message}
+                      </Typography>
+                      <Button variant="outlined" onClick={resetErrorBoundary} sx={{ mt: 2 }}>
+                        Try again
+                      </Button>
+                    </Box>
+                  )}
+                >
                   <Roster />
                 </ErrorBoundary>
               </Body>

@@ -1,5 +1,5 @@
 import _ from 'lodash'
-
+import { Box, Typography, TextField } from '@mui/material'
 import { useRoster, useSystem, useUpdateRoster } from './Context'
 
 const CostLimits = () => {
@@ -8,20 +8,22 @@ const CostLimits = () => {
   const updateRoster = useUpdateRoster()
 
   return (
-    <>
-      <h6>Cost Limits</h6>
-      <div className="grid">
+    <Box>
+      <Typography variant="h6">Cost Limits</Typography>
+      <Box className="grid">
         {gameData.gameSystem.costTypes?.map((type) => {
           const index = _.findIndex(roster.costLimits?.costLimit, ['typeId', type.id])
           if (index !== -1) {
             return (
-              <label key={type.id}>
-                {type.name}
-                <input
+              <Box key={type.id} mb={2}>
+                <Typography variant="body1" component="label" htmlFor={`cost-limit-${type.id}`}>
+                  {type.name}
+                </Typography>
+                <TextField
+                  id={`cost-limit-${type.id}`}
                   type="number"
-                  min="-1"
+                  inputProps={{ min: -1, step: 1 }}
                   value={roster.costLimits.costLimit[index].value}
-                  step="1"
                   onChange={(e) => {
                     if (e.target.value > -1) {
                       updateRoster(`costLimits.costLimit.${index}.value`, e.target.value)
@@ -30,18 +32,21 @@ const CostLimits = () => {
                       setRoster(roster)
                     }
                   }}
+                  fullWidth
                 />
-              </label>
+              </Box>
             )
           }
           return (
-            <label key={type.id}>
-              {type.name}
-              <input
+            <Box key={type.id} mb={2}>
+              <Typography variant="body1" component="label" htmlFor={`cost-limit-${type.id}`}>
+                {type.name}
+              </Typography>
+              <TextField
+                id={`cost-limit-${type.id}`}
                 type="number"
-                min="-1"
+                inputProps={{ min: -1, step: 1 }}
                 value="-1"
-                step="1"
                 onChange={(e) => {
                   roster.costLimits = roster.costLimits || { costLimit: [] }
                   roster.costLimits.costLimit.push({
@@ -51,12 +56,13 @@ const CostLimits = () => {
                   })
                   setRoster(roster)
                 }}
+                fullWidth
               />
-            </label>
+            </Box>
           )
         })}
-      </div>
-    </>
+      </Box>
+    </Box>
   )
 }
 

@@ -1,7 +1,7 @@
 import { useState, useEffect, createContext, useContext } from 'react'
 import path from 'path-browserify'
 import BounceLoader from 'react-spinners/BounceLoader'
-import { Tooltip } from 'react-tooltip'
+import { Tooltip as ReactTooltip } from 'react-tooltip'
 import _ from 'lodash'
 
 import containerTags from 'bsd-schema/containerTags.json'
@@ -26,10 +26,12 @@ import {
   ListItemText,
   Drawer,
   Container,
-  Tooltip as MUITooltip,
-  Details,
-  Summary,
+  Tooltip,
+  Collapse,
+  IconButton as MuiIconButton,
 } from '@mui/material'
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
+import ExpandLessIcon from '@mui/icons-material/ExpandLess'
 
 export const SystemContext = createContext(null)
 export const SetSystemContext = createContext(null)
@@ -95,6 +97,7 @@ const EditSystem = ({ systemInfo, setSystemInfo }) => {
   const [gameData, setGameData] = useState(null)
   const [selectedFile, setSelectedFile] = useState(null)
   const { fs, gameSystemPath } = useFs()
+  const [detailsOpen, setDetailsOpen] = useState(false)
 
   useEffect(() => {
     if (!gameData) {
@@ -110,7 +113,7 @@ const EditSystem = ({ systemInfo, setSystemInfo }) => {
     <SystemContext.Provider value={gameData}>
       <SetSystemContext.Provider value={setGameData}>
         <Container>
-          <MUITooltip id="tooltip" />
+          <Tooltip id="tooltip" />
           <AppBar position="static">
             <Toolbar>
               <Typography variant="h6">BlueScribe</Typography>
@@ -132,23 +135,25 @@ const EditSystem = ({ systemInfo, setSystemInfo }) => {
                 </Select>
               )}
               <Box sx={{ flexGrow: 1 }} />
-              <Details role="list" dir="rtl">
-                <Summary aria-haspopup="listbox" role="link">
-                  ≡
-                </Summary>
-                <List role="listbox">
-                  <ListItem>
-                    <ListItemText
-                      primary={systemInfo.name}
-                      data-tooltip-id="tooltip"
-                      data-tooltip-html="Change game system"
-                      onClick={() => setSystemInfo({})}
-                    />
-                  </ListItem>
-                </List>
-              </Details>
+              <Box>
+                <MuiIconButton onClick={() => setDetailsOpen(!detailsOpen)}>
+                  {detailsOpen ? <ExpandLessIcon /> : <ExpandMoreIcon />}
+                </MuiIconButton>
+              </Box>
             </Toolbar>
           </AppBar>
+          <Collapse in={detailsOpen} timeout="auto" unmountOnExit>
+            <List>
+              <ListItem>
+                <ListItemText
+                  primary={systemInfo.name}
+                  data-tooltip-id="tooltip"
+                  data-tooltip-html="Change game system"
+                  onClick={() => setSystemInfo({})}
+                />
+              </ListItem>
+            </List>
+          </Collapse>
           {!gameData ? (
             <BounceLoader color="#36d7b7" className="loading" />
           ) : selectedFile === 'addNew' ? (

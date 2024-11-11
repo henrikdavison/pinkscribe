@@ -1,7 +1,19 @@
 import _ from 'lodash'
-
-import { Checkbox, Comment, Conditions, Repeats, Text, Value } from './fields'
+import {
+  Box,
+  Button,
+  Checkbox,
+  Select,
+  MenuItem,
+  Table,
+  TableBody,
+  TableCell,
+  TableRow,
+  Typography,
+  Tooltip,
+} from '@mui/material'
 import { gatherFiles, useFile, useSystem } from '../EditSystem'
+import { Comment, Conditions, Repeats, Text, Value } from './fields'
 
 const types = {
   set: 'Set',
@@ -60,14 +72,12 @@ const Modifier = ({ entry, on, filename, modifier }) => {
       }),
   )
 
-  // TODO: field for categories / set-primary
-
-  console.log(fields, modifier)
   return (
-    <details>
-      <summary>
-        <button
-          className="add-entry outline"
+    <Box>
+      <Box display="flex" alignItems="center" mb={2}>
+        <Button
+          variant="outlined"
+          color="secondary"
           onClick={() => {
             if (on.modifiers.length === 1) {
               delete on.modifiers
@@ -78,20 +88,22 @@ const Modifier = ({ entry, on, filename, modifier }) => {
           }}
         >
           -
-        </button>
-        {typeStrings[modifier.type](modifier, gameData)}
-      </summary>
-      <table>
-        <tbody>
+        </Button>
+        <Typography variant="subtitle1" ml={2}>
+          {typeStrings[modifier.type](modifier, gameData)}
+        </Typography>
+      </Box>
+      <Table>
+        <TableBody>
           <Comment entry={modifier} updateFile={updateFile} />
           <Conditions entry={entry} on={modifier} updateFile={updateFile} />
-          <tr>
-            <td>
+          <TableRow>
+            <TableCell>
               <label htmlFor="type">Type</label>
-            </td>
-            <td>
-              <select
-                defaultValue={modifier.type}
+            </TableCell>
+            <TableCell>
+              <Select
+                value={modifier.type}
                 name="type"
                 onChange={(e) => {
                   if (!fields[modifier.field].type.includes(e.target.value)) {
@@ -104,23 +116,24 @@ const Modifier = ({ entry, on, filename, modifier }) => {
                   modifier.type = e.target.value
                   updateFile()
                 }}
+                fullWidth
               >
                 {Object.entries(types).map(([value, label]) => (
-                  <option key={value} value={value}>
+                  <MenuItem key={value} value={value}>
                     {label}
-                  </option>
+                  </MenuItem>
                 ))}
-              </select>
-            </td>
-          </tr>
-          <tr>
-            <td>
+              </Select>
+            </TableCell>
+          </TableRow>
+          <TableRow>
+            <TableCell>
               <label htmlFor="field">Field</label>
-            </td>
-            <td>
-              <select
+            </TableCell>
+            <TableCell>
+              <Select
+                value={modifier.field}
                 name="field"
-                defaultValue={modifier.field}
                 onChange={(e) => {
                   if (fields[modifier.field].value !== fields[e.target.value].value) {
                     modifier.value = defaultValues[fields[e.target.value].value]
@@ -128,31 +141,40 @@ const Modifier = ({ entry, on, filename, modifier }) => {
                   modifier.field = e.target.value
                   updateFile()
                 }}
+                fullWidth
               >
                 {Object.keys(fields).map(
                   (field) =>
                     fields[field].type.includes(modifier.type) && (
-                      <option key={field} value={field}>
+                      <MenuItem key={field} value={field}>
                         {fields[field].label}
-                      </option>
+                      </MenuItem>
                     ),
                 )}
-              </select>
-            </td>
-          </tr>
+              </Select>
+            </TableCell>
+          </TableRow>
           {fields[modifier.field].value === 'number' ? (
             <Value entry={modifier} updateFile={updateFile} />
           ) : fields[modifier.field].value === 'boolean' ? (
-            <Checkbox entry={modifier} field="value" label="Value" updateFile={updateFile} />
+            <Checkbox
+              checked={modifier.value}
+              onChange={(e) => {
+                modifier.value = e.target.checked
+                updateFile()
+              }}
+              name="value"
+              label="Value"
+            />
           ) : (
             <Text field="value" label="Value" entry={entry} updateFile={updateFile} />
           )}
           {(modifier.type === 'increment' || modifier.type === 'decrement') && (
             <Repeats entry={entry} modifier={modifier} updateFile={updateFile} filename={filename} />
           )}
-        </tbody>
-      </table>
-    </details>
+        </TableBody>
+      </Table>
+    </Box>
   )
 }
 

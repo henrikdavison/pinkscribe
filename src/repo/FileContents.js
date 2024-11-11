@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import _ from 'lodash'
+import { Box, Typography, Select, MenuItem, Table, TableBody, TableRow, TableCell, Tooltip } from '@mui/material'
 
 import { useFile } from './EditSystem'
 import Category from './entryTypes/Category'
@@ -40,41 +41,50 @@ const FileContents = ({ filename }) => {
   const [selectedPath, setSelectedPath] = useState('')
 
   return (
-    <details open={true} className="edit-file">
-      <summary>{file.type === 'gameSystem' ? 'Game System' : 'Catalogue'}</summary>
-      <div className="grid columns">
-        <div className="selections">
-          <select onChange={(e) => setEntryType(e.target.value)} defaultValue={entryType}>
-            {Object.entries(file.type === 'gameSystem' ? gameSystemTypes : catalogueTypes).map(([type, name]) => (
-              <option key={type} value={type}>
+    <Box className="edit-file" mb={4}>
+      <Typography variant="h6" gutterBottom>
+        {file.type === 'gameSystem' ? 'Game System' : 'Catalogue'}
+      </Typography>
+      <Box display="flex" gap={2}>
+        <Box className="selections" flex={1}>
+          <Select value={entryType} onChange={(e) => setEntryType(e.target.value)} fullWidth variant="outlined">
+            {(file.type === 'gameSystem' ? gameSystemTypes : catalogueTypes).map(([type, name]) => (
+              <MenuItem key={type} value={type}>
                 {name}
-              </option>
+              </MenuItem>
             ))}
-          </select>
-          <table>
-            <tbody>
-              <tr onClick={() => setSelectedPath(entryType)} className={entryType === selectedPath ? 'selected' : ''}>
-                <th>Add {singular[entryType]}</th>
-              </tr>
+          </Select>
+          <Table>
+            <TableBody>
+              <TableRow
+                onClick={() => setSelectedPath(entryType)}
+                selected={entryType === selectedPath}
+                sx={{ cursor: 'pointer' }}
+              >
+                <TableCell>Add {singular[entryType]}</TableCell>
+              </TableRow>
               {(file[entryType] || []).map((entry, index) => (
-                <tr
+                <TableRow
                   key={entry.id}
-                  onClick={(e) => setSelectedPath(`${entryType}.${index}`)}
-                  className={selectedPath === `${entryType}.${index}` ? 'selected' : ''}
+                  onClick={() => setSelectedPath(`${entryType}.${index}`)}
+                  selected={selectedPath === `${entryType}.${index}`}
+                  sx={{ cursor: 'pointer' }}
                 >
-                  <td>
-                    <span data-tooltip-id="tooltip" data-tooltip-html={entry.comment}>
-                      {entry.name}
-                    </span>
-                  </td>
-                </tr>
+                  <TableCell>
+                    <Tooltip title={entry.comment || ''} arrow>
+                      <Typography>{entry.name}</Typography>
+                    </Tooltip>
+                  </TableCell>
+                </TableRow>
               ))}
-            </tbody>
-          </table>
-        </div>
-        <div className="edit-entry">{entryElement(file, filename, selectedPath)}</div>
-      </div>
-    </details>
+            </TableBody>
+          </Table>
+        </Box>
+        <Box className="edit-entry" flex={2}>
+          {entryElement(file, filename, selectedPath)}
+        </Box>
+      </Box>
+    </Box>
   )
 }
 

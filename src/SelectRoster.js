@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import BounceLoader from 'react-spinners/BounceLoader'
 import useStorage from 'squirrel-gill'
 import { FileDrop } from 'react-file-drop'
+import { Box, Typography, Button, TextField, Select, MenuItem, CircularProgress, Link } from '@mui/material'
 
 import { listRosters, loadRoster, importRoster, deleteRoster } from './repo/rosters'
 import { useFs, useNative, useRoster, useSystem, useConfirm } from './Context'
@@ -39,8 +40,10 @@ const SelectRoster = () => {
   }, [rosters, gameData, newName, selected, setSelected, fs, rosterPath])
 
   return (
-    <>
-      <h2>Select Roster</h2>
+    <Box>
+      <Typography variant="h4" gutterBottom>
+        Select Roster
+      </Typography>
       <FileDrop
         onFrameDrop={async (event) => {
           if (event.dataTransfer?.items[0]?.kind === 'file') {
@@ -51,13 +54,13 @@ const SelectRoster = () => {
           }
         }}
       >
-        <p>
+        <Typography>
           To import a <code>.rosz</code> SELECT ROSTER file, drop it anywhere on the page, or{' '}
-          <span role="link" onClick={() => document.getElementById('import-roster').click()}>
+          <Link component="button" onClick={() => document.getElementById('import-roster').click()} underline="hover">
             click here to select one
-          </span>
+          </Link>
           .
-        </p>
+        </Typography>
         <input
           type="file"
           accept=".rosz,.ros"
@@ -67,79 +70,93 @@ const SelectRoster = () => {
             setSelected(e.target.files[0].name)
             setRosters(null)
           }}
+          style={{ display: 'none' }}
         />
       </FileDrop>
       {rosters ? (
-        <>
-          <select onChange={(e) => setSelected(e.target.value)} value={selected}>
+        <Box mt={4}>
+          <Select fullWidth value={selected} onChange={(e) => setSelected(e.target.value)} variant="outlined">
             {Object.entries(rosters).map(([roster, name]) => (
-              <option key={roster} value={roster}>
+              <MenuItem key={roster} value={roster}>
                 {roster} - {typeof name === 'string' ? name : 'Error'}
-              </option>
+              </MenuItem>
             ))}
-            <option key="new" value="New">
+            <MenuItem key="new" value="New">
               New
-            </option>
-          </select>
+            </MenuItem>
+          </Select>
           {selected === 'New' ? (
-            <>
-              <label>
-                Filename
-                <input value={newName} onChange={(e) => setNewFilename(e.target.value)} />
-              </label>
-              <button
+            <Box mt={2}>
+              <TextField
+                label="Filename"
+                fullWidth
+                value={newName}
+                onChange={(e) => setNewFilename(e.target.value)}
+                variant="outlined"
+              />
+              <Button
+                variant="contained"
                 onClick={async () => {
                   const roster = await createRoster(newName, gameData.gameSystem)
                   setRoster(roster)
                 }}
+                sx={{ mt: 2 }}
               >
                 Create <code>{newName}.rosz</code>
-              </button>
-            </>
+              </Button>
+            </Box>
           ) : (
-            <>
+            <Box mt={2}>
               {typeof rosters[selected] !== 'string' && (
-                <ul>
+                <Typography color="error">
                   BlueScribe is having trouble parsing <code>{selected}</code>. It may not be a valid roster file, or
                   this could be a bug.
-                </ul>
+                </Typography>
               )}
-              <button
+              <Button
+                variant="contained"
                 disabled={typeof rosters[selected] !== 'string'}
                 onClick={async () => {
                   setRoster(await loadRoster(selected, fs, rosterPath), false)
                 }}
+                sx={{ mt: 2, mr: 2 }}
               >
                 Load
-              </button>
-              <button
-                className="secondary outline"
+              </Button>
+              <Button
+                variant="outlined"
+                color="secondary"
                 onClick={async () =>
                   await confirmDelete(async () => {
                     await deleteRoster(selected, fs, rosterPath)
                     setRosters(null)
                   })
                 }
+                sx={{ mt: 2 }}
               >
                 Delete
-              </button>
-            </>
+              </Button>
+            </Box>
           )}
           {!!shellOpen && (
-            <button
-              className="secondary outline"
+            <Button
+              variant="outlined"
+              color="secondary"
               onClick={async () => {
                 await shellOpen(rosterPath)
               }}
+              sx={{ mt: 2 }}
             >
               Open roster directory
-            </button>
+            </Button>
           )}
-        </>
+        </Box>
       ) : (
-        <BounceLoader color="#36d7b7" className="loading" />
+        <Box display="flex" justifyContent="center" alignItems="center" minHeight="100vh">
+          <CircularProgress color="primary" />
+        </Box>
       )}
-    </>
+    </Box>
   )
 }
 

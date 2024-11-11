@@ -431,19 +431,6 @@ dialog article article {
   border-radius: var(--border-radius) var(--border-radius) 0 0;
 }
 
-.react-select input {
-  position: relative;
-  left: var(--form-element-spacing-horizontal);
-  --box-shadow: none !important;
-}
-
-.react-select__menu-list {
-  background: var(--form-element-background-color);
-  border: 1px solid var(--form-element-border-color);
-  border-top: none;
-  border-radius: 0 0 var(--border-radius) var(--border-radius);
-}
-
 .react-select__option {
   padding: var(--form-element-spacing-vertical) var(--form-element-spacing-horizontal);
 }
@@ -497,7 +484,6 @@ input.page {
   .view-roster {
     width: 100%;
     max-width: 100%;
-    background: var(--card-background-color);
     min-height: 100vh;
   }
 

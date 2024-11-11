@@ -1,5 +1,5 @@
 import { DebounceInput } from 'react-debounce-input'
-
+import { Box, Typography, TextField, List, ListItem, Button } from '@mui/material'
 import { usePath, useRoster, useSystem, useRosterErrors, useUpdateRoster } from './Context'
 import CostLimits from './CostLimits'
 import RosterNotes from './RosterNotes'
@@ -23,30 +23,32 @@ const Roster = ({ currentForce, setCurrentForce }) => {
   window.errors = errors
 
   return (
-    <article>
+    <Box component="article">
       {errors[''] && (
-        <ul className="errors">
+        <List className="errors">
           {errors[''].map((e, i) => (
-            <li key={i}>{e instanceof Error ? <BugReport error={e} /> : e}</li>
+            <ListItem key={i}>{e instanceof Error ? <BugReport error={e} /> : e}</ListItem>
           ))}
-        </ul>
+        </List>
       )}
       {path === '' ? (
-        <section>
-          <DebounceInput
-            minLength={2}
-            debounceTimeout={300}
+        <Box component="section">
+          <TextField
+            fullWidth
+            variant="outlined"
+            label="Roster Name"
             value={roster.name}
             onChange={(e) => updateRoster('name', e.target.value)}
+            sx={{ mb: 2 }}
           />
           <CostLimits />
           <AddForce />
           <RosterNotes />
-        </section>
+        </Box>
       ) : (
         <Force />
       )}
-    </article>
+    </Box>
   )
 }
 
