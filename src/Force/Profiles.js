@@ -1,4 +1,5 @@
 import _ from 'lodash'
+import { Box, Typography, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper } from '@mui/material'
 
 import { findId, getMinCount } from '../utils'
 import { useSystem } from '../Context'
@@ -10,31 +11,33 @@ const Profiles = ({ profiles, number }) => {
     <>
       {gameData.gameSystem.profileTypes?.map(({ name, characteristicTypes = [] }) =>
         profiles[name] ? (
-          <table className="profile" key={name}>
-            <thead>
-              <tr>
-                <th>{name}</th>
-                {characteristicTypes.map((ct) => (
-                  <th key={ct.name}>{ct.name}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {_.sortBy(profiles[name], '1.name').map(([number, profile]) => (
-                <tr key={profile.id}>
-                  <td>
-                    {number > 1 ? `x${number} ` : ''}
-                    {profile.name}
-                  </td>
-                  {profile.characteristics?.characteristic.map((c) => (
-                    <td className="profile" key={c.name}>
-                      {c['#text']}
-                    </td>
+          <TableContainer component={Paper} key={name} sx={{ mb: 2 }}>
+            <Table size="small" className="profile">
+              <TableHead>
+                <TableRow>
+                  <TableCell>{name}</TableCell>
+                  {characteristicTypes.map((ct) => (
+                    <TableCell key={ct.name}>{ct.name}</TableCell>
                   ))}
-                </tr>
-              ))}
-            </tbody>
-          </table>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {_.sortBy(profiles[name], '1.name').map(([number, profile]) => (
+                  <TableRow key={profile.id}>
+                    <TableCell>
+                      {number > 1 ? `x${number} ` : ''}
+                      {profile.name}
+                    </TableCell>
+                    {profile.characteristics?.characteristic.map((c) => (
+                      <TableCell className="profile" key={c.name}>
+                        {c['#text']}
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </TableContainer>
         ) : null,
       )}
     </>

@@ -1,7 +1,18 @@
 import _ from 'lodash'
 import { useState } from 'react'
 import pluralize from 'pluralize'
-import { Tooltip } from 'react-tooltip'
+import {
+  Box,
+  Typography,
+  Tooltip,
+  Button,
+  IconButton,
+  Dialog,
+  DialogContent,
+  TextField,
+  Select,
+  MenuItem,
+} from '@mui/material'
 import { DebounceInput } from 'react-debounce-input'
 
 import { useSystem, useRoster, useRosterErrors, usePath } from '../Context'
@@ -39,97 +50,68 @@ const Selection = () => {
   const forcePath = pathToForce(path)
 
   return (
-    <div className="selection">
-      <nav>
-        <Tooltip id="move-tooltip" openOnClick={true} clickable={true}>
-          <label>
-            Move to different force
-            <SelectForce
-              value={forcePath}
-              onChange={(newPath) => {
-                const oldForce = _.get(roster, forcePath)
-                _.pull(oldForce.selections.selection, selection)
+    <Box className="selection">
+      <Box component="nav" display="flex" gap={1} mb={2}>
+        <Tooltip title="Move to different force">
+          <SelectForce
+            value={forcePath}
+            onChange={(newPath) => {
+              const oldForce = _.get(roster, forcePath)
+              _.pull(oldForce.selections.selection, selection)
 
-                const newForce = _.get(roster, newPath)
-                newForce.selections = newForce.selections || { selection: [] }
-                newForce.selections.selection.push(selection)
+              const newForce = _.get(roster, newPath)
+              newForce.selections = newForce.selections || { selection: [] }
+              newForce.selections.selection.push(selection)
 
-                setRoster(roster)
-                setPath(forcePath)
-              }}
-            />
-          </label>
+              setRoster(roster)
+              setPath(forcePath)
+            }}
+          />
         </Tooltip>
-        <button className="outline" data-tooltip-id="move-tooltip">
-          <span data-tooltip-id="tooltip" data-tooltip-html="Move to different force">
-            ->
-          </span>
-        </button>
-        <button className="outline" data-tooltip-id="custom-name-tooltip">
-          <span data-tooltip-id="tooltip" data-tooltip-html="Customize">
+        <Tooltip title="Customize">
+          <IconButton onClick={() => setOpen(true)} color="primary" size="small">
             ✍
-          </span>
-        </button>
-        <Tooltip
-          id="custom-name-tooltip"
-          openOnClick={true}
-          clickable={true}
-          afterShow={(e) => {
-            setTimeout(
-              () => document.getElementById('custom-name-tooltip').getElementsByTagName('input')[0].focus(),
-              10,
-            )
-          }}
-        >
-          <label>
-            Custom Name
-            <DebounceInput
-              minLength={2}
-              debounceTimeout={300}
-              value={selection.customName}
-              onChange={(e) => {
-                selection.customName = e.target.value
-                setRoster(roster)
-              }}
-            />
-          </label>
+          </IconButton>
         </Tooltip>
+        <Tooltip title="Duplicate">
+          <IconButton
+            onClick={() => {
+              const parent = _.get(roster, pathParent(path))
+              parent.selections.selection.push(copySelection(selection))
+              setRoster(roster)
+            }}
+            color="primary"
+            size="small"
+          >
+            ⎘
+          </IconButton>
+        </Tooltip>
+        <Tooltip title="Remove">
+          <IconButton
+            onClick={(e) => {
+              const parent = _.get(roster, pathParent(path))
+              _.pull(parent.selections.selection, selection)
+              setRoster(roster)
 
-        <button
-          className="outline"
-          onClick={() => {
-            const parent = _.get(roster, pathParent(path))
-            parent.selections.selection.push(copySelection(selection))
-            setRoster(roster)
-          }}
-          data-tooltip-id="tooltip"
-          data-tooltip-html="Duplicate"
-        >
-          ⎘
-        </button>
-        <button
-          className="outline"
-          onClick={(e) => {
-            const parent = _.get(roster, pathParent(path))
-            _.pull(parent.selections.selection, selection)
-            setRoster(roster)
+              setPath(pathParent(path))
 
-            setPath(pathParent(path))
-
-            e.stopPropagation()
-            e.preventDefault()
-          }}
-          data-tooltip-id="tooltip"
-          data-tooltip-html="Remove"
-        >
-          x
-        </button>
-      </nav>
-      <h6 onClick={() => setOpen(true)}>{selectionName(selection)}</h6>
+              e.stopPropagation()
+              e.preventDefault()
+            }}
+            color="secondary"
+            size="small"
+          >
+            x
+          </IconButton>
+        </Tooltip>
+      </Box>
+      <Typography variant="h6" onClick={() => setOpen(true)}>
+        {selectionName(selection)}
+      </Typography>
       {selectionEntry ? (
         <>
           {selectionEntry.selectionEntries && (
-            <article>
+            <Box component="article">
               {_.sortBy(selectionEntry.selectionEntries, 'name').map((entry) => (
                 <Entry
                   key={entry.id}
@@ -141,7 +123,7 @@ const Selection = () => {
                   catalogue={catalogue}
                 />
               ))}
-            </article>
+            </Box>
           )}
           {selectionEntry.selectionEntryGroups &&
             _.sortBy(selectionEntry.selectionEntryGroups, 'name').map((entryGroup) => (
@@ -156,20 +138,33 @@ const Selection = () => {
           <SelectionModal open={open} setOpen={setOpen}>
             {open && (
               <>
-                <header>
-                  <h6>{selection.name}</h6>
-                </header>
+                <Box component="header" mb={2}>
+                  <Typography variant="h6">{selection.name}</Typography>
+                </Box>
                 <Categories categories={collectCategories(selection, gameData, catalogue)} />
                 <Profiles profiles={collectSelectionProfiles(selection, gameData)} number={selection.number} />
                 <Rules catalogue={catalogue} rules={collectRules(selection)} />
+                <TextField
+                  fullWidth
+                  label="Custom Name"
+                  variant="outlined"
+                  value={selection.customName}
+                  onChange={(e) => {
+                    selection.customName = e.target.value
+                    setRoster(roster)
+                  }}
+                  sx={{ mt: 2 }}
+                />
               </>
             )}
           </SelectionModal>
         </>
       ) : (
-        <>{selectionName(selection)} does not exist in the game data. It may have been removed in a data update.</>
+        <Typography>
+          {selectionName(selection)} does not exist in the game data. It may have been removed in a data update.
+        </Typography>
       )}
-    </div>
+    </Box>
   )
 }
 
@@ -253,8 +248,9 @@ const EntryGroup = ({ path, entryGroup, selection, selectionEntry }) => {
   }
 
   return (
-    <article>
-      <header
+    <Box component="article" mb={2}>
+      <Typography
+        variant="subtitle1"
         data-tooltip-id="tooltip"
         data-tooltip-html={
           selectionErrors
@@ -268,11 +264,11 @@ const EntryGroup = ({ path, entryGroup, selection, selectionEntry }) => {
         {min > 1 && ` - min ${min}`}
         {max > 1 && ` - max ${max}`}
         {entryGroup.publicationId && (
-          <small>
+          <Typography component="small">
             {findId(gameData, catalogue, entryGroup.publicationId).name}, {entryGroup.page}
-          </small>
+          </Typography>
         )}
-      </header>
+      </Typography>
       {max === 1 && !entryGroup.selectionEntryGroups ? (
         <Radio selection={selection} entryGroup={entryGroup} onSelect={onSelect} catalogue={catalogue} />
       ) : (
@@ -297,7 +293,7 @@ const EntryGroup = ({ path, entryGroup, selection, selectionEntry }) => {
           selectionEntry={selectionEntry}
         />
       ))}
-    </article>
+    </Box>
   )
 }
 
@@ -312,7 +308,7 @@ const Radio = ({ catalogue, selection, entryGroup, onSelect }) => {
   return (
     <>
       {min === 0 && max === 1 && (
-        <label>
+        <Box component="label">
           <input
             type="radio"
             name={entryGroup.id}
@@ -325,7 +321,7 @@ const Radio = ({ catalogue, selection, entryGroup, onSelect }) => {
             checked={!selectedOption}
           />
           (None)
-        </label>
+        </Box>
       )}
       {_.sortBy(entries, 'name').map((option, index) => {
         const cost = costString(sumCosts(option))
@@ -334,21 +330,22 @@ const Radio = ({ catalogue, selection, entryGroup, onSelect }) => {
           return null
         }
         return (
-          <label key={option.id}>
+          <Box component="label" key={option.id} display="block">
             <input
               type={max === 1 && entries.length > 1 ? 'radio' : 'checkbox'}
               name={entryGroup.id}
               checked={checked}
               onChange={() => onSelect(option, (max !== 1 || entries.length > 1) && checked ? 0 : 1)}
             />
-            <span
+            <Typography
+              component="span"
               data-tooltip-id="tooltip"
               data-tooltip-html={textProfile(collectEntryProfiles(option, gameData, catalogue))}
             >
               {option.name}
-            </span>
+            </Typography>
             {cost && ` (${cost})`}
-          </label>
+          </Box>
         )
       })}
     </>
@@ -368,26 +365,23 @@ const Checkbox = ({ catalogue, selection, option, onSelect, entryGroup }) => {
     return null
   }
 
-  if (option.name === 'Litany of Hate (Aura)') {
-    debugger
-  }
-
   return (
-    <label>
+    <Box component="label" display="block">
       <input
         type="checkbox"
         checked={checked}
         onChange={() => onSelect(option, checked ? 0 : 1)}
         disabled={checked && min === 1}
       />
-      <span
+      <Typography
+        component="span"
         data-tooltip-id="tooltip"
         data-tooltip-html={textProfile(collectEntryProfiles(option, gameData, catalogue))}
       >
         {option.name}
-      </span>
+      </Typography>
       {cost && ` (${cost})`}
-    </label>
+    </Box>
   )
 }
 
@@ -401,7 +395,7 @@ const Count = ({ catalogue, selection, option, min, max, onSelect, entryGroup })
     min === max ? `${min} ${pluralize(option.name)}` : max === -1 ? '' : `${min}-${max} ${pluralize(option.name)}`
 
   return (
-    <label>
+    <Box component="label" display="block">
       <input
         type="number"
         value={value}
@@ -412,13 +406,14 @@ const Count = ({ catalogue, selection, option, min, max, onSelect, entryGroup })
         data-tooltip-id="tooltip"
         data-tooltip-html={numberTip}
       />
-      <span
+      <Typography
+        component="span"
         data-tooltip-id="tooltip"
         data-tooltip-html={textProfile(collectEntryProfiles(option, gameData, catalogue))}
       >
         {option.name}
-      </span>
+      </Typography>
       {cost && ` (${cost})`}
-    </label>
+    </Box>
   )
 }

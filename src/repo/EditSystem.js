@@ -9,6 +9,27 @@ import containerTags from 'bsd-schema/containerTags.json'
 import { readRawFiles } from './index'
 import EditFile from './EditFile'
 import { useFs } from '../Context'
+import {
+  Box,
+  Typography,
+  Select,
+  MenuItem,
+  Button,
+  CircularProgress,
+  IconButton,
+  Link,
+  Input,
+  AppBar,
+  Toolbar,
+  List,
+  ListItem,
+  ListItemText,
+  Drawer,
+  Container,
+  Tooltip as MUITooltip,
+  Details,
+  Summary,
+} from '@mui/material'
 
 export const SystemContext = createContext(null)
 export const SetSystemContext = createContext(null)
@@ -88,52 +109,46 @@ const EditSystem = ({ systemInfo, setSystemInfo }) => {
   return (
     <SystemContext.Provider value={gameData}>
       <SetSystemContext.Provider value={setGameData}>
-        <div className="container">
-          <Tooltip id="tooltip" />
-          <header>
-            <nav>
-              <ul>
-                <li>
-                  <strong>BlueScribe</strong>
-                </li>
-                {gameData && (
-                  <li>
-                    <select onChange={(e) => setSelectedFile(e.target.value)} defaultValue={selectedFile}>
-                      <option value={gameData.gameSystem}>
-                        {gameData[gameData.gameSystem].name}
-                        {gameData[gameData.gameSystem].__updated && ' *'}
-                      </option>
-                      {Object.keys(_.omit(gameData, ['gameSystem', gameData.gameSystem, 'ids']))
-                        .sort()
-                        .map((filename) => (
-                          <option key={filename} value={filename}>
-                            &nbsp;&nbsp;&nbsp;&nbsp;{gameData[filename].name}
-                            {gameData[filename].__updated && ' *'}
-                          </option>
-                        ))}
-                      <option value="addNew">Add New Catalogue</option>
-                    </select>
-                  </li>
-                )}
-              </ul>
-              <ul>
-                <li>
-                  <details role="list" dir="rtl">
-                    <summary aria-haspopup="listbox" role="link">
-                      ≡
-                    </summary>
-                    <ul role="listbox">
-                      <li data-tooltip-id="tooltip" data-tooltip-html="Change game system">
-                        <span role="link" onClick={() => setSystemInfo({})}>
-                          {systemInfo.name}
-                        </span>
-                      </li>
-                    </ul>
-                  </details>
-                </li>
-              </ul>
-            </nav>
-          </header>
+        <Container>
+          <MUITooltip id="tooltip" />
+          <AppBar position="static">
+            <Toolbar>
+              <Typography variant="h6">BlueScribe</Typography>
+              {gameData && (
+                <Select value={selectedFile} onChange={(e) => setSelectedFile(e.target.value)} sx={{ ml: 2 }}>
+                  <MenuItem value={gameData.gameSystem}>
+                    {gameData[gameData.gameSystem].name}
+                    {gameData[gameData.gameSystem].__updated && ' *'}
+                  </MenuItem>
+                  {Object.keys(_.omit(gameData, ['gameSystem', gameData.gameSystem, 'ids']))
+                    .sort()
+                    .map((filename) => (
+                      <MenuItem key={filename} value={filename}>
+                        &nbsp;&nbsp;&nbsp;&nbsp;{gameData[filename].name}
+                        {gameData[filename].__updated && ' *'}
+                      </MenuItem>
+                    ))}
+                  <MenuItem value="addNew">Add New Catalogue</MenuItem>
+                </Select>
+              )}
+              <Box sx={{ flexGrow: 1 }} />
+              <Details role="list" dir="rtl">
+                <Summary aria-haspopup="listbox" role="link">
+                  ≡
+                </Summary>
+                <List role="listbox">
+                  <ListItem>
+                    <ListItemText
+                      primary={systemInfo.name}
+                      data-tooltip-id="tooltip"
+                      data-tooltip-html="Change game system"
+                      onClick={() => setSystemInfo({})}
+                    />
+                  </ListItem>
+                </List>
+              </Details>
+            </Toolbar>
+          </AppBar>
           {!gameData ? (
             <BounceLoader color="#36d7b7" className="loading" />
           ) : selectedFile === 'addNew' ? (
@@ -141,7 +156,7 @@ const EditSystem = ({ systemInfo, setSystemInfo }) => {
           ) : (
             <EditFile filename={selectedFile} setSelectedFile={setSelectedFile} />
           )}
-        </div>
+        </Container>
       </SetSystemContext.Provider>
     </SystemContext.Provider>
   )

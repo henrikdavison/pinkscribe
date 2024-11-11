@@ -1,9 +1,11 @@
+// I Think this is just underneath Add Force, the list that is generated and the add button at the bottom
 import { useState } from 'react'
 import _ from 'lodash'
 
 import { usePath, useRoster, useRosterErrors, useSystem } from '../Context'
 import { addForce, costString, gatherCatalogues, sumCosts } from '../utils'
 import { gatherForces } from './SelectForce'
+import { Box, Typography, Select, MenuItem, Button, Tooltip, FormControl, InputLabel } from '@mui/material'
 
 const gatherForceEntries = (faction, gameData) =>
   _.sortBy(_.flatten(gatherCatalogues(gameData.catalogues[faction], gameData).map((c) => c.forceEntries || [])), 'name')
@@ -23,9 +25,9 @@ const AddForce = () => {
   const forces = gatherForces(roster)
 
   return (
-    <div className="grid">
-      <div>
-        <h5>Forces</h5>
+    <Box display="grid" gridTemplateColumns="1fr 1fr" gap={2}>
+      <Box>
+        <Typography variant="h5">Forces</Typography>
         {forces.map((path) => {
           const force = _.get(roster, path)
           const forceErrors = _.flatten(
@@ -35,68 +37,67 @@ const AddForce = () => {
           )
           const cost = costString(sumCosts(force))
           return (
-            <h6 key={path} className="left">
+            <Typography key={path} variant="h6" align="left">
               {forceErrors.length ? (
-                <span className="errors" data-tooltip-id="tooltip" data-tooltip-html={forceErrors.join('<br />')}>
-                  !!
-                </span>
-              ) : (
-                ''
-              )}
+                <Tooltip title={forceErrors.join('<br />')} arrow>
+                  <span className="errors">!!</span>
+                </Tooltip>
+              ) : null}
               <span
                 onClick={() => setPath(path)}
                 role="link"
-                data-tooltip-id="tooltip"
+                style={{ cursor: 'pointer' }}
                 data-tooltip-html={cost || undefined}
               >
                 {force.catalogueName}
                 <small>{force.name}</small>
               </span>
-            </h6>
+            </Typography>
           )
         })}
-      </div>
-      <div>
-        <h6>Add Force</h6>
-        <label>
-          Faction
-          <select
+      </Box>
+      <Box>
+        <Typography variant="h6">Add Force</Typography>
+        <FormControl fullWidth margin="normal">
+          <InputLabel>Faction</InputLabel>
+          <Select
+            value={faction}
             onChange={(e) => {
               setFaction(e.target.value)
               setForce(gatherForceEntries(e.target.value, gameData)[0].id)
             }}
           >
-            {catalogues.map((f, index) => (
-              <option key={f.id} value={f.id}>
+            {catalogues.map((f) => (
+              <MenuItem key={f.id} value={f.id}>
                 {f.name}
-              </option>
+              </MenuItem>
             ))}
-          </select>
-        </label>
-        <label>
-          Detachment
-          <select onChange={(e) => setForce(e.target.value)}>
-            {forceEntries.map((f, index) => (
-              <option key={f.id} value={f.id}>
+          </Select>
+        </FormControl>
+        <FormControl fullWidth margin="normal">
+          <InputLabel>Detachment</InputLabel>
+          <Select value={force} onChange={(e) => setForce(e.target.value)}>
+            {forceEntries.map((f) => (
+              <MenuItem key={f.id} value={f.id}>
                 {f.name}
-              </option>
+              </MenuItem>
             ))}
-          </select>
-        </label>
-        <label>
-          &nbsp;
-          <button
-            onClick={() => {
-              addForce(roster, force, faction, gameData)
-              setRoster(roster)
-              setPath(`forces.force.${roster.forces.force.length - 1}`)
-            }}
-          >
-            Add
-          </button>
-        </label>
-      </div>
-    </div>
+          </Select>
+        </FormControl>
+        <Button
+          variant="contained"
+          color="primary"
+          onClick={() => {
+            addForce(roster, force, faction, gameData)
+            setRoster(roster)
+            setPath(`forces.force.${roster.forces.force.length - 1}`)
+          }}
+          sx={{ mt: 2 }}
+        >
+          Add
+        </Button>
+      </Box>
+    </Box>
   )
 }
 

@@ -8,6 +8,21 @@ import ListSelection from './ListSelection'
 import { costString, findId, sumCosts } from '../utils'
 import { pathToForce } from '../validate'
 
+import {
+  Box,
+  Typography,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Paper,
+  Button,
+  Tooltip,
+  Collapse,
+} from '@mui/material'
+
 const Force = () => {
   const gameData = useSystem()
   const [roster, setRoster] = useRoster()
@@ -24,9 +39,6 @@ const Force = () => {
   const selections = {}
   const parseSelection = (selection) => {
     const primary = _.find(selection.categories?.category, 'primary')?.entryId || '(No Category)'
-    if (!primary) {
-      debugger
-    }
     selections[primary] = selections[primary] || []
     selections[primary].push(selection)
   }
@@ -34,10 +46,10 @@ const Force = () => {
   force.selections?.selection.forEach(parseSelection)
 
   const categories = force.categories.category
-    .filter((category) => category.entryId !== 'Configuration') // Exclude "Configuration" from rendering
+    .filter((category) => category.entryId !== 'Configuration')
     .map((category) => {
       if (!selections[category.entryId]) {
-        return null // Skip if no selections exist for this category
+        return null
       }
 
       const { name } = findId(gameData, gameData.catalogues[force.catalogueId], category.entryId)
@@ -45,83 +57,104 @@ const Force = () => {
 
       return (
         <Fragment key={name}>
-          <tr
-            className="category"
+          <TableRow
+            sx={{ cursor: 'pointer' }}
             onClick={() =>
               setOpenSections({
                 ...openSections,
-                [name]: !open, // Toggle open/closed state
+                [name]: !open,
               })
             }
           >
-            <th colSpan="3" open={open}>
-              {name}
-            </th>
-          </tr>
-          {open &&
-            _.sortBy(selections[category.entryId], 'name').map((selection) => (
-              <ListSelection
-                key={selection.id}
-                indent={1}
-                selection={selection}
-                selectionPath={`${forcePath}.selections.selection.${force.selections.selection.indexOf(selection)}`}
-              />
-            ))}
+            <TableCell colSpan={3} open={open ? 'true' : 'false'}>
+              <Typography variant="h6">{name}</Typography>
+            </TableCell>
+          </TableRow>
+          <TableRow>
+            <TableCell colSpan={3}>
+              <Collapse in={open} timeout="auto" unmountOnExit>
+                {_.sortBy(selections[category.entryId], 'name').map((selection) => (
+                  <ListSelection
+                    key={selection.id}
+                    indent={1}
+                    selection={selection}
+                    selectionPath={`${forcePath}.selections.selection.${force.selections.selection.indexOf(selection)}`}
+                  />
+                ))}
+              </Collapse>
+            </TableCell>
+          </TableRow>
         </Fragment>
       )
-    }) // Ensure this semicolon ends the statement
+    })
 
   const globalErrors = errors?.filter((e) => !e.includes('must have'))
 
   const cost = costString(sumCosts(force))
 
   return (
-    <section>
-      <h6>
-        {force.catalogueName}
-        <small>{force.name}</small>
-        {cost && <small>{cost}</small>}
-        {errors && (
-          <span className="errors" data-tooltip-id="tooltip" data-tooltip-html={errors.join('<br />')}>
-            Validation errors
-          </span>
-        )}
-        <span
-          role="link"
-          className="outline"
-          onClick={async () => {
-            await confirmDelete(() => {
-              _.pull(roster.forces.force, force)
-              setRoster(roster)
-              setPath('')
-            })
-          }}
-        >
-          Remove
-        </span>
-      </h6>
+    <Box>
+      <Box mb={2}>
+        <Typography variant="h6">
+          {force.catalogueName}
+          <Typography component="span" variant="subtitle1" sx={{ ml: 1 }}>
+            {force.name}
+          </Typography>
+          {cost && (
+            <Typography component="span" variant="subtitle2" sx={{ ml: 1 }}>
+              {cost}
+            </Typography>
+          )}
+          {errors && (
+            <Tooltip title={errors.join('<br />')} arrow>
+              <Typography component="span" variant="caption" color="error" sx={{ ml: 2 }}>
+                Validation errors
+              </Typography>
+            </Tooltip>
+          )}
+          <Button
+            variant="outlined"
+            color="error"
+            size="small"
+            onClick={async () => {
+              await confirmDelete(() => {
+                _.pull(roster.forces.force, force)
+                setRoster(roster)
+                setPath('')
+              })
+            }}
+            sx={{ ml: 2 }}
+          >
+            Remove
+          </Button>
+        </Typography>
+      </Box>
       {!!globalErrors?.length && (
-        <ul className="errors">
-          {globalErrors.map((e) => (
-            <li key={e}>{e}</li>
+        <Box component="ul" sx={{ color: 'error.main', mb: 2 }}>
+          {globalErrors.map((e, index) => (
+            <Box component="li" key={index}>
+              {e}
+            </Box>
           ))}
-        </ul>
+        </Box>
       )}
-      <div className="grid columns">
-        <div className="selections">
-          <h6>Selections</h6>
-          <table>
-            <tbody>
-              <tr className={path === forcePath ? 'selected' : ''} onClick={() => setPath(forcePath)}>
-                <td colSpan="3">Add Unit</td>
-              </tr>
-              {categories}
-            </tbody>
-          </table>
-        </div>
-        {path === forcePath ? <AddUnit errors={errors} /> : <Selection errors={errors} />}
-      </div>
-    </section>
+      <Box display="grid" gridTemplateColumns="1fr 1fr" gap={2}>
+        <Box>
+          <Typography variant="h6">Selections</Typography>
+          <TableContainer component={Paper} sx={{ mt: 2 }}>
+            <Table>
+              <TableBody>
+                <TableRow sx={{ cursor: 'pointer' }} selected={path === forcePath} onClick={() => setPath(forcePath)}>
+                  <TableCell colSpan={3}>Add Unit</TableCell>
+                </TableRow>
+                {categories}
+              </TableBody>
+            </Table>
+          </TableContainer>
+        </Box>
+        <Box>{path === forcePath ? <AddUnit errors={errors} /> : <Selection errors={errors} />}</Box>
+      </Box>
+    </Box>
   )
 }
 

@@ -1,8 +1,7 @@
 import { useEffect, useState } from 'react'
 import path from 'path-browserify'
-import BounceLoader from 'react-spinners/BounceLoader'
 import _ from 'lodash'
-
+import { Box, Typography, Select, MenuItem, Button, Input, Link, CircularProgress } from '@mui/material'
 import {
   listGameSystems,
   listAvailableGameSystems,
@@ -20,7 +19,6 @@ const SelectSystem = ({ setSystemInfo, setMode, previouslySelected, error }) => 
   const [selected, setSelected] = useState(null)
   const [updatingSystem, setUpdatingSystem] = useState(false)
   const { fs, gameSystemPath } = useFs()
-
   const { selectDirectory } = useNative()
 
   const isOffline = !!selectDirectory
@@ -49,55 +47,57 @@ const SelectSystem = ({ setSystemInfo, setMode, previouslySelected, error }) => 
   }, [selected, available])
 
   return (
-    <div>
-      <h2>Select Game System</h2>
+    <Box>
+      <Typography variant="h5">Select Game System</Typography>
       {systems ? (
         <>
-          <select
+          <Select
             value={selected}
             onChange={(e) => {
               setSelected(e.target.value)
             }}
+            fullWidth
           >
             {_.reverse(_.sortBy(Object.values(systems), 'lastUpdated')).map((system) => (
-              <option key={system.name} value={system.name}>
+              <MenuItem key={system.name} value={system.name}>
                 {system.description} - {system.version}
-              </option>
+              </MenuItem>
             ))}
-            <option key="add">Add New</option>
-          </select>
+            <MenuItem value="Add New">Add New</MenuItem>
+          </Select>
           {selected === 'Add New' ? (
-            <label>
+            <Box mt={2}>
               {available ? (
                 <>
-                  <select onChange={(e) => setSelectedAvailable(e.target.value)}>
+                  <Select value={selectedAvailable} onChange={(e) => setSelectedAvailable(e.target.value)} fullWidth>
                     {available.map((system, index) => (
-                      <option key={system.name} value={index}>
+                      <MenuItem key={system.name} value={index}>
                         {system.description}
-                      </option>
+                      </MenuItem>
                     ))}
-                  </select>
-                  <p>
+                  </Select>
+                  <Typography mt={2}>
                     Or{' '}
-                    <span role="link" onClick={() => document.getElementById('import-system').click()}>
+                    <Link component="button" onClick={() => document.getElementById('import-system').click()}>
                       select a folder
-                    </span>{' '}
+                    </Link>{' '}
                     containing a <code>.gst</code> and <code>.cat</code> files.
-                  </p>
+                  </Typography>
                   {!isOffline ? (
-                    <input
+                    <Input
                       type="file"
                       id="import-system"
-                      webkitdirectory="true"
+                      inputProps={{ webkitdirectory: 'true' }}
                       onChange={async (e) => {
                         const system = await addLocalGameSystem([...e.target.files], fs, gameSystemPath)
                         setSystemInfo(system)
                       }}
+                      sx={{ display: 'none' }}
                     />
                   ) : (
-                    <div
+                    <Box
                       id="import-system"
-                      onClick={async (e) => {
+                      onClick={async () => {
                         const externalDir = await selectDirectory()
                         if (externalDir === null) {
                           return null
@@ -107,54 +107,55 @@ const SelectSystem = ({ setSystemInfo, setMode, previouslySelected, error }) => 
                           setSystemInfo(system)
                         }
                       }}
+                      sx={{ cursor: 'pointer', mt: 2 }}
                     />
                   )}
                 </>
               ) : (
-                <BounceLoader color="#36d7b7" className="loading" />
+                <CircularProgress color="primary" />
               )}
-            </label>
+            </Box>
           ) : (
             <>
               {error && previouslySelected.name === selected && (
-                <article className="errors">
-                  <p className="errors">
+                <Box mt={2}>
+                  <Typography color="error">
                     BlueScribe is having an issue loading this data. This is a bug; please report it.{' '}
-                    <span role="link" onClick={() => console.log(error)}>
+                    <Link component="button" onClick={() => console.log(error)}>
                       Log error to console.
-                    </span>
-                  </p>
+                    </Link>
+                  </Typography>
                   <details>
                     <summary>{error.message}</summary>
                     <code>{error.stack}</code>
                   </details>
-                </article>
+                </Box>
               )}
-              <article>
-                <header>{systems[selected].description}</header>
-                <p>
+              <Box mt={2}>
+                <Typography variant="h6">{systems[selected].description}</Typography>
+                <Typography>
                   Version {systems[selected].version} - {systems[selected].lastUpdateDescription}
-                </p>
-                <p>
+                </Typography>
+                <Typography>
                   Last updated {new Date(Date.parse(systems[selected].lastUpdated)).toLocaleDateString()}.{' '}
                   {systems[selected].bugTrackerUrl && (
                     <>
-                      <a target="_blank" rel="noreferrer" href={systems[selected].bugTrackerUrl}>
+                      <Link target="_blank" rel="noreferrer" href={systems[selected].bugTrackerUrl}>
                         Repository
-                      </a>
+                      </Link>
                       {' | '}
                     </>
                   )}
                   {systems[selected].reportBugUrl && (
                     <>
-                      <a target="_blank" rel="noreferrer" href={systems[selected].reportBugUrl}>
+                      <Link target="_blank" rel="noreferrer" href={systems[selected].reportBugUrl}>
                         Report a bug
-                      </a>
+                      </Link>
                       {' | '}
                     </>
                   )}
-                  <span
-                    role="link"
+                  <Link
+                    component="button"
                     onClick={() => {
                       clearGameSystem(systems[selected], fs, gameSystemPath).then(() => {
                         setSystems(null)
@@ -162,12 +163,14 @@ const SelectSystem = ({ setSystemInfo, setMode, previouslySelected, error }) => 
                     }}
                   >
                     Clear data
-                  </span>
-                </p>
-              </article>
+                  </Link>
+                </Typography>
+              </Box>
             </>
           )}
-          <button
+          <Button
+            variant="contained"
+            color="primary"
             disabled={updatingSystem ? true : undefined}
             onClick={async () => {
               setMode('editRoster')
@@ -193,11 +196,14 @@ const SelectSystem = ({ setSystemInfo, setMode, previouslySelected, error }) => 
                 setSystemInfo(systems[selected])
               }
             }}
+            sx={{ mt: 2 }}
           >
             {updatingSystem ? `${updatingSystem.done} files downloaded` : 'Load'}
-          </button>
+          </Button>
           {selected !== 'Add New' && !updatingSystem && !systems[selected].externalPath && (
-            <button
+            <Button
+              variant="outlined"
+              color="primary"
               onClick={async () => {
                 if (updatingSystem) {
                   return
@@ -218,13 +224,15 @@ const SelectSystem = ({ setSystemInfo, setMode, previouslySelected, error }) => 
                 setSystems(null)
                 setUpdatingSystem(false)
               }}
-              className="outline"
+              sx={{ mt: 2 }}
             >
               Update data
-            </button>
+            </Button>
           )}
           {selected !== 'Add New' && !updatingSystem && (
-            <button
+            <Button
+              variant="outlined"
+              color="primary"
               onClick={async () => {
                 try {
                   const cacheFile = path.join(gameSystemPath, systems[selected].name, 'cache.json')
@@ -233,27 +241,29 @@ const SelectSystem = ({ setSystemInfo, setMode, previouslySelected, error }) => 
                   // Cache file doesn't exist
                 }
               }}
-              className="outline"
+              sx={{ mt: 2 }}
             >
               Clear cache
-            </button>
+            </Button>
           )}
           {false && selected !== 'Add New' && !updatingSystem && (
-            <button
+            <Button
+              variant="outlined"
+              color="primary"
               onClick={async () => {
                 setMode('editSystem')
                 setSystemInfo(systems[selected])
               }}
-              className="outline"
+              sx={{ mt: 2 }}
             >
               Edit data
-            </button>
+            </Button>
           )}
         </>
       ) : (
-        <BounceLoader color="#36d7b7" className="loading" />
+        <CircularProgress color="primary" />
       )}
-    </div>
+    </Box>
   )
 }
 

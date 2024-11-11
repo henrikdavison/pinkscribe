@@ -1,7 +1,9 @@
 import { useRef, useEffect } from 'react'
+import { Dialog, DialogContent, Box, useTheme } from '@mui/material'
 
 const SelectionModal = ({ children, open, setOpen }) => {
   const ref = useRef()
+  const theme = useTheme()
 
   useEffect(() => {
     if (open) {
@@ -29,9 +31,13 @@ const SelectionModal = ({ children, open, setOpen }) => {
   }, [ref, setOpen, open])
 
   return (
-    <dialog open={open}>
-      <article ref={ref}>{children}</article>
-    </dialog>
+    <Dialog open={open} onClose={() => setOpen(false)}>
+      <DialogContent>
+        <Box ref={ref} sx={{ ...theme.mixins.gutters }}>
+          {children}
+        </Box>
+      </DialogContent>
+    </Dialog>
   )
 }
 

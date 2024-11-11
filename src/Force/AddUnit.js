@@ -1,6 +1,19 @@
 import _ from 'lodash'
 import { Fragment } from 'react'
 import pluralize from 'pluralize'
+import {
+  Box,
+  Typography,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Paper,
+  Tooltip,
+  Collapse,
+} from '@mui/material'
 
 // Import functions and hooks for roster management and game data
 import { useRoster, useRosterErrors, useSystem, useOpenCategories, usePath } from '../Context'
@@ -95,56 +108,73 @@ const AddUnit = () => {
     const error = hasMatchingError(rosterErrors[path], category.name) // Check if there’s an error for this category
     return (
       <Fragment key={category.name}>
-        <tr has-error={error} className="category">
-          <th
-            colSpan="2"
-            data-tooltip-id="tooltip"
-            data-tooltip-html={error} // Display error as tooltip
-            open={open}
-            onClick={() =>
-              setOpenCategories({
-                ...openCategories,
-                [category.name]: !open, // Toggle open/closed state on click
-              })
-            }
-          >
-            {category.name}
-          </th>
-        </tr>
-        {open &&
-          catEntries.map((entry) => {
-            const error = hasMatchingError(rosterErrors[path], entry.name)
-            return (
-              <tr
-                has-error={error}
-                key={entry.id}
-                className="add-unit"
-                onClick={() => {
-                  addSelection(force, entry, gameData, null, catalogue) // Add entry to roster on click
-                  setRoster(roster) // Update roster state
-                  setPath(`${path}.selections.selection.${force.selections.selection.length - 1}`) // Update path to new selection
-                }}
-              >
-                <td data-tooltip-id="tooltip" data-tooltip-html={error}>
-                  {entry.name}
-                </td>
-                <td className="cost">{costString(sumDefaultCosts(entry))}</td> {/* Display entry cost */}
-              </tr>
-            )
-          })}
+        <TableRow>
+          <TableCell colSpan={2} sx={{ cursor: 'pointer' }}>
+            <Typography
+              variant="h6"
+              data-tooltip-id="tooltip"
+              data-tooltip-html={error}
+              onClick={() =>
+                setOpenCategories({
+                  ...openCategories,
+                  [category.name]: !open, // Toggle open/closed state on click
+                })
+              }
+            >
+              {category.name}
+            </Typography>
+          </TableCell>
+        </TableRow>
+        <TableRow>
+          <TableCell colSpan={2}>
+            <Collapse in={open} timeout="auto" unmountOnExit>
+              {catEntries.map((entry) => {
+                const error = hasMatchingError(rosterErrors[path], entry.name)
+                return (
+                  <TableRow
+                    key={entry.id}
+                    sx={{ cursor: 'pointer' }}
+                    onClick={() => {
+                      addSelection(force, entry, gameData, null, catalogue) // Add entry to roster on click
+                      setRoster(roster) // Update roster state
+                      setPath(`${path}.selections.selection.${force.selections.selection.length - 1}`) // Update path to new selection
+                    }}
+                  >
+                    <TableCell data-tooltip-id="tooltip" data-tooltip-html={error}>
+                      {entry.name}
+                    </TableCell>
+                    <TableCell>
+                      <Typography>{costString(sumDefaultCosts(entry))}</Typography> {/* Display entry cost */}
+                    </TableCell>
+                  </TableRow>
+                )
+              })}
+            </Collapse>
+          </TableCell>
+        </TableRow>
       </Fragment>
     )
   })
 
   // Render the Add Unit section with categories and entries
   return (
-    <div className="selections">
-      <h6>Add Unit</h6>
-      {categoryErrors.length > 0 && <ul className="errors">{categoryErrors}</ul>}
-      <table role="grid">
-        <tbody>{categories}</tbody>
-      </table>
-    </div>
+    <Box>
+      <Typography variant="h6">Add Unit</Typography>
+      {categoryErrors.length > 0 && (
+        <Box component="ul" sx={{ color: 'error.main' }}>
+          {categoryErrors.map((error, index) => (
+            <Box component="li" key={index}>
+              {error}
+            </Box>
+          ))}
+        </Box>
+      )}
+      <TableContainer component={Paper}>
+        <Table aria-label="add unit table">
+          <TableBody>{categories}</TableBody>
+        </Table>
+      </TableContainer>
+    </Box>
   )
 }
 
