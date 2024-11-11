@@ -2,7 +2,6 @@
 import { useState, useCallback } from 'react'
 import useStorage from 'squirrel-gill'
 import RosterManager from './RosterManager'
-import '@picocss/pico'
 import './App.css'
 import getTheme from './theme/theme'
 import TopMenu from './components/TopMenu'

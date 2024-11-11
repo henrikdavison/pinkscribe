@@ -1,5 +1,16 @@
 import { DebounceInput } from 'react-debounce-input'
-import { Box, Typography, TextField, List, ListItem, Button } from '@mui/material'
+import {
+  Box,
+  Typography,
+  TextField,
+  List,
+  ListItem,
+  Button,
+  Accordion,
+  AccordionSummary,
+  AccordionDetails,
+} from '@mui/material'
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
 import { usePath, useRoster, useSystem, useRosterErrors, useUpdateRoster } from './Context'
 import CostLimits from './CostLimits'
 import RosterNotes from './RosterNotes'
@@ -23,16 +34,23 @@ const Roster = ({ currentForce, setCurrentForce }) => {
   window.errors = errors
 
   return (
-    <Box component="article">
-      {errors[''] && (
-        <List className="errors">
-          {errors[''].map((e, i) => (
-            <ListItem key={i}>{e instanceof Error ? <BugReport error={e} /> : e}</ListItem>
-          ))}
-        </List>
+    <Box>
+      {errors[''] && errors[''].length > 0 && (
+        <Accordion defaultExpanded={false}>
+          <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+            <Typography color="error">Errors</Typography>
+          </AccordionSummary>
+          <AccordionDetails>
+            <List className="errors">
+              {errors[''].map((e, i) => (
+                <ListItem key={i}>{e instanceof Error ? <BugReport error={e} /> : e}</ListItem>
+              ))}
+            </List>
+          </AccordionDetails>
+        </Accordion>
       )}
       {path === '' ? (
-        <Box component="section">
+        <Box>
           <TextField
             fullWidth
             variant="outlined"
