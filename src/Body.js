@@ -9,6 +9,19 @@ import { downloadRoster, saveRoster } from './repo/rosters'
 import { refreshRoster } from './utils'
 import { useConfirm, usePath, useRoster, useSystem, useFs } from './Context'
 import { pathToForce } from './validate'
+import {
+  Box,
+  Button,
+  Select,
+  MenuItem,
+  Typography,
+  Container,
+  Tooltip as MuiTooltip,
+  Menu,
+  MenuItem as MuiMenuItem,
+  IconButton,
+} from '@mui/material'
+import MoreVertIcon from '@mui/icons-material/MoreVert'
 
 const Body = ({ children, systemInfo, setSystemInfo }) => {
   const [roster, setRoster] = useRoster()
@@ -20,122 +33,100 @@ const Body = ({ children, systemInfo, setSystemInfo }) => {
   const [path, setPath] = usePath()
   const [open, setOpen] = useState(false)
   const { fs, rosterPath } = useFs()
+  const [anchorEl, setAnchorEl] = useState(null)
+
+  const handleMenuOpen = (event) => {
+    setAnchorEl(event.currentTarget)
+  }
+
+  const handleMenuClose = () => {
+    setAnchorEl(null)
+  }
 
   return (
-    <div className="container">
-      <Tooltip id="tooltip" />
-      <header>
-        <nav>
-          <ul>
+    <Container className="container">
+      <MuiTooltip id="tooltip" />
+      <Box display="flex" justifyContent="space-between" alignItems="center" py={2}>
+        {roster && (
+          <SelectForce value={pathToForce(path)} onChange={setPath} fullWidth>
+            <MenuItem value="">Manage Roster</MenuItem>
+          </SelectForce>
+        )}
+        {system && (
+          <Box display="flex" gap={2} ml={2}>
             {roster && (
-              <li>
-                <SelectForce value={pathToForce(path)} onChange={setPath}>
-                  <option value="">Manage Roster</option>
-                </SelectForce>
-              </li>
+              <Button variant="outlined" onClick={() => setOpen(!open)}>
+                View/Print
+              </Button>
             )}
-          </ul>
-          {system && (
-            <ul>
+            {roster && (
+              <Button variant="outlined" onClick={() => downloadRoster(roster)}>
+                Download
+              </Button>
+            )}
+            {roster && (
+              <Button
+                variant="outlined"
+                disabled={!roster.__.updated}
+                onClick={async () => {
+                  await saveRoster(roster, fs, rosterPath)
+                  setRoster(roster, false)
+                }}
+              >
+                Save
+              </Button>
+            )}
+            <IconButton onClick={handleMenuOpen}>
+              <MoreVertIcon />
+            </IconButton>
+            <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleMenuClose}>
               {roster && (
-                <li>
-                  <button className="outline" onClick={() => setOpen(!open)}>
-                    View/Print
-                  </button>
-                </li>
+                <MuiMenuItem
+                  onClick={() => {
+                    document.querySelectorAll('details').forEach((d) => d.removeAttribute('open'))
+                    setRoster(refreshRoster(roster, system))
+                    handleMenuClose()
+                  }}
+                >
+                  Refresh Roster
+                </MuiMenuItem>
               )}
               {roster && (
-                <li>
-                  <button className="outline" onClick={() => downloadRoster(roster)}>
-                    Download
-                  </button>
-                </li>
+                <MuiMenuItem
+                  onClick={async () => {
+                    await confirmLeaveRoster(() => {
+                      document.querySelectorAll('details').forEach((d) => d.removeAttribute('open'))
+                      setPath('')
+                      setRoster()
+                      handleMenuClose()
+                    })
+                  }}
+                >
+                  Roster ({roster.__.filename.split('/').at(-1)})
+                </MuiMenuItem>
               )}
-              {roster && (
-                <li>
-                  <button
-                    className="outline"
-                    disabled={!roster.__.updated}
-                    onClick={async () => {
-                      await saveRoster(roster, fs, rosterPath)
-                      setRoster(roster, false)
-                    }}
-                  >
-                    Save
-                  </button>
-                </li>
-              )}
-              <li>
-                <details role="list" dir="rtl">
-                  <summary aria-haspopup="listbox" role="link">
-                    ≡
-                  </summary>
-                  <ul role="listbox">
-                    {roster && (
-                      <li
-                        data-tooltip-id="tooltip"
-                        data-tooltip-html="This can be useful if the game system has been updated or if the roster was generated by a different tool and something seems incorrect."
-                      >
-                        <span
-                          role="link"
-                          onClick={() => {
-                            document.querySelectorAll('details').forEach((d) => d.removeAttribute('open'))
-                            setRoster(refreshRoster(roster, system))
-                          }}
-                        >
-                          Refresh Roster
-                        </span>
-                      </li>
-                    )}
-                    {roster && (
-                      <li data-tooltip-id="tooltip" data-tooltip-html="Load a different roster">
-                        <span
-                          role="link"
-                          onClick={async () =>
-                            await confirmLeaveRoster(() => {
-                              document.querySelectorAll('details').forEach((d) => d.removeAttribute('open'))
-                              setPath('')
-                              setRoster()
-                            })
-                          }
-                        >
-                          Roster
-                          <div>
-                            <small>{roster.__.filename.split('/').at(-1)}</small>
-                          </div>
-                        </span>
-                      </li>
-                    )}
-                    <li data-tooltip-id="tooltip" data-tooltip-html="Load a different game system">
-                      <span
-                        role="link"
-                        onClick={async () =>
-                          await confirmLeaveRoster(() => {
-                            document.querySelectorAll('details').forEach((d) => d.removeAttribute('open'))
-                            setPath('')
-                            setRoster()
-                            setSystemInfo({ name: systemInfo.name })
-                          })
-                        }
-                      >
-                        Game System
-                        <div>
-                          <small>{system?.gameSystem.name}</small>
-                        </div>
-                      </span>
-                    </li>
-                  </ul>
-                </details>
-              </li>
-            </ul>
-          )}
-        </nav>
-      </header>
+              <MuiMenuItem
+                onClick={async () => {
+                  await confirmLeaveRoster(() => {
+                    document.querySelectorAll('details').forEach((d) => d.removeAttribute('open'))
+                    setPath('')
+                    setRoster()
+                    setSystemInfo({ name: systemInfo.name })
+                    handleMenuClose()
+                  })
+                }}
+              >
+                Game System ({system?.gameSystem.name})
+              </MuiMenuItem>
+            </Menu>
+          </Box>
+        )}
+      </Box>
       {children}
       <SelectionModal open={open} setOpen={setOpen}>
         {roster && <ViewRoster />}
       </SelectionModal>
-    </div>
+    </Container>
   )
 }
 
