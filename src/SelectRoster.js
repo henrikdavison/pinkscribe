@@ -75,7 +75,18 @@ const SelectRoster = () => {
       </FileDrop>
       {rosters ? (
         <Box mt={4}>
-          <Select fullWidth value={selected} onChange={(e) => setSelected(e.target.value)} variant="outlined">
+          <Select
+            fullWidth
+            value={selected}
+            onChange={(e) => {
+              setSelected(e.target.value)
+            }}
+            variant="outlined"
+            displayEmpty
+          >
+            <MenuItem value="" disabled>
+              Select a roster
+            </MenuItem>
             {Object.entries(rosters).map(([roster, name]) => (
               <MenuItem key={roster} value={roster}>
                 {roster} - {typeof name === 'string' ? name : 'Error'}

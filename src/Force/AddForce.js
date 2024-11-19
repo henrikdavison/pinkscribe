@@ -15,10 +15,10 @@ const AddForce = () => {
   const errors = useRosterErrors()
   const catalogues = _.sortBy(gameData.catalogues, 'name').filter((c) => !c.library)
 
-  const [faction, setFaction] = useState(catalogues[0].id)
+  const [faction, setFaction] = useState(catalogues[0]?.id || '')
   const forceEntries = gatherForceEntries(faction, gameData)
 
-  const [force, setForce] = useState(forceEntries[0].id)
+  const [force, setForce] = useState(forceEntries[0]?.id || '')
   const [roster, setRoster] = useRoster()
   const [, setPath] = usePath()
 
@@ -64,35 +64,52 @@ const AddForce = () => {
             value={faction}
             onChange={(e) => {
               setFaction(e.target.value)
-              setForce(gatherForceEntries(e.target.value, gameData)[0].id)
+              const newForceEntries = gatherForceEntries(e.target.value, gameData)
+              setForce(newForceEntries[0]?.id || '')
             }}
+            displayEmpty
           >
-            {catalogues.map((f) => (
-              <MenuItem key={f.id} value={f.id}>
-                {f.name}
+            {catalogues.length > 0 ? (
+              catalogues.map((f) => (
+                <MenuItem key={f.id} value={f.id}>
+                  {f.name}
+                </MenuItem>
+              ))
+            ) : (
+              <MenuItem value="" disabled>
+                No factions available
               </MenuItem>
-            ))}
+            )}
           </Select>
         </FormControl>
         <FormControl fullWidth margin="normal">
           <InputLabel>Detachment</InputLabel>
-          <Select value={force} onChange={(e) => setForce(e.target.value)}>
-            {forceEntries.map((f) => (
-              <MenuItem key={f.id} value={f.id}>
-                {f.name}
+          <Select value={force} onChange={(e) => setForce(e.target.value)} displayEmpty>
+            {forceEntries.length > 0 ? (
+              forceEntries.map((f) => (
+                <MenuItem key={f.id} value={f.id}>
+                  {f.name}
+                </MenuItem>
+              ))
+            ) : (
+              <MenuItem value="" disabled>
+                No detachments available
               </MenuItem>
-            ))}
+            )}
           </Select>
         </FormControl>
         <Button
           variant="contained"
           color="primary"
           onClick={() => {
-            addForce(roster, force, faction, gameData)
-            setRoster(roster)
-            setPath(`forces.force.${roster.forces.force.length - 1}`)
+            if (force && faction) {
+              addForce(roster, force, faction, gameData)
+              setRoster(roster)
+              setPath(`forces.force.${roster.forces.force.length - 1}`)
+            }
           }}
           sx={{ mt: 2 }}
+          disabled={!force || !faction}
         >
           Add
         </Button>
