@@ -1,6 +1,6 @@
 import _ from 'lodash'
-
 import { useRoster, useRosterErrors } from '../Context'
+import { Select, MenuItem, FormControl, InputLabel } from '@mui/material'
 
 export const gatherForces = (parent, path = '', forces = []) => {
   parent.forces?.force.forEach((f, i) => {
@@ -18,18 +18,21 @@ const SelectForce = ({ children, onChange, value }) => {
   const forces = gatherForces(roster)
 
   return (
-    <select value={value} onChange={(e) => onChange(e.target.value)}>
-      {children}
-      {forces.map((path) => (
-        <option value={path} key={path}>
-          {'  '.repeat(path.split('.').length / 3)}
-          {Object.keys(errors).find((p) => p.startsWith(path)) ? '!! ' : ''}
-          {_.get(roster, path).catalogueName}
-          {' - '}
-          {_.get(roster, path).name}
-        </option>
-      ))}
-    </select>
+    <FormControl fullWidth>
+      <InputLabel>Force</InputLabel>
+      <Select value={value} onChange={(e) => onChange(e.target.value)}>
+        {children}
+        {forces.map((path) => (
+          <MenuItem value={path} key={path}>
+            {'  '.repeat(path.split('.').length / 3)}
+            {Object.keys(errors).find((p) => p.startsWith(path)) ? '!! ' : ''}
+            {_.get(roster, path).catalogueName}
+            {' - '}
+            {_.get(roster, path).name}
+          </MenuItem>
+        ))}
+      </Select>
+    </FormControl>
   )
 }
 

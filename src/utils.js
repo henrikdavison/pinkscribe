@@ -29,20 +29,29 @@ export const gatherCatalogues = (catalogue, gameData, catalogues = [gameData.gam
 
   return catalogues
 }
-
 export const findId = (gameData, catalogue, id) => {
-  if (gameData.gameSystem.ids[id]) {
+  if (!gameData || !catalogue || !id) {
+    console.error('Invalid input to findId:', { gameData, catalogue, id })
+    return null // Gracefully handle invalid input
+  }
+
+  if (gameData.gameSystem?.ids?.[id]) {
     return gameData.gameSystem.ids[id]
-  } else if (catalogue.ids[id]) {
+  }
+
+  if (catalogue.ids?.[id]) {
     return catalogue.ids[id]
-  } else {
-    for (let cl of catalogue.catalogueLinks || []) {
-      const found = findId(gameData, gameData.catalogues[cl.targetId], id)
-      if (found) {
-        return found
-      }
+  }
+
+  for (let cl of catalogue.catalogueLinks || []) {
+    const found = findId(gameData, gameData.catalogues?.[cl.targetId], id)
+    if (found) {
+      return found
     }
   }
+
+  console.warn(`ID ${id} not found in gameData or catalogue`)
+  return null // Explicitly return null if ID not found
 }
 
 export const sumCosts = (entry, costs = {}) => {
@@ -145,24 +154,35 @@ const getMinForceCount = (entry, roster) =>
   0
 
 export const addForce = (roster, forceId, factionId, gameData) => {
+  // Validate input before proceeding
+  if (!gameData || !gameData.catalogues[factionId]) {
+    console.error('addForce: Invalid gameData or factionId', { gameData, factionId })
+    return // Now properly inside the function
+  }
+
   const entry = findId(gameData, gameData.catalogues[factionId], forceId)
+  if (!entry) {
+    console.error('addForce: Failed to find entry with ID', { forceId, factionId })
+    return // Also properly inside the function
+  }
+
   roster.forces = roster.forces || { force: [] }
 
   const force = {
     id: randomId(),
-    name: entry.name,
+    name: entry.name || 'Unnamed Force',
     entryId: forceId,
     catalogueId: factionId,
-    catalogueRevision: gameData.catalogues[factionId].revision,
-    catalogueName: gameData.catalogues[factionId].name,
+    catalogueRevision: gameData.catalogues[factionId]?.revision || 'Unknown',
+    catalogueName: gameData.catalogues[factionId]?.name || 'Unknown',
     publications: {
       publication: [
-        ...(gameData.catalogues[factionId].publications || []).map((p) => _.pick(p, ['id', 'name'])),
-        ...(gameData.gameSystem.publications || []).map((p) => _.pick(p, ['id', 'name'])),
+        ...(gameData.catalogues[factionId]?.publications || []).map((p) => _.pick(p, ['id', 'name'])),
+        ...(gameData.gameSystem?.publications || []).map((p) => _.pick(p, ['id', 'name'])),
         ..._.flatten(
-          gameData.catalogues[factionId].catalogueLinks?.map(
-            (cl) => gameData.catalogues[cl.targetId].publications || [],
-          ),
+          gameData.catalogues[factionId]?.catalogueLinks?.map(
+            (cl) => gameData.catalogues[cl.targetId]?.publications || [],
+          ) || [],
         ).map((p) => _.pick(p, ['id', 'name'])),
       ],
     },
@@ -174,7 +194,7 @@ export const addForce = (roster, forceId, factionId, gameData) => {
           entryId: '(No Category)',
           primary: 'false',
         },
-        ...entry.categoryLinks.map((c) => ({
+        ...(entry.categoryLinks || []).map((c) => ({
           id: c.id,
           name: c.name,
           entryId: c.targetId,
@@ -186,22 +206,6 @@ export const addForce = (roster, forceId, factionId, gameData) => {
 
   const path = `forces.force.${roster.forces.force.length}.selections.selection.10000`
   roster.forces.force.push(force)
-
-  gatherCatalogues(gameData.catalogues[force.catalogueId], gameData).forEach((catalogue) => {
-    catalogue.entryLinks?.forEach((selectionEntry) => {
-      const entry = getEntry(roster, path, selectionEntry.id, gameData)
-      if (getMinForceCount(entry, roster) === 1) {
-        addSelection(force, entry, gameData, null, catalogue)
-      }
-    })
-
-    catalogue.selectionEntries?.forEach((selectionEntry) => {
-      const entry = getEntry(roster, path, selectionEntry.id, gameData)
-      if (getMinForceCount(entry, roster) === 1) {
-        addSelection(force, entry, gameData, null, catalogue)
-      }
-    })
-  })
 }
 
 export const addSelection = (base, selectionEntry, gameData, entryGroup, catalogue, number = 1) => {

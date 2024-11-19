@@ -62,8 +62,17 @@ const validateForce = (roster, path, force, gameData) => {
     })
 
     const f = findId(gameData, getCatalogue(roster, path, gameData), force.entryId)
+    if (!f) {
+      console.error('validateForce: Could not find force entry:', { force })
+      return errors // Return existing errors to prevent breaking the flow
+    }
+
     f.categoryLinks?.forEach((categoryLink) => {
       const entry = getEntry(roster, path, categoryLink.id, gameData)
+      if (!entry) {
+        console.error('validateForce: Could not find category entry for link:', { categoryLink })
+        return
+      }
       arrayMerge(errors, checkConstraints(roster, path, entry, gameData))
     })
 
@@ -380,6 +389,16 @@ const applyModifiers = (roster, path, entry, gameData, catalogue) => {
     const target =
       settable[modifier.field] || entry[modifier.field] !== undefined ? modifier.field : `${ids[modifier.field]}`
 
+    if (!target) {
+      console.error('applyModifier: Target is undefined. Modifier:', modifier)
+      return
+    }
+
+    if (!target) {
+      console.error('applyModifier: Target is undefined. Modifier:', modifier)
+      return
+    }
+
     if (target === 'undefined' && modifier.value === true) {
       debugger
     }
@@ -470,8 +489,17 @@ const applyModifiers = (roster, path, entry, gameData, catalogue) => {
     group.modifierGroups?.forEach(applyModifierGroup)
   }
 
-  entry.modifiers?.forEach(applyModifier)
-  entry.modifierGroups?.forEach(applyModifierGroup)
+  if (Array.isArray(entry.modifiers)) {
+    entry.modifiers.forEach(applyModifier)
+  } else if (entry.modifiers) {
+    console.error('applyModifiers: Expected modifiers to be an array, but got:', entry.modifiers)
+  }
+
+  if (Array.isArray(entry.modifierGroups)) {
+    entry.modifierGroups.forEach(applyModifierGroup)
+  } else if (entry.modifierGroups) {
+    console.error('applyModifiers: Expected modifierGroups to be an array, but got:', entry.modifierGroups)
+  }
 }
 
 const checkConditions = (roster, path, entry, gameData) => {

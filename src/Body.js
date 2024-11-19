@@ -1,7 +1,6 @@
 // src/Body.js
 
 import { useState } from 'react'
-import { Tooltip } from 'react-tooltip'
 import SelectForce from './Force/SelectForce'
 import SelectionModal from './Force/SelectionModal'
 import ViewRoster from './ViewRoster'
@@ -12,9 +11,7 @@ import { pathToForce } from './validate'
 import {
   Box,
   Button,
-  Select,
   MenuItem,
-  Typography,
   Container,
   Tooltip as MuiTooltip,
   Menu,
@@ -45,7 +42,6 @@ const Body = ({ children, systemInfo, setSystemInfo }) => {
 
   return (
     <Container className="container">
-      <MuiTooltip id="tooltip" />
       <Box display="flex" justifyContent="space-between" alignItems="center" py={2}>
         {roster && (
           <SelectForce value={pathToForce(path)} onChange={setPath} fullWidth>
@@ -77,7 +73,9 @@ const Body = ({ children, systemInfo, setSystemInfo }) => {
               </Button>
             )}
             <IconButton onClick={handleMenuOpen}>
-              <MoreVertIcon />
+              <MuiTooltip title="More options">
+                <MoreVertIcon />
+              </MuiTooltip>
             </IconButton>
             <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleMenuClose}>
               {roster && (
