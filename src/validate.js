@@ -62,9 +62,10 @@ const validateForce = (roster, path, force, gameData) => {
     })
 
     const f = findId(gameData, getCatalogue(roster, path, gameData), force.entryId)
+
     if (!f) {
-      console.error('validateForce: Could not find force entry:', { force })
-      return errors // Return existing errors to prevent breaking the flow
+      console.warn('validateForce: Could not find force entry.', { path, force })
+      return errors
     }
 
     f.categoryLinks?.forEach((categoryLink) => {
@@ -669,10 +670,15 @@ export const getEntry = (roster, path, id, gameData, ignoreCache) => {
     return cache[cachePath]
   }
 
+  if (!id || id.trim() === '') {
+    console.warn('getEntry: Invalid or empty ID provided.', { id, path })
+    return null
+  }
+
   const catalogue = getCatalogue(roster, path, gameData)
   const entry = _.cloneDeep(findId(gameData, catalogue, _.last(id.split('::'))))
-
   if (!entry) {
+    console.warn('No entry found for ID:', { id, path })
     return null
   }
 
@@ -681,7 +687,6 @@ export const getEntry = (roster, path, id, gameData, ignoreCache) => {
   }
 
   const baseId = id.split('::').slice(0, -1).join('::')
-
   const base = findId(gameData, catalogue, _.last(baseId.split('::')))
   if (base?.targetId === entry.id) {
     Object.keys(base).forEach((key) => {

@@ -30,9 +30,9 @@ export const gatherCatalogues = (catalogue, gameData, catalogues = [gameData.gam
   return catalogues
 }
 export const findId = (gameData, catalogue, id) => {
-  if (!gameData || !catalogue || !id) {
-    console.error('Invalid input to findId:', { gameData, catalogue, id })
-    return null // Gracefully handle invalid input
+  if (!gameData || !catalogue || !id || id.trim() === '') {
+    console.warn('findId: Invalid or empty ID provided.', { gameData, catalogue, id })
+    return null // Return null for invalid input
   }
 
   if (gameData.gameSystem?.ids?.[id]) {
