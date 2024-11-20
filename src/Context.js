@@ -48,6 +48,9 @@ export const useUpdateRoster = () => {
   const [roster, setRoster] = useRoster()
 
   return (path, value) => {
+    console.log('Context: Updating roster path:', { path, value, roster })
+    setRoster(_.set(roster, path, value))
+
     setRoster(_.set(roster, path, value))
   }
 }

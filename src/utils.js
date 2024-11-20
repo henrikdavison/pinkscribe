@@ -1,6 +1,7 @@
 import _ from 'lodash'
-
+import { findId, cachedFindId, buildIdIndex } from './repo/idIndex.js'
 import { getEntry, countBy } from './validate'
+export { buildIdIndex, cachedFindId, findId }
 
 export const randomId = () => {
   const hex = () => Math.floor(Math.random() * 16).toString(16)
@@ -28,30 +29,6 @@ export const gatherCatalogues = (catalogue, gameData, catalogues = [gameData.gam
   })
 
   return catalogues
-}
-export const findId = (gameData, catalogue, id) => {
-  if (!gameData || !catalogue || !id || id.trim() === '') {
-    console.warn('findId: Invalid or empty ID provided.', { gameData, catalogue, id })
-    return null // Return null for invalid input
-  }
-
-  if (gameData.gameSystem?.ids?.[id]) {
-    return gameData.gameSystem.ids[id]
-  }
-
-  if (catalogue.ids?.[id]) {
-    return catalogue.ids[id]
-  }
-
-  for (let cl of catalogue.catalogueLinks || []) {
-    const found = findId(gameData, gameData.catalogues?.[cl.targetId], id)
-    if (found) {
-      return found
-    }
-  }
-
-  console.warn(`ID ${id} not found in gameData or catalogue`)
-  return null // Explicitly return null if ID not found
 }
 
 export const sumCosts = (entry, costs = {}) => {
@@ -127,10 +104,12 @@ export const createRoster = (name, gameSystem) => {
     gameSystemName: gameSystem.name,
     gameSystemRevision: gameSystem.revision,
     xmlns: 'http://www.battlescribe.net/schema/rosterSchema',
+    forces: { force: [] }, // Add forces property initialization
     __: {
       filename: name + '.rosz',
       updated: true,
     },
+
     costs: {
       cost:
         gameSystem.costTypes?.map((ct) => ({
@@ -140,7 +119,11 @@ export const createRoster = (name, gameSystem) => {
         })) || [],
     },
   }
-
+  console.log('createRoster: Initialized roster:', JSON.stringify(roster, null, 2))
+  console.log('DEBUG: Decoded roster structure:', JSON.stringify(roster, null, 2))
+  if (!validateDecodedRoster(roster)) {
+    console.error('createRoster: Roster structure is invalid after initialization:', JSON.stringify(roster, null, 2))
+  }
   return roster
 }
 
@@ -160,13 +143,66 @@ export const addForce = (roster, forceId, factionId, gameData) => {
     return // Now properly inside the function
   }
 
+  if (typeof forceId !== 'string') {
+    console.error('addForce: Invalid forceId, expected a string', { forceId })
+    return
+  }
+
+  if (!forceId || typeof forceId !== 'string') {
+    console.error('addForce: Invalid forceId:', { forceId })
+    return
+  }
+  if (!factionId || typeof factionId !== 'string') {
+    console.error('addForce: Invalid factionId:', { factionId })
+    return
+  }
+  console.log('addForce: Current roster state before modification:', JSON.stringify(roster, null, 2))
+  if (!validateDecodedRoster(roster)) {
+    console.error('addForce: Invalid roster structure before modification:', JSON.stringify(roster, null, 2))
+    return
+  }
+
+  if (!gameData?.catalogues[factionId]) {
+    console.error('addForce: Missing faction catalogue in gameData:', { factionId, gameData })
+    return
+  }
+  if (!forceId || typeof forceId !== 'string') {
+    console.warn('addForce: Invalid forceId provided. Proceeding with caution.', { forceId })
+  }
+  if (!factionId || typeof factionId !== 'string') {
+    console.warn('addForce: Invalid factionId provided. Proceeding with caution.', { factionId })
+  }
+  if (!gameData?.catalogues[factionId]) {
+    console.warn('addForce: Missing faction catalogue in gameData. Proceeding with caution.', { factionId, gameData })
+  }
+
+  if (!forceId || typeof forceId !== 'string') {
+    console.error('addForce: Invalid forceId provided:', { forceId })
+    return
+  }
+  if (!factionId || typeof factionId !== 'string') {
+    console.error('addForce: Invalid factionId provided:', { factionId })
+    return
+  }
+  if (!gameData?.catalogues[factionId]) {
+    console.error('addForce: Missing faction catalogue in gameData:', { factionId, gameData })
+    return
+  }
+
   const entry = findId(gameData, gameData.catalogues[factionId], forceId)
   if (!entry) {
     console.error('addForce: Failed to find entry with ID', { forceId, factionId })
-    return // Also properly inside the function
+    return
   }
 
-  roster.forces = roster.forces || { force: [] }
+  if (!roster) {
+    console.error('addForce: Invalid roster object:', roster)
+    return
+  }
+  if (!roster?.forces?.force) {
+    console.error('addForce: Invalid or uninitialized roster structure. Initializing default structure.', { roster })
+    roster.forces = { force: [] }
+  }
 
   const force = {
     id: randomId(),
@@ -406,4 +442,18 @@ export const copySelection = (selection) => {
 
   reId(copy)
   return copy
+}
+
+export const validateDecodedRoster = (roster) => {
+  if (!roster?.forces || typeof roster.forces !== 'object') {
+    console.error('Invalid roster: forces is missing or not an object.', { roster })
+    return false
+  }
+
+  if (!Array.isArray(roster.forces.force)) {
+    console.error('Invalid roster: forces.force is missing or not an array.', { roster })
+    return false
+  }
+
+  return true
 }

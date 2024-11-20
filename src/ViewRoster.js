@@ -39,9 +39,15 @@ const ViewRoster = () => {
     }
   }, [])
 
-  let rules = roster.forces?.force.map((force) => (
-    <Rules catalogue={gameData.catalogues[force.catalogueId]} rules={collectRules(force)} key={force.id} />
-  ))
+  let rules
+  if (roster?.forces?.force) {
+    rules = roster.forces.force.map((force) => (
+      <Rules catalogue={gameData.catalogues[force.catalogueId]} rules={collectRules(force)} key={force.id} />
+    ))
+  } else {
+    console.error('Invalid roster structure:', roster)
+    rules = null // Or provide a default value like an empty array or message
+  }
 
   return (
     <Container>

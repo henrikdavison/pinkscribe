@@ -2,7 +2,7 @@ import _ from 'lodash'
 import an from 'indefinite'
 import pluralize from 'pluralize'
 
-import { findId, gatherCatalogues, getCatalogue, randomId } from './utils'
+import { findId, gatherCatalogues, getCatalogue, randomId, buildIdIndex, cachedFindId } from './utils'
 
 const arrayMerge = (dest, source) => {
   Object.entries(source).forEach(([key, value]) => {
@@ -15,7 +15,7 @@ export const validateRoster = (roster, gameData) => {
   const errors = {}
 
   try {
-    if (!roster.forces || roster.forces.force.length < 1) {
+    if (!roster.forces?.force || roster.forces.force.length < 1) {
       errors[''] = ['A roster requires at least one Force.']
       return errors
     }
@@ -670,13 +670,17 @@ export const getEntry = (roster, path, id, gameData, ignoreCache) => {
     return cache[cachePath]
   }
 
+  const idIndex = buildIdIndex(gameData)
+  const catalogue = getCatalogue(roster, path, gameData)
+  const entry = cachedFindId(idIndex, id)
+
   if (!id || id.trim() === '') {
     console.warn('getEntry: Invalid or empty ID provided.', { id, path })
     return null
   }
 
-  const catalogue = getCatalogue(roster, path, gameData)
-  const entry = _.cloneDeep(findId(gameData, catalogue, _.last(id.split('::'))))
+  const currentCatalogue = getCatalogue(roster, path, gameData)
+  const newEntry = _.cloneDeep(findId(gameData, currentCatalogue, _.last(id.split('::'))))
   if (!entry) {
     console.warn('No entry found for ID:', { id, path })
     return null

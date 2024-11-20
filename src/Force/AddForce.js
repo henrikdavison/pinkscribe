@@ -102,10 +102,47 @@ const AddForce = () => {
           variant="contained"
           color="primary"
           onClick={() => {
-            if (force && faction) {
+            if (!roster?.forces?.force) {
+              console.error('AddForce: Invalid roster structure:', roster)
+              return
+            }
+
+            if (force && faction && typeof force === 'string' && typeof faction === 'string') {
+              console.log('AddForce: Inputs:', { force, faction, roster, gameData })
+
+              if (!force || typeof force !== 'string') {
+                console.error('AddForce: Invalid force ID:', { force })
+                return
+              }
+              if (!faction || typeof faction !== 'string') {
+                console.error('AddForce: Invalid faction ID:', { faction })
+                return
+              }
+              if (!gameData?.catalogues[faction]) {
+                console.error('AddForce: Missing faction in gameData:', { faction, gameData })
+                return
+              }
+              if (!roster.forces) {
+                console.warn('AddForce: Forces missing in roster. Initializing.', { roster })
+                roster.forces = { force: [] }
+              }
+              if (!roster.forces.force) {
+                console.warn('AddForce: Forces array missing. Initializing.', { roster })
+                roster.forces.force = []
+              }
+
+              setPath(`forces.force.${roster.forces.force.length - 1}`)
+
               addForce(roster, force, faction, gameData)
               setRoster(roster)
-              setPath(`forces.force.${roster.forces.force.length - 1}`)
+              console.log('AddForce: Updating roster with setRoster:', { roster })
+              setRoster(roster)
+
+              if (roster.forces?.force) {
+                setPath(`forces.force.${roster.forces.force.length - 1}`)
+              } else {
+                console.error('Invalid roster structure:', roster)
+              }
             }
           }}
           sx={{ mt: 2 }}
