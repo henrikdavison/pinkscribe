@@ -4,7 +4,7 @@ import BounceLoader from 'react-spinners/BounceLoader'
 import { Tooltip as ReactTooltip } from 'react-tooltip'
 import _ from 'lodash'
 
-import containerTags from 'bsd-schema/containerTags.json'
+import containerTags from './bsd-schema/containerTags.json'
 
 import { readRawFiles } from './index'
 import EditFile from './EditFile'

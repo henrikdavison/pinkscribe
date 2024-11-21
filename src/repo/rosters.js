@@ -1,7 +1,6 @@
 import path from 'path-browserify'
-import containerTags from 'bsd-schema/containerTags.json'
-
-import { readXML, xmlData } from './'
+import { readXML, xmlData } from '../bsd-schema/index.js'
+import containerTags from '../bsd-schema/containerTags.json'
 
 export const listRosters = async (gameSystem, fs, rosterPath) => {
   const rosters = {}

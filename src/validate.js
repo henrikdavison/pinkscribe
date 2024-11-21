@@ -2,7 +2,7 @@ import _ from 'lodash'
 import an from 'indefinite'
 import pluralize from 'pluralize'
 
-import { findId, gatherCatalogues, getCatalogue, randomId } from './utils'
+import { findId, gatherCatalogues, getCatalogue, randomId, buildIdIndex, cachedFindId } from './utils'
 
 const arrayMerge = (dest, source) => {
   Object.entries(source).forEach(([key, value]) => {
@@ -15,9 +15,14 @@ export const validateRoster = (roster, gameData) => {
   const errors = {}
 
   try {
-    if (!roster.forces || roster.forces.force.length < 1) {
+    if (!roster.forces?.force || roster.forces.force.length < 1) {
       errors[''] = ['A roster requires at least one Force.']
       return errors
+    }
+
+    if (!roster.forces?.force || roster.forces.force.length < 1) {
+      console.warn('validateRoster: No forces found. Informing the user to add a force.')
+      errors[''] = ['Add a force to the roster before proceeding.']
     }
 
     roster.costLimits?.costLimit.forEach((cl) => {
@@ -62,8 +67,18 @@ const validateForce = (roster, path, force, gameData) => {
     })
 
     const f = findId(gameData, getCatalogue(roster, path, gameData), force.entryId)
+
+    if (!f) {
+      console.warn('validateForce: Could not find force entry.', { path, force })
+      return errors
+    }
+
     f.categoryLinks?.forEach((categoryLink) => {
       const entry = getEntry(roster, path, categoryLink.id, gameData)
+      if (!entry) {
+        console.error('validateForce: Could not find category entry for link:', { categoryLink })
+        return
+      }
       arrayMerge(errors, checkConstraints(roster, path, entry, gameData))
     })
 
@@ -380,6 +395,16 @@ const applyModifiers = (roster, path, entry, gameData, catalogue) => {
     const target =
       settable[modifier.field] || entry[modifier.field] !== undefined ? modifier.field : `${ids[modifier.field]}`
 
+    if (!target) {
+      console.error('applyModifier: Target is undefined. Modifier:', modifier)
+      return
+    }
+
+    if (!target) {
+      console.error('applyModifier: Target is undefined. Modifier:', modifier)
+      return
+    }
+
     if (target === 'undefined' && modifier.value === true) {
       debugger
     }
@@ -470,8 +495,17 @@ const applyModifiers = (roster, path, entry, gameData, catalogue) => {
     group.modifierGroups?.forEach(applyModifierGroup)
   }
 
-  entry.modifiers?.forEach(applyModifier)
-  entry.modifierGroups?.forEach(applyModifierGroup)
+  if (Array.isArray(entry.modifiers)) {
+    entry.modifiers.forEach(applyModifier)
+  } else if (entry.modifiers) {
+    console.error('applyModifiers: Expected modifiers to be an array, but got:', entry.modifiers)
+  }
+
+  if (Array.isArray(entry.modifierGroups)) {
+    entry.modifierGroups.forEach(applyModifierGroup)
+  } else if (entry.modifierGroups) {
+    console.error('applyModifiers: Expected modifierGroups to be an array, but got:', entry.modifierGroups)
+  }
 }
 
 const checkConditions = (roster, path, entry, gameData) => {
@@ -641,10 +675,19 @@ export const getEntry = (roster, path, id, gameData, ignoreCache) => {
     return cache[cachePath]
   }
 
+  const idIndex = buildIdIndex(gameData)
   const catalogue = getCatalogue(roster, path, gameData)
-  const entry = _.cloneDeep(findId(gameData, catalogue, _.last(id.split('::'))))
+  const entry = cachedFindId(idIndex, id)
 
+  if (!id || id.trim() === '') {
+    console.warn('getEntry: Invalid or empty ID provided.', { id, path })
+    return null
+  }
+
+  const currentCatalogue = getCatalogue(roster, path, gameData)
+  const newEntry = _.cloneDeep(findId(gameData, currentCatalogue, _.last(id.split('::'))))
   if (!entry) {
+    console.warn('No entry found for ID:', { id, path })
     return null
   }
 
@@ -653,7 +696,6 @@ export const getEntry = (roster, path, id, gameData, ignoreCache) => {
   }
 
   const baseId = id.split('::').slice(0, -1).join('::')
-
   const base = findId(gameData, catalogue, _.last(baseId.split('::')))
   if (base?.targetId === entry.id) {
     Object.keys(base).forEach((key) => {

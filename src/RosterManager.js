@@ -14,6 +14,7 @@ import {
   useNative,
 } from './Context'
 import Roster from './Roster'
+import AddForce from './Force/AddForce'
 import SelectSystem from './repo/SelectSystem'
 import Body from './Body'
 import { Box, CircularProgress, Typography, Button } from '@mui/material'

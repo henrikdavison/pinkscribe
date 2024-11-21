@@ -37,12 +37,7 @@ const getTheme = (mode) => {
     shape: {
       borderRadius: 8,
     },
-    shadows: [
-      'none',
-      '0px 2px 4px rgba(0, 0, 0, 0.1)',
-      '0px 3px 6px rgba(0, 0, 0, 0.1)',
-      '0px 4px 8px rgba(0, 0, 0, 0.12)',
-    ],
+
     spacing: 8,
     customSpacing: spacing,
     components: {

@@ -1,3 +1,5 @@
+// NOT MUI: Need to discover purpose
+
 import { findId } from '../utils' // Import utility function to retrieve IDs
 
 // Functional component to display categories as a comma-separated string

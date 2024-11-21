@@ -10,8 +10,7 @@ import {
   Checkbox,
   IconButton,
   Tooltip,
-  Select,
-  MenuItem,
+  Autocomplete,
 } from '@mui/material'
 import { findId, randomId } from '../../utils'
 import { useFile, useSystem } from '../EditSystem'
@@ -128,19 +127,15 @@ export const ValueField = ({ entry, updateFile, ...props }) => (
 
 export const ReferenceSelect = ({ value, options, onChange, isClearable = true, isSearchable = true }) => {
   return (
-    <Select
-      value={value?.id || ''}
-      onChange={(e) => onChange(options.find((o) => o.id === e.target.value))}
-      displayEmpty
+    <Autocomplete
+      value={value || null}
+      options={_.sortBy(_.uniq(_.flatten(options)), 'name')}
+      getOptionLabel={(option) => option.name || ''}
+      isOptionEqualToValue={(option, value) => option.id === value.id}
+      onChange={(e, newValue) => onChange(newValue)}
+      renderInput={(params) => <TextField {...params} label={isClearable ? 'None' : ''} fullWidth />}
       fullWidth
-    >
-      {isClearable && <MenuItem value="">None</MenuItem>}
-      {_.sortBy(_.uniq(_.flatten(options)), 'name').map((option) => (
-        <MenuItem key={option.id} value={option.id}>
-          {option.name}
-        </MenuItem>
-      ))}
-    </Select>
+    />
   )
 }
 

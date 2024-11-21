@@ -7,6 +7,7 @@ import Selection from './Selection'
 import ListSelection from './ListSelection'
 import { costString, findId, sumCosts } from '../utils'
 import { pathToForce } from '../validate'
+import { validateDecodedRoster } from '../utils'
 
 import {
   Box,
@@ -29,12 +30,26 @@ const Force = () => {
   const [path, setPath] = usePath()
   const forcePath = pathToForce(path)
   const force = _.get(roster, forcePath)
-  window.force = force
-  const confirmDelete = useConfirm(true, `Delete ${force.name}?`)
 
+  // Hooks that must always be called unconditionally
+  const confirmDelete = useConfirm(true, force ? `Delete ${force.name}?` : '')
   const [openSections, setOpenSections] = useState({})
-
   const errors = useRosterErrors()[forcePath]
+
+  // Log the current state for debugging
+  console.log('Force: Rendering with force object:', JSON.stringify(force, null, 2))
+
+  // Early return for missing or invalid roster
+  if (!validateDecodedRoster(roster)) {
+    console.error('Force: Invalid roster structure before rendering:', JSON.stringify(roster, null, 2))
+    return <div>No valid force data available.</div>
+  }
+
+  // Early return for missing force
+  if (!force) {
+    console.warn('Force: No force available. Prompting user to add one.')
+    return <div>Please add a force to begin building your roster.</div>
+  }
 
   const selections = {}
   const parseSelection = (selection) => {
@@ -43,6 +58,7 @@ const Force = () => {
     selections[primary].push(selection)
   }
 
+  // Process selections in the force object
   force.selections?.selection.forEach(parseSelection)
 
   const categories = force.categories.category

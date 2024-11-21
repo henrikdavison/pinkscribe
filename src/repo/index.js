@@ -5,7 +5,7 @@ import _ from 'lodash'
 import axios from 'axios'
 import PQueue from 'p-queue'
 
-import { parseXML } from 'bsd-schema'
+import { parseXML } from '../bsd-schema'
 
 export const readXML = async (path, fs) => {
   let buffer = await fs.promises.readFile(path)
