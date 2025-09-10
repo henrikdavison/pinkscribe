@@ -36,3 +36,14 @@ In your development cycle, use `npm run tauri dev`. This launches `npm run start
 
 Executables can be built with `npm run tauri build -- -b app`
 Packaged installers can be built with `npm run tauri build`
+
+## Loading data from BSData
+
+For a quick example of parsing official data files, run the helper script:
+
+```
+node scripts/loadBsData.mjs wh40k
+```
+
+The script downloads the chosen game system from the BSData GitHub organisation and
+parses it using the `bsd-schema` library, printing a short summary once complete.
