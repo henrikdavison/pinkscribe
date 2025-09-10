@@ -72,9 +72,9 @@ export const xmlData = async (contents, filename = '') => {
 }
 
 export const listAvailableGameSystems = async () => {
-  const data = await axios.get(
-    'https://api.codetabs.com/v1/proxy?quest=https://github.com/BSData/gallery/releases/download/index-v1/bsdata.catpkg-gallery.json',
-  )
+  const jsDelivr = 'https://cdn.jsdelivr.net/gh/BSData/gallery@master/index-v1/bsdata.catpkg-gallery.json'
+  const raw = 'https://raw.githubusercontent.com/BSData/gallery/master/index-v1/bsdata.catpkg-gallery.json'
+  const data = await fetchWithFallback(jsDelivr, raw, 'game system list')
 
   return data.data.repositories.filter((repo) => repo.battleScribeVersion === '2.03')
 }
@@ -99,6 +99,18 @@ export const listGameSystems = async (fs, gameSystemPath) => {
 const htmlDecode = (str) => {
   const doc = new DOMParser().parseFromString(str, 'text/html')
   return doc.documentElement.textContent
+}
+
+const fetchWithFallback = async (primary, fallback, desc) => {
+  try {
+    return await axios.get(primary)
+  } catch (e) {
+    try {
+      return await axios.get(fallback)
+    } catch {
+      throw new Error(`Failed to fetch ${desc} from jsDelivr or GitHub`)
+    }
+  }
 }
 
 export const addLocalGameSystem = async (files, fs, gameSystemPath) => {
@@ -160,11 +172,19 @@ export const addGameSystem = async (system, fs, gameSystemPath) => {
   await fs.promises.mkdir(path.join(gameSystemPath, system.name))
   await fs.promises.writeFile(path.join(gameSystemPath, system.name, 'system.json'), JSON.stringify(system))
 
-  const index = await axios.get(`https://cdn.jsdelivr.net/gh/BSData/${system.name}@${system.version.replace('v', '')}/`)
+  const versionNoV = system.version.replace('v', '')
+  const index = await fetchWithFallback(
+    `https://cdn.jsdelivr.net/gh/BSData/${system.name}@${versionNoV}/`,
+    `https://raw.githubusercontent.com/BSData/${system.name}/${system.version}/`,
+    `${system.name} index`,
+  )
 
   const files = (await index.data)
     .match(/href="(.+\.(?:cat|gst))"/g)
-    .map((m) => htmlDecode(m.replace('href="', '').slice(0, -1)))
+    ?.map((m) => htmlDecode(m.replace('href="', '').slice(0, -1)))
+  if (!files) {
+    throw new Error(`Failed to parse file list for ${system.name}`)
+  }
 
   const q = new PQueue({
     concurency: 3,
@@ -175,7 +195,10 @@ export const addGameSystem = async (system, fs, gameSystemPath) => {
 
   files.forEach((filename) =>
     q.add(async () => {
-      const file = await axios(`https://cdn.jsdelivr.net${filename}`)
+      const rawFile = `https://raw.githubusercontent.com/BSData/${system.name}/${system.version}/${_.last(
+        filename.split('/'),
+      )}`
+      const file = await fetchWithFallback(`https://cdn.jsdelivr.net${filename}`, rawFile, `${system.name} file`)
       await fs.promises.writeFile(path.join(gameSystemPath, system.name, _.last(filename.split('/'))), file.data)
     }),
   )
