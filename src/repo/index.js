@@ -5,6 +5,15 @@ import _ from 'lodash'
 import axios from 'axios'
 import PQueue from 'p-queue'
 
+// ensure axios bypasses any configured proxies
+axios.defaults.proxy = false
+delete process.env.HTTP_PROXY
+delete process.env.http_proxy
+delete process.env.HTTPS_PROXY
+delete process.env.https_proxy
+delete process.env.ALL_PROXY
+delete process.env.all_proxy
+
 import { parseXML } from 'bsd-schema'
 
 export const readXML = async (path, fs) => {
@@ -72,11 +81,9 @@ export const xmlData = async (contents, filename = '') => {
 }
 
 export const listAvailableGameSystems = async () => {
-  const jsDelivr = 'https://cdn.jsdelivr.net/gh/BSData/gallery@master/index-v1/bsdata.catpkg-gallery.json'
-  const raw = 'https://raw.githubusercontent.com/BSData/gallery/master/index-v1/bsdata.catpkg-gallery.json'
-  const data = await fetchWithFallback(jsDelivr, raw, 'game system list')
 
-  return data.data.repositories.filter((repo) => repo.battleScribeVersion === '2.03')
+
+  return repositories
 }
 
 export const listGameSystems = async (fs, gameSystemPath) => {

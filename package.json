@@ -39,7 +39,7 @@
   },
   "scripts": {
     "prepare": "husky install",
-    "postinstall": "run-script-os",
+    "postinstall": "run-script-os && patch-package",
     "postinstall:linux:darwin": "mkdir -p src/__tests__/downloadedGameSystems/wh40k && cd src/__tests__/downloadedGameSystems/wh40k && git init && git remote add origin https://github.com/BSData/wh40k.git || true && git fetch --depth 1 origin fd0b88293e5f7abacb49639be941eb8098cf785a && git checkout FETCH_HEAD",
     "postinstall:win32": "mkdir src\\__tests__\\downloadedGameSystems\\wh40k && cd src\\__tests__\\downloadedGameSystems\\wh40k && git init && git remote add origin https://github.com/BSData/wh40k.git || true  && git fetch --depth 1 origin fd0b88293e5f7abacb49639be941eb8098cf785a && git checkout FETCH_HEAD",
     "predeploy": "npm run build",
@@ -84,6 +84,8 @@
     "internal-ip": "^8.0.0",
     "lint-staged": "^13.2.2",
     "prettier": "^2.8.8",
+    "patch-package": "^8.0.0",
+    "@babel/plugin-syntax-import-attributes": "^7.24.7",
     "react-app-rewired": "^2.2.1",
     "run-script-os": "^1.1.6",
     "web-streams-polyfill": "^3.2.1"
