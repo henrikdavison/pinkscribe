@@ -1,12 +1,12 @@
 import { DebounceInput } from 'react-debounce-input'
 
-import { usePath, useRoster, useSystem, useRosterErrors, useUpdateRoster } from './Context'
-import CostLimits from './CostLimits'
-import RosterNotes from './RosterNotes'
-import Force from './Force/Force'
-import AddForce from './Force/AddForce'
-import BugReport from './BugReport'
-import SelectRoster from './SelectRoster'
+import { usePath, useRoster, useSystem, useRosterErrors, useUpdateRoster } from './Context.js'
+import CostLimits from './CostLimits.js'
+import RosterNotes from './RosterNotes.js'
+import Force from './Force/Force.js'
+import AddForce from './Force/AddForce.js'
+import BugReport from './BugReport.js'
+import SelectRoster from './SelectRoster.js'
 
 const Roster = ({ currentForce, setCurrentForce }) => {
   const [roster] = useRoster()

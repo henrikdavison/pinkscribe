@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import path from 'path-browserify'
-import BounceLoader from 'react-spinners/BounceLoader'
+import { BounceLoader } from 'react-spinners'
 import _ from 'lodash'
 
 import {
@@ -10,8 +10,8 @@ import {
   addLocalGameSystem,
   addExternalGameSystem,
   clearGameSystem,
-} from './'
-import { useFs, useNative } from '../Context'
+} from './index.js'
+import { useFs, useNative } from '../Context.js'
 
 const SelectSystem = ({ setSystemInfo, setMode, previouslySelected, error }) => {
   const [systems, setSystems] = useState(null)
@@ -133,10 +133,14 @@ const SelectSystem = ({ setSystemInfo, setMode, previouslySelected, error }) => 
               <article>
                 <header>{systems[selected].description}</header>
                 <p>
-                  Version {systems[selected].version} - {systems[selected].lastUpdateDescription}
+                  Version {systems[selected].version} - {systems[selected].lastUpdateDescription || '—'}
                 </p>
                 <p>
-                  Last updated {new Date(Date.parse(systems[selected].lastUpdated)).toLocaleDateString()}.{' '}
+                  Last updated{' '}
+                  {systems[selected].lastUpdated && !isNaN(Date.parse(systems[selected].lastUpdated))
+                    ? new Date(Date.parse(systems[selected].lastUpdated)).toLocaleDateString()
+                    : 'Unknown'}
+                  .{' '}
                   {systems[selected].bugTrackerUrl && (
                     <>
                       <a target="_blank" rel="noreferrer" href={systems[selected].bugTrackerUrl}>
@@ -187,10 +191,20 @@ const SelectSystem = ({ setSystemInfo, setMode, previouslySelected, error }) => 
 
                 await queue.onIdle()
 
-                setSystemInfo(available[selectedAvailable])
+                // Ensure UI proceeds by including battleScribeVersion and fresh metadata
+                setSystemInfo({
+                  ...available[selectedAvailable],
+                  battleScribeVersion: 'ready',
+                  lastUpdated: new Date().toISOString(),
+                  lastUpdateDescription: 'Downloaded',
+                })
                 setUpdatingSystem(false)
               } else {
-                setSystemInfo(systems[selected])
+                // In case stored metadata lacks this field, add a ready marker
+                setSystemInfo({
+                  ...systems[selected],
+                  battleScribeVersion: systems[selected].battleScribeVersion || 'ready',
+                })
               }
             }}
           >

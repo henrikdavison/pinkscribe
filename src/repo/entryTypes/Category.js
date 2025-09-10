@@ -1,7 +1,7 @@
 import _ from 'lodash'
 
-import { useFile } from '../EditSystem'
-import { Comment, Hidden, Id, Modifiers, Name, Profiles, Publication } from './fields'
+import { useFile } from '../EditSystem.js'
+import { Comment, Hidden, Id, Modifiers, Name, Profiles, Publication } from './fields.js'
 
 const Category = ({ filename, category }) => {
   const [file, updateFile] = useFile(filename)

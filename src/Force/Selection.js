@@ -4,9 +4,9 @@ import pluralize from 'pluralize'
 import { Tooltip } from 'react-tooltip'
 import { DebounceInput } from 'react-debounce-input'
 
-import { useSystem, useRoster, useRosterErrors, usePath } from '../Context'
-import { getEntry, pathToForce } from '../validate'
-import SelectForce from './SelectForce'
+import { useSystem, useRoster, useRosterErrors, usePath } from '../Context.js'
+import { getEntry, pathToForce } from '../validate.js'
+import SelectForce from './SelectForce.js'
 import {
   costString,
   findId,
@@ -20,12 +20,12 @@ import {
   isCollective,
   selectionName,
   copySelection,
-} from '../utils'
-import Profiles, { collectSelectionProfiles, collectEntryProfiles } from './Profiles'
-import Rules, { collectRules } from './Rules'
-import Categories, { collectCategories } from './Categories'
-import SelectionModal from './SelectionModal'
-import { pathParent } from '../validate'
+} from '../utils.js'
+import Profiles, { collectSelectionProfiles, collectEntryProfiles } from './Profiles.js'
+import Rules, { collectRules } from './Rules.js'
+import Categories, { collectCategories } from './Categories.js'
+import SelectionModal from './SelectionModal.js'
+import { pathParent } from '../validate.js'
 
 const Selection = () => {
   const gameData = useSystem()

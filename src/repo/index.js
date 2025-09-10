@@ -4,8 +4,9 @@ import { BlobReader, BlobWriter, TextReader, TextWriter, ZipReader, ZipWriter } 
 import _ from 'lodash'
 import axios from 'axios'
 import PQueue from 'p-queue'
+import { parseXML } from 'bsd-schema'
 
-// ensure axios bypasses any configured proxies
+// ensure axios bypasses any configured proxies (imports must come first)
 axios.defaults.proxy = false
 delete process.env.HTTP_PROXY
 delete process.env.http_proxy
@@ -13,8 +14,6 @@ delete process.env.HTTPS_PROXY
 delete process.env.https_proxy
 delete process.env.ALL_PROXY
 delete process.env.all_proxy
-
-import { parseXML } from 'bsd-schema'
 
 export const readXML = async (path, fs) => {
   let buffer = await fs.promises.readFile(path)
@@ -81,14 +80,49 @@ export const xmlData = async (contents, filename = '') => {
 }
 
 export const listAvailableGameSystems = async () => {
+  // Default to 10th edition data
+  const repoNames = ['wh40k-10e']
+  const systems = []
+  for (const name of repoNames) {
+    try {
+      // Get repo information (description, default branch, URLs)
+      const repo = await axios.get(`https://api.github.com/repos/BSData/${name}`)
+      const description = repo.data.description || name
+      const branch = repo.data.default_branch || 'master'
+      const htmlUrl = repo.data.html_url
 
+      // Get latest commit on the default branch
+      const branchInfo = await axios.get(`https://api.github.com/repos/BSData/${name}/branches/${branch}`)
+      const sha = branchInfo.data.commit.sha
+      const commit = branchInfo.data.commit.commit
+      const lastUpdated = commit.committer?.date || commit.author?.date || new Date().toISOString()
+      const lastUpdateDescription = (commit.message || '').split('\n')[0] || 'Latest commit'
 
-  return repositories
+      systems.push({
+        name,
+        description,
+        version: sha,
+        lastUpdated,
+        lastUpdateDescription,
+        bugTrackerUrl: htmlUrl,
+        reportBugUrl: `${htmlUrl}/issues`,
+        battleScribeVersion: 'ready',
+      })
+    } catch {
+      // Fallback minimal entry if GitHub API is unavailable
+      systems.push({ name, description: name, version: 'main', battleScribeVersion: 'ready' })
+    }
+  }
+  return systems
 }
 
 export const listGameSystems = async (fs, gameSystemPath) => {
   const systems = {}
-  const dirs = await fs.promises.readdir(gameSystemPath)
+  // Ensure the directory exists
+  try {
+    await fs.promises.mkdir(gameSystemPath, { recursive: true })
+  } catch {}
+  const dirs = await fs.promises.readdir(gameSystemPath).catch(() => [])
   await Promise.all(
     dirs.map(async (dir) => {
       try {
@@ -127,6 +161,8 @@ export const addLocalGameSystem = async (files, fs, gameSystemPath) => {
     lastUpdated: new Date().toISOString(),
     lastUpdateDescription: 'Updated locally',
     version: 'v0.0.0',
+    // marker used by UI to proceed with loading
+    battleScribeVersion: 'ready',
   }
 
   const dirs = await fs.promises.readdir(gameSystemPath)
@@ -159,6 +195,7 @@ export const addExternalGameSystem = async (externalDir, fs, gameSystemPath) => 
     lastUpdateDescription: 'External Game System',
     version: 'v0.0.0',
     externalPath: externalDir,
+    battleScribeVersion: 'ready',
   }
 
   const systemDir = path.join(gameSystemPath, system.name)
@@ -177,7 +214,10 @@ export const addGameSystem = async (system, fs, gameSystemPath) => {
   }
 
   await fs.promises.mkdir(path.join(gameSystemPath, system.name))
-  await fs.promises.writeFile(path.join(gameSystemPath, system.name, 'system.json'), JSON.stringify(system))
+  await fs.promises.writeFile(
+    path.join(gameSystemPath, system.name, 'system.json'),
+    JSON.stringify({ ...system, battleScribeVersion: system.battleScribeVersion || 'ready' }),
+  )
 
   const versionNoV = system.version.replace('v', '')
   const index = await fetchWithFallback(

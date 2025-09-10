@@ -2,8 +2,9 @@ import React from 'react'
 import ReactDOM from 'react-dom/client'
 
 import './index.css'
-import App from './App'
-import { FSContext } from './Context'
+import App from './App.js'
+import { FSContext } from './Context.js'
+import { ErrorBoundary } from 'react-error-boundary'
 
 import FS from '@isomorphic-git/lightning-fs'
 
@@ -11,25 +12,39 @@ const fs = new FS('bluescribedata')
 const gameSystemPath = '/gameSystems'
 const rosterPath = '/rosters'
 
+// Render immediately; initialize directories in the background
+const root = ReactDOM.createRoot(document.getElementById('root'))
+root.render(
+  <React.StrictMode>
+    <FSContext.Provider value={{ fs, gameSystemPath, rosterPath }}>
+      <ErrorBoundary
+        fallbackRender={({ error, resetErrorBoundary }) => (
+          <div style={{ padding: 16 }}>
+            <h3>BlueScribe failed to start</h3>
+            <p>{error?.message}</p>
+            <button
+              onClick={() => {
+                try {
+                  localStorage.removeItem('system')
+                } catch {}
+                resetErrorBoundary()
+              }}
+            >
+              Reset and retry
+            </button>
+          </div>
+        )}
+      >
+        <App />
+      </ErrorBoundary>
+    </FSContext.Provider>
+  </React.StrictMode>,
+)
 ;(async () => {
   try {
-    await fs.promises.readdir(gameSystemPath)
-  } catch (e) {
     await fs.promises.mkdir(gameSystemPath, { recursive: true })
-  }
-
+  } catch {}
   try {
-    await fs.promises.readdir(rosterPath)
-  } catch (e) {
     await fs.promises.mkdir(rosterPath, { recursive: true })
-  }
-
-  const root = ReactDOM.createRoot(document.getElementById('root'))
-  root.render(
-    <React.StrictMode>
-      <FSContext.Provider value={{ fs, gameSystemPath, rosterPath }}>
-        <App />
-      </FSContext.Provider>
-    </React.StrictMode>,
-  )
+  } catch {}
 })()

@@ -1,14 +1,14 @@
 import { useState, useEffect, createContext, useContext } from 'react'
 import path from 'path-browserify'
-import BounceLoader from 'react-spinners/BounceLoader'
+import { BounceLoader } from 'react-spinners'
 import { Tooltip } from 'react-tooltip'
 import _ from 'lodash'
 
 import containerTags from 'bsd-schema/containerTags.json'
 
-import { readRawFiles } from './index'
-import EditFile from './EditFile'
-import { useFs } from '../Context'
+import { readRawFiles } from './index.js'
+import EditFile from './EditFile.js'
+import { useFs } from '../Context.js'
 
 export const SystemContext = createContext(null)
 export const SetSystemContext = createContext(null)

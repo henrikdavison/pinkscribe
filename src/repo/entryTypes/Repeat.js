@@ -1,8 +1,8 @@
 import _ from 'lodash'
 
-import { findId } from '../../utils'
-import { gatherFiles, useFile, useSystem } from '../EditSystem'
-import { Comment, Checkbox, ReferenceSelect, Value } from './fields'
+import { findId } from '../../utils.js'
+import { gatherFiles, useFile, useSystem } from '../EditSystem.js'
+import { Comment, Checkbox, ReferenceSelect, Value } from './fields.js'
 
 const Repeat = ({ entry, filename, modifier }) => {
   const [file, updateFile] = useFile(filename)

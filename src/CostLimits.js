@@ -1,6 +1,6 @@
 import _ from 'lodash'
 
-import { useRoster, useSystem, useUpdateRoster } from './Context'
+import { useRoster, useSystem, useUpdateRoster } from './Context.js'
 
 const CostLimits = () => {
   const gameData = useSystem()

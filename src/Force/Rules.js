@@ -1,5 +1,5 @@
-import { findId } from '../utils'
-import { useSystem } from '../Context'
+import { findId } from '../utils.js'
+import { useSystem } from '../Context.js'
 
 const Rules = ({ catalogue, rules }) => {
   const gameData = useSystem()

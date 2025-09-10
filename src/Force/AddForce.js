@@ -1,9 +1,9 @@
 import { useState } from 'react'
 import _ from 'lodash'
 
-import { usePath, useRoster, useRosterErrors, useSystem } from '../Context'
-import { addForce, costString, gatherCatalogues, sumCosts } from '../utils'
-import { gatherForces } from './SelectForce'
+import { usePath, useRoster, useRosterErrors, useSystem } from '../Context.js'
+import { addForce, costString, gatherCatalogues, sumCosts } from '../utils.js'
+import { gatherForces } from './SelectForce.js'
 
 const gatherForceEntries = (faction, gameData) =>
   _.sortBy(_.flatten(gatherCatalogues(gameData.catalogues[faction], gameData).map((c) => c.forceEntries || [])), 'name')

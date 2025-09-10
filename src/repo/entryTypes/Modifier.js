@@ -1,7 +1,7 @@
 import _ from 'lodash'
 
-import { Checkbox, Comment, Conditions, Repeats, Text, Value } from './fields'
-import { gatherFiles, useFile, useSystem } from '../EditSystem'
+import { Checkbox, Comment, Conditions, Repeats, Text, Value } from './fields.js'
+import { gatherFiles, useFile, useSystem } from '../EditSystem.js'
 
 const types = {
   set: 'Set',

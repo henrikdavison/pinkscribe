@@ -1,7 +1,7 @@
 import _ from 'lodash'
 
-import { findId, getMinCount } from '../utils'
-import { useSystem } from '../Context'
+import { findId, getMinCount } from '../utils.js'
+import { useSystem } from '../Context.js'
 
 const Profiles = ({ profiles, number }) => {
   const gameData = useSystem()

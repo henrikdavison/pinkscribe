@@ -1,8 +1,8 @@
 import { useState } from 'react'
 import _ from 'lodash'
 
-import { useFile } from './EditSystem'
-import Category from './entryTypes/Category'
+import { useFile } from './EditSystem.js'
+import Category from './entryTypes/Category.js'
 
 const gameSystemTypes = {
   categoryEntries: 'Categories',

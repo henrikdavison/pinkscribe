@@ -1,11 +1,11 @@
 import { useEffect, useState } from 'react'
-import BounceLoader from 'react-spinners/BounceLoader'
+import { BounceLoader } from 'react-spinners'
 import useStorage from 'squirrel-gill'
 import { FileDrop } from 'react-file-drop'
 
-import { listRosters, loadRoster, importRoster, deleteRoster } from './repo/rosters'
-import { useFs, useNative, useRoster, useSystem, useConfirm } from './Context'
-import { createRoster } from './utils'
+import { listRosters, loadRoster, importRoster, deleteRoster } from './repo/rosters.js'
+import { useFs, useNative, useRoster, useSystem, useConfirm } from './Context.js'
+import { createRoster } from './utils.js'
 
 const SelectRoster = () => {
   const [, setRoster] = useRoster()

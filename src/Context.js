@@ -1,7 +1,7 @@
 import { createContext, useContext } from 'react'
 import _ from 'lodash'
 
-import { sumCosts } from './utils'
+import { sumCosts } from './utils.js'
 
 export const FSContext = createContext(null)
 export const NativeContext = createContext([])

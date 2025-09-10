@@ -2,11 +2,11 @@ import { Fragment, useEffect } from 'react'
 import _ from 'lodash'
 import useStorage from 'squirrel-gill'
 
-import { useRoster, useSystem } from './Context'
-import { costString, findId, sumCosts } from './utils'
-import Profiles, { collectSelectionProfiles } from './Force/Profiles'
-import Rules, { collectRules } from './Force/Rules'
-import Categories, { collectCategories } from './Force/Categories'
+import { useRoster, useSystem } from './Context.js'
+import { costString, findId, sumCosts } from './utils.js'
+import Profiles, { collectSelectionProfiles } from './Force/Profiles.js'
+import Rules, { collectRules } from './Force/Rules.js'
+import Categories, { collectCategories } from './Force/Categories.js'
 
 const ViewRoster = () => {
   const gameData = useSystem()

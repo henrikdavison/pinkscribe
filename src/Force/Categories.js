@@ -1,4 +1,4 @@
-import { findId } from '../utils' // Import utility function to retrieve IDs
+import { findId } from '../utils.js' // Import utility function to retrieve IDs
 
 // Functional component to display categories as a comma-separated string
 const Categories = ({ categories }) => {

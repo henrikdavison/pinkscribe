@@ -1,6 +1,6 @@
 import _ from 'lodash'
 
-import { getEntry, countBy } from './validate'
+import { getEntry, countBy } from './validate.js'
 
 export const randomId = () => {
   const hex = () => Math.floor(Math.random() * 16).toString(16)
@@ -31,18 +31,21 @@ export const gatherCatalogues = (catalogue, gameData, catalogues = [gameData.gam
 }
 
 export const findId = (gameData, catalogue, id) => {
-  if (gameData.gameSystem.ids[id]) {
-    return gameData.gameSystem.ids[id]
-  } else if (catalogue.ids[id]) {
+  // Prefer IDs in the current catalogue first; fall back to gameSystem
+  if (catalogue?.ids?.[id]) {
     return catalogue.ids[id]
-  } else {
-    for (let cl of catalogue.catalogueLinks || []) {
-      const found = findId(gameData, gameData.catalogues[cl.targetId], id)
-      if (found) {
-        return found
-      }
+  }
+  if (gameData?.gameSystem?.ids?.[id]) {
+    return gameData.gameSystem.ids[id]
+  }
+  // Recurse through linked catalogues
+  for (let cl of catalogue?.catalogueLinks || []) {
+    const found = findId(gameData, gameData.catalogues[cl.targetId], id)
+    if (found) {
+      return found
     }
   }
+  return undefined
 }
 
 export const sumCosts = (entry, costs = {}) => {

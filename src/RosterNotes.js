@@ -1,6 +1,6 @@
 import { DebounceInput } from 'react-debounce-input'
 
-import { useRoster } from './Context'
+import { useRoster } from './Context.js'
 
 const RosterNotes = () => {
   const [roster, setRoster] = useRoster()

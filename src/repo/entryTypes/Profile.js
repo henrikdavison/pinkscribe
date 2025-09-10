@@ -1,8 +1,8 @@
 import _ from 'lodash'
 
-import { findId } from '../../utils'
-import { Comment, Hidden, Id, Modifiers, Name, Publication, ReferenceSelect } from './fields'
-import { useFile, useSystem, gatherFiles } from '../EditSystem'
+import { findId } from '../../utils.js'
+import { Comment, Hidden, Id, Modifiers, Name, Publication, ReferenceSelect } from './fields.js'
+import { useFile, useSystem, gatherFiles } from '../EditSystem.js'
 
 const Profile = ({ filename, on, profile }) => {
   const [file, updateFile] = useFile(filename)

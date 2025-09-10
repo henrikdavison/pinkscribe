@@ -3,9 +3,9 @@ import { Fragment } from 'react'
 import pluralize from 'pluralize'
 
 // Import functions and hooks for roster management and game data
-import { useRoster, useRosterErrors, useSystem, useOpenCategories, usePath } from '../Context'
-import { costString, addSelection, findId, gatherCatalogues, getCatalogue, getMaxCount } from '../utils'
-import { getEntry } from '../validate'
+import { useRoster, useRosterErrors, useSystem, useOpenCategories, usePath } from '../Context.js'
+import { costString, addSelection, findId, gatherCatalogues, getCatalogue, getMaxCount } from '../utils.js'
+import { getEntry } from '../validate.js'
 
 // Helper function to check if there’s a validation error for a given category name
 const hasMatchingError = (errors, name) => {
@@ -128,7 +128,7 @@ const AddUnit = () => {
                 <td data-tooltip-id="tooltip" data-tooltip-html={error}>
                   {entry.name}
                 </td>
-                <td className="cost">{costString(sumDefaultCosts(entry))}</td> {/* Display entry cost */}
+                <td className="cost">{costString(sumDefaultCosts(entry))}</td>
               </tr>
             )
           })}

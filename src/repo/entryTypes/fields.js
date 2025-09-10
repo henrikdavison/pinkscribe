@@ -1,12 +1,12 @@
 import Select from 'react-select'
 import _ from 'lodash'
 
-import { findId, randomId } from '../../utils'
-import { useFile, useSystem } from '../EditSystem'
-import Profile from './Profile'
-import Modifier from './Modifier'
-import ModifierGroup from './ModifierGroup'
-import Repeat, { repeatToString } from './Repeat'
+import { findId, randomId } from '../../utils.js'
+import { useFile, useSystem } from '../EditSystem.js'
+import Profile from './Profile.js'
+import Modifier from './Modifier.js'
+import ModifierGroup from './ModifierGroup.js'
+import Repeat, { repeatToString } from './Repeat.js'
 
 export const Checkbox = ({ entry, field, label, updateFile, defaultValue = false, ...props }) => (
   <tr {...props}>

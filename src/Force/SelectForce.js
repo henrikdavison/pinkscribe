@@ -1,6 +1,6 @@
 import _ from 'lodash'
 
-import { useRoster, useRosterErrors } from '../Context'
+import { useRoster, useRosterErrors } from '../Context.js'
 
 export const gatherForces = (parent, path = '', forces = []) => {
   parent.forces?.force.forEach((f, i) => {

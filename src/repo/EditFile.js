@@ -1,5 +1,5 @@
-import { useFile, useSystem, useSetSystem } from './EditSystem'
-import FileContents from './FileContents'
+import { useFile, useSystem, useSetSystem } from './EditSystem.js'
+import FileContents from './FileContents.js'
 
 const EditFile = ({ filename, setSelectedFile }) => {
   return (

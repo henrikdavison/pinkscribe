@@ -8,8 +8,8 @@ import { createDir, metadata, readDir, readBinaryFile, removeDir, removeFile } f
 import { open as shellOpen } from '@tauri-apps/plugin-shell'
 
 import './index.css'
-import App from './App'
-import { FSContext, NativeContext } from './Context'
+import App from './App.js'
+import { FSContext, NativeContext } from './Context.js'
 
 // Emulate the parts of the metadata object that we use
 class offlineMetadata {

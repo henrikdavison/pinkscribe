@@ -1,8 +1,8 @@
 import _ from 'lodash'
 
-import { costString, sumCosts, selectionName } from '../utils'
-import { useRoster, useRosterErrors, usePath, useSystem } from '../Context'
-import { getEntry, pathParent } from '../validate'
+import { costString, sumCosts, selectionName } from '../utils.js'
+import { useRoster, useRosterErrors, usePath, useSystem } from '../Context.js'
+import { getEntry, pathParent } from '../validate.js'
 
 const ListSelection = ({ indent, selectionPath, selection }) => {
   const gameData = useSystem()

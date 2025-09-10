@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import BounceLoader from 'react-spinners/BounceLoader'
+import { BounceLoader } from 'react-spinners'
 import 'react-tooltip/dist/react-tooltip.css'
 import { Tooltip } from 'react-tooltip'
 import useStorage from 'squirrel-gill'
@@ -8,10 +8,10 @@ import path from 'path-browserify'
 
 import '@picocss/pico'
 import './App.css'
-import { readFiles } from './repo'
-import SelectSystem from './repo/SelectSystem'
-import Roster from './Roster'
-import { saveRoster, downloadRoster } from './repo/rosters'
+import { readFiles } from './repo/index.js'
+import SelectSystem from './repo/SelectSystem.js'
+import Roster from './Roster.js'
+import { saveRoster, downloadRoster } from './repo/rosters.js'
 import {
   GameContext,
   OpenCategoriesContext,
@@ -24,13 +24,13 @@ import {
   usePath,
   useRoster,
   useSystem,
-} from './Context'
-import SelectionModal from './Force/SelectionModal'
-import SelectForce from './Force/SelectForce'
-import ViewRoster from './ViewRoster'
-import { refreshRoster } from './utils'
-import EditSystem from './repo/EditSystem'
-import { pathToForce, validateRoster } from './validate'
+} from './Context.js'
+import SelectionModal from './Force/SelectionModal.js'
+import SelectForce from './Force/SelectForce.js'
+import ViewRoster from './ViewRoster.js'
+import { refreshRoster } from './utils.js'
+import EditSystem from './repo/EditSystem.js'
+import { pathToForce, validateRoster } from './validate.js'
 import packageJson from '../package.json'
 import discordIcon from './discord-icon.png'
 import githubIcon from './github-icon.png'
@@ -186,7 +186,15 @@ function App() {
   const [loading, setLoading] = useState(false)
   const [gameData, setGameData] = useState(null)
 
-  const [systemInfo, setInfo] = useState(JSON.parse(localStorage.system || '{}'))
+  const [systemInfo, setInfo] = useState(() => {
+    try {
+      return JSON.parse(localStorage.system || '{}')
+    } catch {
+      // Corrupt or legacy value in localStorage; reset to empty
+      localStorage.removeItem('system')
+      return {}
+    }
+  })
 
   const setSystemInfo = (info) => {
     localStorage.system = JSON.stringify(info)

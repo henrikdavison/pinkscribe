@@ -1,12 +1,12 @@
 import _ from 'lodash'
 import { Fragment, useState } from 'react'
 
-import { useRoster, useRosterErrors, useSystem, useConfirm, usePath } from '../Context'
-import AddUnit from './AddUnit'
-import Selection from './Selection'
-import ListSelection from './ListSelection'
-import { costString, findId, sumCosts } from '../utils'
-import { pathToForce } from '../validate'
+import { useRoster, useRosterErrors, useSystem, useConfirm, usePath } from '../Context.js'
+import AddUnit from './AddUnit.js'
+import Selection from './Selection.js'
+import ListSelection from './ListSelection.js'
+import { costString, findId, sumCosts } from '../utils.js'
+import { pathToForce } from '../validate.js'
 
 const Force = () => {
   const gameData = useSystem()
@@ -71,7 +71,7 @@ const Force = () => {
       )
     }) // Ensure this semicolon ends the statement
 
-  const globalErrors = errors?.filter((e) => !e.includes('must have'))
+  const globalErrors = _.uniq(errors?.filter((e) => !e.includes('must have')))
 
   const cost = costString(sumCosts(force))
 
@@ -102,8 +102,45 @@ const Force = () => {
       </h6>
       {!!globalErrors?.length && (
         <ul className="errors">
-          {globalErrors.map((e) => (
-            <li key={e}>{e}</li>
+          {globalErrors.map((e, i) => (
+            <li key={i}>
+              {e}{' '}
+              <small
+                role="link"
+                onClick={() => {
+                  try {
+                    window.__explainError && window.__explainError(e)
+                  } catch {}
+                }}
+              >
+                Explain
+              </small>
+              {' · '}
+              <small
+                role="link"
+                onClick={async () => {
+                  try {
+                    const details = window.errorMap?.[e] || []
+                    const text = JSON.stringify(details, null, 2)
+                    if (navigator.clipboard?.writeText) {
+                      await navigator.clipboard.writeText(text)
+                    } else {
+                      const ta = document.createElement('textarea')
+                      ta.value = text
+                      ta.style.position = 'fixed'
+                      ta.style.opacity = '0'
+                      document.body.appendChild(ta)
+                      ta.focus()
+                      ta.select()
+                      document.execCommand('copy')
+                      document.body.removeChild(ta)
+                    }
+                  } catch {}
+                }}
+              >
+                Copy details
+              </small>
+            </li>
           ))}
         </ul>
       )}

@@ -1,7 +1,7 @@
 import _ from 'lodash'
 
-import { Comment, Conditions, Modifiers, Repeats } from './fields'
-import { useFile } from '../EditSystem'
+import { Comment, Conditions, Modifiers, Repeats } from './fields.js'
+import { useFile } from '../EditSystem.js'
 
 const ModifierGroup = ({ entry, on, filename, modifierGroup }) => {
   const [file, updateFile] = useFile(filename)

@@ -2,17 +2,72 @@ import _ from 'lodash'
 import an from 'indefinite'
 import pluralize from 'pluralize'
 
-import { findId, gatherCatalogues, getCatalogue, randomId } from './utils'
+import { findId, gatherCatalogues, getCatalogue, randomId } from './utils.js'
+
+// Lightweight debugging hooks to trace where validation messages come from
+const recordErrorDetail = (message, detail) => {
+  try {
+    if (typeof window === 'undefined') return
+    window.errorMap = window.errorMap || {}
+    ;(window.errorMap[message] = window.errorMap[message] || []).push(detail)
+    window.__explainError =
+      window.__explainError ||
+      ((msg) => {
+        const items = window.errorMap?.[msg] || []
+        console.group(`Explanation for: ${msg}`)
+        items.forEach((d, i) => console.log(`#${i + 1}`, d))
+        console.groupEnd()
+      })
+  } catch {}
+}
+
+// Collect matching selections contributing to a count, for debugging/explain output
+const collectSelectionMatches = (subject, entryId, currentPath = '') => {
+  const results = []
+  const add = (sel, path) =>
+    results.push({
+      path,
+      name: sel.name,
+      entryId: sel.entryId,
+      number: sel.number ?? 1,
+      categories: (sel.categories?.category || []).map((c) => c.entryId),
+    })
+
+  if (subject?.selections?.selection) {
+    subject.selections.selection.forEach((sel, i) => {
+      const path = `${currentPath ? currentPath + '.' : ''}selections.selection.${i}`
+      if (sel.entryId?.includes(entryId) || sel.entryGroupId?.includes(entryId) || hasCategory(sel, entryId)) {
+        add(sel, path)
+      }
+      // Recurse to find nested matches
+      results.push(...collectSelectionMatches(sel, entryId, path))
+    })
+  }
+
+  if (subject?.forces?.force) {
+    subject.forces.force.forEach((f, i) => {
+      results.push(...collectSelectionMatches(f, entryId, `${currentPath ? currentPath + '.' : ''}forces.force.${i}`))
+    })
+  }
+
+  return results
+}
 
 const arrayMerge = (dest, source) => {
   Object.entries(source).forEach(([key, value]) => {
-    dest[key] = dest[key] || []
-    dest[key].push(...value.sort())
+    const existing = dest[key] || []
+    // Merge and deduplicate messages to avoid duplicate keys/warnings in UI
+    dest[key] = Array.from(new Set([...existing, ...value.sort()]))
   })
 }
 
 export const validateRoster = (roster, gameData) => {
   const errors = {}
+  try {
+    if (typeof window !== 'undefined') {
+      window.errorMap = {}
+    }
+  } catch {}
 
   try {
     if (!roster.forces || roster.forces.force.length < 1) {
@@ -145,7 +200,7 @@ const validateSelection = (roster, path, selection, gameData) => {
 }
 
 const hasCategory = (subject, categoryId) => {
-  return !!subject.categories?.category.some((c) => c.entryId.includes(categoryId))
+  return !!subject.categories?.category.some((c) => (c.entryId || '').includes(categoryId))
 }
 
 export const countBy = (subject, entryId, entry, groupIds) => {
@@ -161,7 +216,8 @@ export const countBy = (subject, entryId, entry, groupIds) => {
     subject.entryGroupId?.includes(entryId) ||
     groupIds?.some((groupId) => subject.entryGroupId === groupId) ||
     subject.type === entryId ||
-    hasCategory(subject, entryId)
+    // Only count a direct category hit at the selection level, not for forces/roster
+    (!subject.gameSystemId && !subject.catalogueId && hasCategory(subject, entryId))
   ) {
     return subject.number ?? 1
   }
@@ -178,10 +234,15 @@ export const countBy = (subject, entryId, entry, groupIds) => {
     if (entry.includeChildSelections || entry.shared) {
       count += _.sum(subject.selections.selection.map((selection) => countBy(selection, entryId, entry, groupIds)))
     } else {
+      // When counting by category or group id, include selections that have that category
       count += _.sum(
         _.map(
           subject.selections.selection.filter((selection) => {
-            return selection.entryId.includes(entryId) || selection.entryGroupId?.includes(entryId)
+            return (
+              selection.entryId.includes(entryId) ||
+              selection.entryGroupId?.includes(entryId) ||
+              hasCategory(selection, entryId)
+            )
           }),
           'number',
         ),
@@ -196,6 +257,7 @@ export const countBy = (subject, entryId, entry, groupIds) => {
   return count
 }
 
+// eslint-disable-next-line no-unused-vars
 const countByCategory = (subject, category, entry) => {
   const categoryId = _.last(category.id.split('::'))
 
@@ -225,16 +287,17 @@ const sumCost = (subject, entry, filterByCategory) => {
   // If we're a top-level roster, don't include the "costs" or we'll end up double-counting.
   if (!subject.gameSystemId) {
     if (filterByCategory === 'any' || subject.categories?.category.some((c) => c.entryId === filterByCategory)) {
-      sum += subject.costs?.cost.find((c) => c.typeId === entry.field)?.value | 0
+      const v = subject.costs?.cost.find((c) => c.typeId === entry.field)?.value
+      sum += typeof v === 'number' ? v : 0
     }
   }
 
   if ((entry.includeChildForces || filterByCategory === 'any') && subject.forces) {
-    sum += subject.forces.force.map((force) => sumCost(force, entry, filterByCategory)) | 0
+    sum += _.sum(subject.forces.force.map((force) => sumCost(force, entry, filterByCategory)))
   }
 
   if ((entry.includeChildSelections || filterByCategory === 'any') && subject.selections) {
-    sum += subject.selections.selection.map((selection) => sumCost(selection, entry, filterByCategory)) | 0
+    sum += _.sum(subject.selections.selection.map((s) => sumCost(s, entry, filterByCategory)))
   }
 
   return sum
@@ -274,42 +337,129 @@ const checkConstraints = (roster, path, entry, gameData, group = false) => {
     let max = Infinity
     if (entry.constraints) {
       entry.constraints?.forEach((constraint) => {
+        // Respect constraint-level conditions (very common in 10e data)
+        if (!checkConditions(roster, path, constraint, gameData)) {
+          return
+        }
         const subject = getSubject(roster, path, constraint)
         if (!subject) {
           return
         }
 
-        const occurances =
-          entry.primary === undefined
-            ? countBy(subject, entry.id, constraint, collectGroupIds(entry))
-            : countByCategory(subject, entry, constraint)
-        const value = getConstraintValue(constraint, entry.id, subject, gameData)
+        const costConstraint =
+          (typeof constraint.field === 'string' && constraint.field.startsWith('limit::')) ||
+          isCostType(constraint.field, gameData)
+
+        // Compute the actual measured value and the allowed threshold
+        let actual
+        let limit = constraint.value
+
+        if (costConstraint) {
+          // Costs: sum matching costs, optionally as a percent
+          if (constraint.percentValue) {
+            const denom = sumCost(subject, constraint, 'any')
+            const num = sumCost(subject, constraint, false)
+            actual = denom ? num / denom : 0
+          } else {
+            actual = sumCost(subject, constraint, false)
+          }
+        } else if (entry.primary !== undefined) {
+          // Category entry: count by category
+          actual = countByCategory(subject, entry, constraint)
+        } else {
+          // Selection entry: count occurrences of this entry
+          actual = countBy(subject, entry.id, constraint, collectGroupIds(entry))
+        }
+
+        // Find up to 20 concrete matches for debugging (for counts only)
+        const matches = costConstraint ? [] : collectSelectionMatches(subject, entry.id, path).slice(0, 20)
         const name = getSubjectName(subject, constraint)
         const entryName = entry.name.replace(/[^A-z]+$/, '')
 
-        if (constraint.type === 'min' && value !== -1 && !entry.hidden && occurances < value) {
-          if (value === 1) {
-            errors.push(`${name} must have ${an(pluralize.singular(entryName))} selection`)
+        if (constraint.type === 'min' && limit !== -1 && !entry.hidden && actual < limit) {
+          if (limit === 1) {
+            const msg = `${name} must have ${an(pluralize.singular(entryName))} selection`
+            errors.push(msg)
+            recordErrorDetail(msg, {
+              path,
+              entry: entryName,
+              constraint: JSON.parse(JSON.stringify(constraint)),
+              occurances: actual,
+              required: limit,
+              subject: name,
+              targetId: entry.id,
+              targetName: entry.name,
+              matches,
+            })
           } else {
-            errors.push(
-              `${name} must have ${value - occurances} more ${entryName} selection${value - occurances > 1 ? 's' : ''}`,
-            )
+            const msg = `${name} must have ${limit - actual} more ${entryName} selection${
+              limit - actual > 1 ? 's' : ''
+            }`
+            errors.push(msg)
+            recordErrorDetail(msg, {
+              path,
+              entry: entryName,
+              constraint: JSON.parse(JSON.stringify(constraint)),
+              occurances: actual,
+              required: limit,
+              subject: name,
+              targetId: entry.id,
+              targetName: entry.name,
+              matches,
+            })
           }
         }
 
-        if (constraint.type === 'max' && value < max) {
-          max = value
+        if (constraint.type === 'max' && limit < max) {
+          max = limit
         }
-        if (constraint.type === 'max' && value !== -1 && occurances > value * (subject?.number ?? 1)) {
-          if (value === 0) {
-            errors.push(`${name} cannot have ${an(pluralize.singular(entryName))} selection`)
+        const multiplicative = subject?.number ?? 1
+        if (constraint.type === 'max' && limit !== -1 && actual > (costConstraint ? limit : limit * multiplicative)) {
+          if (limit === 0) {
+            const msg = `${name} cannot have ${an(pluralize.singular(entryName))} selection`
+            errors.push(msg)
+            recordErrorDetail(msg, {
+              path,
+              entry: entryName,
+              constraint: JSON.parse(JSON.stringify(constraint)),
+              occurances: actual,
+              allowed: limit,
+              subject: name,
+              targetId: entry.id,
+              targetName: entry.name,
+              matches,
+            })
           } else {
-            errors.push(`${name} has ${occurances - value} too many ${entryName} selections`)
+            const msg = `${name} has ${actual - limit} too many ${entryName} selections`
+            errors.push(msg)
+            recordErrorDetail(msg, {
+              path,
+              entry: entryName,
+              constraint: JSON.parse(JSON.stringify(constraint)),
+              occurances: actual,
+              allowed: limit,
+              subject: name,
+              targetId: entry.id,
+              targetName: entry.name,
+              matches,
+            })
           }
         }
 
-        if (constraint.type === 'exactly' && value !== occurances) {
-          errors.push(`${name} must have ${value} ${entryName}, but has ${occurances}`)
+        if (constraint.type === 'exactly' && limit !== actual) {
+          const msg = `${name} must have ${limit} ${entryName}, but has ${actual}`
+          errors.push(msg)
+          recordErrorDetail(msg, {
+            path,
+            entry: entryName,
+            constraint: JSON.parse(JSON.stringify(constraint)),
+            occurances: actual,
+            required: limit,
+            subject: name,
+            targetId: entry.id,
+            targetName: entry.name,
+            matches,
+          })
         }
       })
 
@@ -418,6 +568,43 @@ const applyModifiers = (roster, path, entry, gameData, catalogue) => {
       }
     } else if (modifier.type === 'append') {
       entry[modifier.field] += modifier.value
+    } else if (modifier.type === 'floor' || modifier.type === 'ceil' || modifier.type === 'round') {
+      const oldValue = _.get(entry, target)
+      const roundFn = modifier.type === 'ceil' ? Math.ceil : modifier.type === 'floor' ? Math.floor : Math.round
+      if (_.isString(oldValue)) {
+        _.set(
+          entry,
+          target,
+          oldValue.replace(numberRegex, (match) => String(roundFn(parseFloat(match)))),
+        )
+      } else if (_.isNumber(oldValue)) {
+        _.set(entry, target, roundFn(oldValue))
+      } else {
+        // If target is not a number/number string, ignore safely
+      }
+    } else if (modifier.type === 'replace') {
+      const oldValue = _.get(entry, target)
+      // Common shapes seen in BSData: find/replace, from/to, pattern/value
+      const find = modifier.find ?? modifier.from ?? (modifier.value && modifier.value.find) ?? modifier.pattern
+      const replacement =
+        modifier.replace ?? modifier.to ?? (modifier.value && (modifier.value.replace ?? modifier.value.value)) ?? ''
+      const flags = modifier.flags || modifier.regexFlags || 'g'
+      if (_.isString(oldValue)) {
+        let newVal
+        if (modifier.regex || (typeof find === 'string' && find.startsWith('^')) || find instanceof RegExp) {
+          const regex = find instanceof RegExp ? find : new RegExp(String(find), flags)
+          newVal = oldValue.replace(regex, String(replacement))
+        } else if (find !== undefined) {
+          newVal = oldValue.split(String(find)).join(String(replacement))
+        } else {
+          // If only replacement given, set directly
+          newVal = String(replacement)
+        }
+        _.set(entry, target, newVal)
+      } else if (_.isNumber(oldValue) && find !== undefined) {
+        // Numeric equality replacement
+        _.set(entry, target, Number(oldValue) === Number(find) ? Number(replacement) : oldValue)
+      }
     } else if (modifier.type === 'add') {
       if (modifier.field !== 'category') {
         debugger
@@ -444,6 +631,7 @@ const applyModifiers = (roster, path, entry, gameData, catalogue) => {
         debugger
         throw new Error(`modifier.type === ${modifier.type} while modifier.field !== 'category'`)
       }
+      entry.categoryLinks = entry.categoryLinks || []
       let category = entry.categoryLinks.find((cat) => cat.targetId === modifier.value)
       if (category) {
         category.primary = modifier.type === 'set-primary'
@@ -566,6 +754,11 @@ const getValue = (condition, subject, gameData, catalogue) => {
   }
 }
 
+const isCostType = (field, gameData) => {
+  // If the field matches a declared cost type (by id or name), it's a cost constraint
+  return !!gameData?.gameSystem?.costTypes?.find((ct) => ct.id === field || ct.name === field || ct.typeId === field)
+}
+
 const getConstraintValue = (constraint, entryId, subject, gameData) => {
   switch (constraint.field) {
     case 'selections':
@@ -573,17 +766,28 @@ const getConstraintValue = (constraint, entryId, subject, gameData) => {
     case 'forces':
       return constraint.value
     default: {
-      let cost = constraint.field.startsWith('limit::')
-        ? subject.costLimits?.costLimit.find((cl) => `limit::${cl.id}` === constraint.field) ?? -1
-        : sumCost(subject, constraint, false)
-      if (constraint.percentValue) {
-        cost /= sumCost(subject, constraint, 'any')
-        if (!Number.isFinite(cost)) {
-          cost = 0
-        }
+      // In BS data, a max with negative value means "no limit"
+      if (constraint.type === 'max' && constraint.value < 0) {
+        return -1
+      }
+      // If the field references a roster limit, compute from limits
+      if (typeof constraint.field === 'string' && constraint.field.startsWith('limit::')) {
+        const limit = subject.costLimits?.costLimit.find((cl) => `limit::${cl.id}` === constraint.field)
+        return (limit ?? -1) * constraint.value
       }
 
-      return cost * constraint.value
+      // If the field is a known cost type, compute based on costs
+      if (isCostType(constraint.field, gameData)) {
+        let cost = sumCost(subject, constraint, false)
+        if (constraint.percentValue) {
+          cost /= sumCost(subject, constraint, 'any')
+          if (!Number.isFinite(cost)) cost = 0
+        }
+        return cost * constraint.value
+      }
+
+      // Otherwise, treat as a selection count style constraint where the number is explicit
+      return constraint.value
     }
   }
 }

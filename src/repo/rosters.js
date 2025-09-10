@@ -1,11 +1,15 @@
 import path from 'path-browserify'
 import containerTags from 'bsd-schema/containerTags.json'
 
-import { readXML, xmlData } from './'
+import { readXML, xmlData } from './index.js'
 
 export const listRosters = async (gameSystem, fs, rosterPath) => {
   const rosters = {}
-  const files = await fs.promises.readdir(rosterPath)
+  // Ensure the directory exists and handle first-run cases gracefully
+  try {
+    await fs.promises.mkdir(rosterPath, { recursive: true })
+  } catch {}
+  const files = await fs.promises.readdir(rosterPath).catch(() => [])
   await Promise.all(
     files.map(async (file) => {
       try {
