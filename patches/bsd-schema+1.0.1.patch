@@ -1,0 +1,20 @@
+diff --git a/node_modules/bsd-schema/index.js b/node_modules/bsd-schema/index.js
+index d78e093..73d393a 100644
+--- a/node_modules/bsd-schema/index.js
++++ b/node_modules/bsd-schema/index.js
+@@ -1,10 +1,10 @@
+ import fxparser from 'fast-xml-parser'
+-import Ajv2019 from "ajv/dist/2019"
++import Ajv2019 from "ajv/dist/2019.js"
+ 
+-import catalogueSchema from './catalogue.schema.json'
+-import gameSystemSchema from './gameSystem.schema.json'
+-import sharedSchema from './shared.schema.json'
+-import containerTags from './containerTags.json'
++import catalogueSchema from './catalogue.schema.json' with { type: 'json' }
++import gameSystemSchema from './gameSystem.schema.json' with { type: 'json' }
++import sharedSchema from './shared.schema.json' with { type: 'json' }
++import containerTags from './containerTags.json' with { type: 'json' }
+ 
+ const ajv = new Ajv2019({allErrors: true, allowUnionTypes: true, coerceTypes: true})
+ ajv.addSchema(sharedSchema, 'shared.schema.json')

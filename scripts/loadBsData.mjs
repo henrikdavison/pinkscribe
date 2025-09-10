@@ -1,6 +1,15 @@
 import fs from 'fs'
 import path from 'path'
-import { listAvailableGameSystems, addGameSystem, readFiles } from '../src/repo/index.js'
+import axios from 'axios'
+axios.defaults.proxy = false
+import { addGameSystem, readFiles } from '../src/repo/index.js'
+
+async function listAvailableGameSystems() {
+  const { data } = await axios.get(
+    'https://raw.githubusercontent.com/BSData/gallery/index-v1/bsdata.catpkg-gallery.json',
+  )
+  return data.repositories.filter((repo) => repo.battleScribeVersion === '2.03')
+}
 
 async function loadSystem(name = 'wh40k') {
   const systems = await listAvailableGameSystems()
