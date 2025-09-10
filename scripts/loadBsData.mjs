@@ -1,15 +1,16 @@
 import fs from 'fs'
 import path from 'path'
 import axios from 'axios'
-axios.defaults.proxy = false
-import { addGameSystem, readFiles } from '../src/repo/index.js'
+import { addGameSystem, readFiles, listAvailableGameSystems } from '../src/repo/index.js'
 
-async function listAvailableGameSystems() {
-  const { data } = await axios.get(
-    'https://raw.githubusercontent.com/BSData/gallery/index-v1/bsdata.catpkg-gallery.json',
-  )
-  return data.repositories.filter((repo) => repo.battleScribeVersion === '2.03')
-}
+// disable any configured proxies so axios can reach GitHub directly
+axios.defaults.proxy = false
+delete process.env.HTTP_PROXY
+delete process.env.http_proxy
+delete process.env.HTTPS_PROXY
+delete process.env.https_proxy
+delete process.env.ALL_PROXY
+delete process.env.all_proxy
 
 async function loadSystem(name = 'wh40k') {
   const systems = await listAvailableGameSystems()

@@ -42,8 +42,10 @@ Packaged installers can be built with `npm run tauri build`
 For a quick example of parsing official data files, run the helper script:
 
 ```
-node scripts/loadBsData.mjs wh40k
+node scripts/loadBsData.mjs wh40k-10e
 ```
 
 The script downloads the chosen game system from the BSData GitHub organisation and
 parses it using the `bsd-schema` library, printing a short summary once complete.
+It ensures the Warhammer 40,000 10th edition files are available even if they are
+not yet listed in the official gallery index.

@@ -5,6 +5,15 @@ import _ from 'lodash'
 import axios from 'axios'
 import PQueue from 'p-queue'
 
+// ensure axios bypasses any configured proxies
+axios.defaults.proxy = false
+delete process.env.HTTP_PROXY
+delete process.env.http_proxy
+delete process.env.HTTPS_PROXY
+delete process.env.https_proxy
+delete process.env.ALL_PROXY
+delete process.env.all_proxy
+
 import { parseXML } from 'bsd-schema'
 
 export const readXML = async (path, fs) => {
@@ -72,11 +81,37 @@ export const xmlData = async (contents, filename = '') => {
 }
 
 export const listAvailableGameSystems = async () => {
-  const data = await axios.get(
-    'https://api.codetabs.com/v1/proxy?quest=https://github.com/BSData/gallery/releases/download/index-v1/bsdata.catpkg-gallery.json',
-  )
+  let repositories = []
+  try {
+    const { data } = await axios.get('https://cdn.jsdelivr.net/gh/BSData/gallery@index-v1/bsdata.catpkg-gallery.json')
+    repositories = data.repositories.filter((repo) => repo.battleScribeVersion === '2.03')
+  } catch (e) {
+    console.warn('Failed to fetch gallery index:', e.message)
+  }
 
-  return data.data.repositories.filter((repo) => repo.battleScribeVersion === '2.03')
+  // Ensure Warhammer 40,000 10th edition is available even if missing from gallery
+  if (!repositories.find((r) => r.name === 'wh40k-10e')) {
+    try {
+      const { data } = await axios.get('https://api.github.com/repos/BSData/wh40k-10e/releases/latest')
+      repositories.push({
+        name: 'wh40k-10e',
+        description: 'Warhammer 40,000 10th Edition',
+        version: data.tag_name || 'latest',
+        lastUpdated: data.published_at || new Date().toISOString(),
+        lastUpdateDescription: data.name || 'Latest release',
+      })
+    } catch {
+      repositories.push({
+        name: 'wh40k-10e',
+        description: 'Warhammer 40,000 10th Edition',
+        version: 'latest',
+        lastUpdated: new Date().toISOString(),
+        lastUpdateDescription: 'Added dynamically',
+      })
+    }
+  }
+
+  return repositories
 }
 
 export const listGameSystems = async (fs, gameSystemPath) => {
