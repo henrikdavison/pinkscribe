@@ -80,8 +80,15 @@ export const xmlData = async (contents, filename = '') => {
 }
 
 export const listAvailableGameSystems = async () => {
-  // Default to 10th edition data
-  const repoNames = ['wh40k-10e']
+  // Offer a short curated list across major systems
+  const repoNames = [
+    'wh40k-10e', // Warhammer 40,000 10th edition
+    'wh40k-9e', // Warhammer 40,000 9th edition
+    'warhammer-age-of-sigmar', // Age of Sigmar
+    'The-9th-Age', // The 9th Age
+    'necromunda', // Necromunda
+    'wh40k-killteam', // Kill Team (classic)
+  ]
   const systems = []
   for (const name of repoNames) {
     try {
