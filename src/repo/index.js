@@ -81,35 +81,7 @@ export const xmlData = async (contents, filename = '') => {
 }
 
 export const listAvailableGameSystems = async () => {
-  let repositories = []
-  try {
-    const { data } = await axios.get('https://cdn.jsdelivr.net/gh/BSData/gallery@index-v1/bsdata.catpkg-gallery.json')
-    repositories = data.repositories.filter((repo) => repo.battleScribeVersion === '2.03')
-  } catch (e) {
-    console.warn('Failed to fetch gallery index:', e.message)
-  }
 
-  // Ensure Warhammer 40,000 10th edition is available even if missing from gallery
-  if (!repositories.find((r) => r.name === 'wh40k-10e')) {
-    try {
-      const { data } = await axios.get('https://api.github.com/repos/BSData/wh40k-10e/releases/latest')
-      repositories.push({
-        name: 'wh40k-10e',
-        description: 'Warhammer 40,000 10th Edition',
-        version: data.tag_name || 'latest',
-        lastUpdated: data.published_at || new Date().toISOString(),
-        lastUpdateDescription: data.name || 'Latest release',
-      })
-    } catch {
-      repositories.push({
-        name: 'wh40k-10e',
-        description: 'Warhammer 40,000 10th Edition',
-        version: 'latest',
-        lastUpdated: new Date().toISOString(),
-        lastUpdateDescription: 'Added dynamically',
-      })
-    }
-  }
 
   return repositories
 }
@@ -134,6 +106,18 @@ export const listGameSystems = async (fs, gameSystemPath) => {
 const htmlDecode = (str) => {
   const doc = new DOMParser().parseFromString(str, 'text/html')
   return doc.documentElement.textContent
+}
+
+const fetchWithFallback = async (primary, fallback, desc) => {
+  try {
+    return await axios.get(primary)
+  } catch (e) {
+    try {
+      return await axios.get(fallback)
+    } catch {
+      throw new Error(`Failed to fetch ${desc} from jsDelivr or GitHub`)
+    }
+  }
 }
 
 export const addLocalGameSystem = async (files, fs, gameSystemPath) => {
@@ -195,11 +179,19 @@ export const addGameSystem = async (system, fs, gameSystemPath) => {
   await fs.promises.mkdir(path.join(gameSystemPath, system.name))
   await fs.promises.writeFile(path.join(gameSystemPath, system.name, 'system.json'), JSON.stringify(system))
 
-  const index = await axios.get(`https://cdn.jsdelivr.net/gh/BSData/${system.name}@${system.version.replace('v', '')}/`)
+  const versionNoV = system.version.replace('v', '')
+  const index = await fetchWithFallback(
+    `https://cdn.jsdelivr.net/gh/BSData/${system.name}@${versionNoV}/`,
+    `https://raw.githubusercontent.com/BSData/${system.name}/${system.version}/`,
+    `${system.name} index`,
+  )
 
   const files = (await index.data)
     .match(/href="(.+\.(?:cat|gst))"/g)
-    .map((m) => htmlDecode(m.replace('href="', '').slice(0, -1)))
+    ?.map((m) => htmlDecode(m.replace('href="', '').slice(0, -1)))
+  if (!files) {
+    throw new Error(`Failed to parse file list for ${system.name}`)
+  }
 
   const q = new PQueue({
     concurency: 3,
@@ -210,7 +202,10 @@ export const addGameSystem = async (system, fs, gameSystemPath) => {
 
   files.forEach((filename) =>
     q.add(async () => {
-      const file = await axios(`https://cdn.jsdelivr.net${filename}`)
+      const rawFile = `https://raw.githubusercontent.com/BSData/${system.name}/${system.version}/${_.last(
+        filename.split('/'),
+      )}`
+      const file = await fetchWithFallback(`https://cdn.jsdelivr.net${filename}`, rawFile, `${system.name} file`)
       await fs.promises.writeFile(path.join(gameSystemPath, system.name, _.last(filename.split('/'))), file.data)
     }),
   )

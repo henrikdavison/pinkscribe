@@ -6,6 +6,8 @@
   "author": "Blue Frauenglass",
   "url": "https://winds.blue",
   "license": "GPL-3.0",
+  "type": "module",
+  "config-overrides-path": "config-overrides.cjs",
   "dependencies": {
     "@isomorphic-git/lightning-fs": "^4.6.0",
     "@picocss/pico": "^1.5.7",
