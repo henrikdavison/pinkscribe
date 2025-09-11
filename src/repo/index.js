@@ -133,9 +133,14 @@ export const listGameSystems = async (fs, gameSystemPath) => {
   await Promise.all(
     dirs.map(async (dir) => {
       try {
-        systems[dir] = await JSON.parse(
-          (await fs.promises.readFile(path.join(gameSystemPath, dir, 'system.json'))).toString(),
-        )
+        const raw = (await fs.promises.readFile(path.join(gameSystemPath, dir, 'system.json'))).toString()
+        const sys = JSON.parse(raw)
+        // Normalize missing metadata so multiple systems always render distinctly in the selector
+        sys.name = sys.name || dir
+        sys.description = sys.description || dir
+        sys.version = sys.version || 'main'
+        sys.lastUpdated = sys.lastUpdated || new Date(0).toISOString()
+        systems[dir] = sys
       } catch {
         await clearGameSystem({ name: dir }, fs, gameSystemPath)
       }

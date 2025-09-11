@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react'
+import path from 'path-browserify'
 import { BounceLoader } from 'react-spinners'
 import useStorage from 'squirrel-gill'
 import { FileDrop } from 'react-file-drop'
 
-import { listRosters, loadRoster, importRoster, deleteRoster } from './repo/rosters.js'
+import { listRosters, loadRoster, importRoster, deleteRoster, deleteAllRosters } from './repo/rosters.js'
 import { useFs, useNative, useRoster, useSystem, useConfirm } from './Context.js'
 import { createRoster } from './utils.js'
 
@@ -19,7 +20,8 @@ const SelectRoster = () => {
 
   useEffect(() => {
     const load = async () => {
-      const r = await listRosters(gameData.gameSystem, fs, rosterPath)
+      const systemRosterPath = path.join(rosterPath, gameData.gameSystem.id)
+      const r = await listRosters(gameData.gameSystem, fs, systemRosterPath)
       setRosters(r)
       if (!r[selected]) {
         setSelected(Object.keys(r)[0] || 'New')
@@ -45,7 +47,8 @@ const SelectRoster = () => {
         onFrameDrop={async (event) => {
           if (event.dataTransfer?.items[0]?.kind === 'file') {
             const file = event.dataTransfer.items[0].getAsFile()
-            await importRoster(file, fs, rosterPath)
+            const systemRosterPath = path.join(rosterPath, gameData.gameSystem.id)
+            await importRoster(file, fs, systemRosterPath)
             setSelected(file.name)
             setRosters(null)
           }
@@ -63,7 +66,8 @@ const SelectRoster = () => {
           accept=".rosz,.ros"
           id="import-roster"
           onChange={async (e) => {
-            await importRoster(e.target.files[0], fs, rosterPath)
+            const systemRosterPath = path.join(rosterPath, gameData.gameSystem.id)
+            await importRoster(e.target.files[0], fs, systemRosterPath)
             setSelected(e.target.files[0].name)
             setRosters(null)
           }}
@@ -107,7 +111,8 @@ const SelectRoster = () => {
               <button
                 disabled={typeof rosters[selected] !== 'string'}
                 onClick={async () => {
-                  setRoster(await loadRoster(selected, fs, rosterPath), false)
+                  const systemRosterPath = path.join(rosterPath, gameData.gameSystem.id)
+                  setRoster(await loadRoster(selected, fs, systemRosterPath), false)
                 }}
               >
                 Load
@@ -116,12 +121,23 @@ const SelectRoster = () => {
                 className="secondary outline"
                 onClick={async () =>
                   await confirmDelete(async () => {
-                    await deleteRoster(selected, fs, rosterPath)
+                    const systemRosterPath = path.join(rosterPath, gameData.gameSystem.id)
+                    await deleteRoster(selected, fs, systemRosterPath)
                     setRosters(null)
                   })
                 }
               >
                 Delete
+              </button>
+              <button
+                className="secondary outline"
+                onClick={async () => {
+                  const systemRosterPath = path.join(rosterPath, gameData.gameSystem.id)
+                  await deleteAllRosters(fs, systemRosterPath)
+                  setRosters(null)
+                }}
+              >
+                Delete all (this system)
               </button>
             </>
           )}
@@ -129,7 +145,8 @@ const SelectRoster = () => {
             <button
               className="secondary outline"
               onClick={async () => {
-                await shellOpen(rosterPath)
+                const systemRosterPath = path.join(rosterPath, gameData.gameSystem.id)
+                await shellOpen(systemRosterPath)
               }}
             >
               Open roster directory

@@ -3,23 +3,40 @@ import containerTags from 'bsd-schema/containerTags.json'
 
 import { readXML, xmlData } from './index.js'
 
+const systemFolder = (rosterPath, systemId) => path.join(rosterPath, systemId)
+
 export const listRosters = async (gameSystem, fs, rosterPath) => {
   const rosters = {}
-  // Ensure the directory exists and handle first-run cases gracefully
+  // New location: /rosters/<systemId>
+  const sysPath = systemFolder(rosterPath, gameSystem.id)
   try {
-    await fs.promises.mkdir(rosterPath, { recursive: true })
+    await fs.promises.mkdir(sysPath, { recursive: true })
   } catch {}
-  const files = await fs.promises.readdir(rosterPath).catch(() => [])
+
+  // Read rosters in the system folder
+  const files = await fs.promises.readdir(sysPath).catch(() => [])
   await Promise.all(
     files.map(async (file) => {
+      try {
+        const roster = await loadRoster(file, fs, sysPath)
+        rosters[file] = roster.name
+      } catch (e) {
+        rosters[file] = e
+      }
+    }),
+  )
+
+  // Backward-compat: also scan legacy root folder and include matching system rosters
+  const legacyFiles = await fs.promises.readdir(rosterPath).catch(() => [])
+  await Promise.all(
+    legacyFiles.map(async (file) => {
+      if (rosters[file]) return
       try {
         const roster = await loadRoster(file, fs, rosterPath)
         if (roster.gameSystemId === gameSystem.id) {
           rosters[file] = roster.name
         }
-      } catch (e) {
-        rosters[file] = e
-      }
+      } catch {}
     }),
   )
   return rosters
@@ -54,7 +71,11 @@ export const saveRoster = async (roster, fs, rosterPath) => {
   } = roster
 
   const data = await xmlData({ roster: contents }, filename)
-  await fs.promises.writeFile(path.join(rosterPath, filename), data)
+  const sysPath = systemFolder(rosterPath, roster.gameSystemId)
+  try {
+    await fs.promises.mkdir(sysPath, { recursive: true })
+  } catch {}
+  await fs.promises.writeFile(path.join(sysPath, filename), data)
 }
 
 export const importRoster = async (file, fs, rosterPath) => {
@@ -85,4 +106,11 @@ export const downloadRoster = async (roster) => {
 
 export const deleteRoster = async (file, fs, rosterPath) => {
   await fs.promises.unlink(path.join(rosterPath, file))
+}
+
+export const deleteAllRosters = async (fs, rosterPath) => {
+  try {
+    const files = await fs.promises.readdir(rosterPath)
+    await Promise.all(files.map((f) => fs.promises.unlink(path.join(rosterPath, f))))
+  } catch {}
 }

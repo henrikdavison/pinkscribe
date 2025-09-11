@@ -606,19 +606,21 @@ const applyModifiers = (roster, path, entry, gameData, catalogue) => {
         _.set(entry, target, Number(oldValue) === Number(find) ? Number(replacement) : oldValue)
       }
     } else if (modifier.type === 'add') {
-      if (modifier.field !== 'category') {
-        debugger
-        throw new Error("modifier.type === 'add' while modifier.field !== 'category'")
+      if (modifier.field === 'category') {
+        entry.categoryLinks = entry.categoryLinks || []
+        entry.categoryLinks.push({
+          id: randomId(),
+          hidden: false,
+          name: 'New CategoryLink',
+          primary: false,
+          targetId: modifier.value,
+        })
+      } else {
+        // Unknown/unsupported add target in data (seen in some 10e catalogues).
+        // Gracefully ignore rather than throwing to avoid blocking roster loading.
+        // This matches BS tolerance for non-critical add modifiers outside categories.
+        return
       }
-
-      entry.categoryLinks = entry.categoryLinks || []
-      entry.categoryLinks.push({
-        id: randomId(),
-        hidden: false,
-        name: 'New CategoryLink',
-        primary: false,
-        targetId: modifier.value,
-      })
     } else if (modifier.type === 'remove') {
       if (modifier.field !== 'category') {
         debugger
@@ -759,38 +761,7 @@ const isCostType = (field, gameData) => {
   return !!gameData?.gameSystem?.costTypes?.find((ct) => ct.id === field || ct.name === field || ct.typeId === field)
 }
 
-const getConstraintValue = (constraint, entryId, subject, gameData) => {
-  switch (constraint.field) {
-    case 'selections':
-      return constraint.value
-    case 'forces':
-      return constraint.value
-    default: {
-      // In BS data, a max with negative value means "no limit"
-      if (constraint.type === 'max' && constraint.value < 0) {
-        return -1
-      }
-      // If the field references a roster limit, compute from limits
-      if (typeof constraint.field === 'string' && constraint.field.startsWith('limit::')) {
-        const limit = subject.costLimits?.costLimit.find((cl) => `limit::${cl.id}` === constraint.field)
-        return (limit ?? -1) * constraint.value
-      }
-
-      // If the field is a known cost type, compute based on costs
-      if (isCostType(constraint.field, gameData)) {
-        let cost = sumCost(subject, constraint, false)
-        if (constraint.percentValue) {
-          cost /= sumCost(subject, constraint, 'any')
-          if (!Number.isFinite(cost)) cost = 0
-        }
-        return cost * constraint.value
-      }
-
-      // Otherwise, treat as a selection count style constraint where the number is explicit
-      return constraint.value
-    }
-  }
-}
+// getConstraintValue removed; logic split into count or cost evaluation in checkConstraints
 
 const checkCondition = (roster, path, condition, gameData) => {
   const subject = getSubject(roster, path, condition)
