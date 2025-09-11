@@ -19,31 +19,21 @@ const ListSelection = ({ indent, selectionPath, selection }) => {
       .map(([key, value]) => value),
   )
 
-  // Build a concise summary of meaningful choices, de-emphasising repeated weapons
+  // Build a concise summary of leaf choices; duplicates are aggregated (Name ×N)
   const upgrades = (() => {
     const items = (selection.selections?.selection || [])
       .map((s, i) => ({
         s,
         entry: getEntry(roster, `${selectionPath}.selections.selection.${i}`, s.entryId, gameData),
       }))
-      .filter(({ s, entry }) => entry && !entry.selectionEntries && !entry.selectionEntryGroups && !s.selections)
-
-    const important = items.filter(({ entry }) => {
-      const costs = Object.values(sumCosts(entry))
-      const hasCost = costs.some((v) => v)
-      const hasRules = (entry.rules || []).length > 0
-      const profileTypes = (entry.profiles || []).map((p) => (p.typeName || '').toLowerCase())
-      const onlyWeapons = profileTypes.length > 0 && profileTypes.every((t) => t.includes('weapon'))
-      const hasNonWeaponProfile = profileTypes.some((t) => t && !t.includes('weapon'))
-      const categoryHints = (entry.categoryLinks || []).some((c) =>
-        /enhance|relic|warlord|trait|psych|power|spell|artefact|upgrade/i.test(c.name || ''),
+      .filter(
+        ({ s, entry }) =>
+          entry && !entry.selectionEntries && !entry.selectionEntryGroups && !s.selections?.selection?.length,
       )
-      return hasCost || hasRules || hasNonWeaponProfile || categoryHints || !onlyWeapons
-    })
 
     // Aggregate duplicates: "Name ×N"
     const counts = {}
-    important.forEach(({ s }) => {
+    items.forEach(({ s }) => {
       const name = s.name
       counts[name] = (counts[name] || 0) + (typeof s.number === 'number' ? s.number : 1)
     })
@@ -125,13 +115,12 @@ const ListSelection = ({ indent, selectionPath, selection }) => {
       {_.sortBy(selection.selections?.selection, 'name')
         .filter((s, i) => {
           const entry = getEntry(roster, `${selectionPath}.selections.selection.${i}`, s.entryId, gameData)
-          return (
-            entry &&
-            (entry.selectionEntries ||
-              entry.selectionEntryGroups ||
-              s.selections ||
-              rosterErrors[`${selectionPath}.selections.selection.${selection.selections.selection.indexOf(s)}`])
-          )
+          const isLeaf =
+            entry && !entry.selectionEntries && !entry.selectionEntryGroups && !s.selections?.selection?.length
+          const hasError =
+            rosterErrors[`${selectionPath}.selections.selection.${selection.selections.selection.indexOf(s)}`]
+          // Only render non-leaf children (or any with errors). Leaves are summarized in the parent row.
+          return entry && (!isLeaf || hasError)
         })
         .map((subSelection) => (
           <ListSelection
