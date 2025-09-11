@@ -1,4 +1,4 @@
-import { createTheme, alpha } from '@mui/material/styles/index.js'
+import { createTheme } from '@mui/material/styles/index.js'
 
 import '@fontsource/inter/400.css'
 import '@fontsource/inter/500.css'

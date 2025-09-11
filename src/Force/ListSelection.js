@@ -1,7 +1,7 @@
 import _ from 'lodash'
 
 import { costString, sumCosts, selectionName, getMinCount } from '../utils.js'
-import { useRoster, useRosterErrors, usePath, useSystem } from '../Context.js'
+import { useRoster, usePath, useSystem } from '../Context.js'
 import { getEntry, pathParent } from '../validate.js'
 import TableRow from '@mui/material/TableRow/index.js'
 import TableCell from '@mui/material/TableCell/index.js'
@@ -9,16 +9,12 @@ import Typography from '@mui/material/Typography/index.js'
 
 const ListSelection = ({ indent, selectionPath, selection }) => {
   const gameData = useSystem()
-  const rosterErrors = useRosterErrors()
+  // const rosterErrors = useRosterErrors()
   const [roster, setRoster] = useRoster()
   const [path, setPath] = usePath()
   const selected = selectionPath === path ? 'selected' : ''
 
-  const selectionErrors = _.flatten(
-    Object.entries(useRosterErrors())
-      .filter(([key, value]) => key === selectionPath || key.startsWith(selectionPath + '.'))
-      .map(([key, value]) => value),
-  )
+  const selectionErrors = []
 
   // Build a concise summary of immediate children only (indent 2).
   // Do NOT include deeper data to keep this view uncluttered.
