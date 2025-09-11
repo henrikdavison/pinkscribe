@@ -4,7 +4,6 @@ import { Fragment, useState } from 'react'
 import { useRoster, useRosterErrors, useSystem, useConfirm, usePath } from '../Context.js'
 import AddUnit from './AddUnit.js'
 import Selection from './Selection.js'
-import ListSelection from './ListSelection.js'
 import { costString, findId, sumCosts } from '../utils.js'
 import { pathToForce } from '../validate.js'
 import Box from '@mui/material/Box/index.js'
@@ -162,17 +161,27 @@ const Force = () => {
       )}
       <Box className="grid columns">
         <Box className="selections" sx={{ pr: 2, borderRight: (theme) => `1px solid ${theme.palette.divider}` }}>
-          <Typography variant="subtitle1" fontWeight={600}>
+          <Typography variant="subtitle1" fontWeight={600} sx={{ px: 2, py: 1 }}>
             Selections
           </Typography>
-          <Table size="small">
-            <TableBody>
-              <TableRow className={path === forcePath ? 'selected' : ''} onClick={() => setPath(forcePath)}>
-                <TableCell colSpan={3}>Add Unit</TableCell>
-              </TableRow>
-              {categories}
-            </TableBody>
-          </Table>
+          <List subheader={<li />} sx={{ pt: 0 }}>
+            <ListItemButton
+              dense
+              selected={path === forcePath}
+              onClick={() => setPath(forcePath)}
+              sx={{ px: 2, py: 1 }}
+            >
+              <ListItemText
+                primary={
+                  <Typography variant="subtitle1" fontWeight={600}>
+                    Add Unit
+                  </Typography>
+                }
+              />
+            </ListItemButton>
+            <Divider component="li" />
+            {categories}
+          </List>
         </Box>
         <Box sx={{ pl: 2 }}>{path === forcePath ? <AddUnit errors={errors} /> : <Selection errors={errors} />}</Box>
       </Box>
