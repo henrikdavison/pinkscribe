@@ -18,8 +18,9 @@ export const getTheme = (mode = 'dark') => {
       warning: { main: '#ed6c02' },
       success: { main: '#2e7d32' },
       background: {
-        default: mode === 'dark' ? '#121212' : '#f5f5f5',
-        paper: mode === 'dark' ? 'rgba(255, 255, 255, 0.05)' : '#ffffff',
+        // Use solid backgrounds to avoid unintended translucency in menus/popovers
+        default: mode === 'dark' ? '#11191f' : '#f5f5f5',
+        paper: mode === 'dark' ? '#11191f' : '#ffffff',
       },
     },
     typography: {
