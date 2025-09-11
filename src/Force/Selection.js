@@ -48,6 +48,30 @@ const Selection = () => {
   const selectionEntry = getEntry(roster, path, selection.entryId, gameData)
   const forcePath = pathToForce(path)
 
+  // Determine whether this selection can be deleted without violating min constraints
+  const parent = _.get(roster, pathParent(path))
+  const groupEntry = selection.entryGroupId ? getEntry(roster, path, selection.entryGroupId, gameData) : null
+  const entryMin = selectionEntry ? getMinCount(selectionEntry) : 0
+  const groupMin = groupEntry ? getMinCount(groupEntry) : 0
+  const siblings = parent?.selections?.selection || []
+  let canDelete = true
+  if (groupEntry && groupMin > 0) {
+    const groupCount = siblings.filter((s) => s.entryGroupId === selection.entryGroupId).length
+    canDelete = groupCount > groupMin
+  } else if (selectionEntry && entryMin > 0) {
+    if (selectionEntry.collective) {
+      const total = _.sum(
+        siblings
+          .filter((s) => s.entryId === selection.entryId)
+          .map((s) => (typeof s.number === 'number' ? s.number : 1)),
+      )
+      canDelete = total > entryMin
+    } else {
+      const count = siblings.filter((s) => s.entryId === selection.entryId).length
+      canDelete = count > entryMin
+    }
+  }
+
   return (
     <div className="selection">
       <Box component="nav" sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
@@ -133,6 +157,7 @@ const Selection = () => {
           }}
           data-tooltip-id="tooltip"
           data-tooltip-html="Remove"
+          disabled={!canDelete}
         >
           x
         </Button>
