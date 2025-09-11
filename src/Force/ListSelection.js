@@ -19,24 +19,25 @@ const ListSelection = ({ indent, selectionPath, selection }) => {
       .map(([key, value]) => value),
   )
 
-  // Build a concise summary of leaf choices; duplicates are aggregated (Name ×N)
+  // Build a concise summary of all leaf choices recursively; aggregates duplicates
   const upgrades = (() => {
-    const items = (selection.selections?.selection || [])
-      .map((s, i) => ({
-        s,
-        entry: getEntry(roster, `${selectionPath}.selections.selection.${i}`, s.entryId, gameData),
-      }))
-      .filter(
-        ({ s, entry }) =>
-          entry && !entry.selectionEntries && !entry.selectionEntryGroups && !s.selections?.selection?.length,
-      )
-
-    // Aggregate duplicates: "Name ×N"
     const counts = {}
-    items.forEach(({ s }) => {
-      const name = s.name
-      counts[name] = (counts[name] || 0) + (typeof s.number === 'number' ? s.number : 1)
-    })
+    const walk = (baseSel, basePath) => {
+      const children = baseSel.selections?.selection || []
+      children.forEach((child, idx) => {
+        const childPath = `${basePath}.selections.selection.${idx}`
+        const entry = getEntry(roster, childPath, child.entryId, gameData)
+        if (!entry) return
+        const hasChildren = entry.selectionEntries || entry.selectionEntryGroups || child.selections?.selection?.length
+        if (hasChildren) {
+          walk(child, childPath)
+        } else {
+          const name = child.name
+          counts[name] = (counts[name] || 0) + (typeof child.number === 'number' ? child.number : 1)
+        }
+      })
+    }
+    walk(selection, selectionPath)
     return Object.entries(counts)
       .map(([name, n]) => (n > 1 ? `${name} ×${n}` : name))
       .sort()
@@ -112,26 +113,7 @@ const ListSelection = ({ indent, selectionPath, selection }) => {
           )}
         </TableCell>
       </TableRow>
-      {_.sortBy(selection.selections?.selection, 'name')
-        .filter((s, i) => {
-          const entry = getEntry(roster, `${selectionPath}.selections.selection.${i}`, s.entryId, gameData)
-          const isLeaf =
-            entry && !entry.selectionEntries && !entry.selectionEntryGroups && !s.selections?.selection?.length
-          const hasError =
-            rosterErrors[`${selectionPath}.selections.selection.${selection.selections.selection.indexOf(s)}`]
-          // Only render non-leaf children (or any with errors). Leaves are summarized in the parent row.
-          return entry && (!isLeaf || hasError)
-        })
-        .map((subSelection) => (
-          <ListSelection
-            key={subSelection.id}
-            indent={indent + 1}
-            selection={subSelection}
-            selectionPath={`${selectionPath}.selections.selection.${selection.selections.selection.indexOf(
-              subSelection,
-            )}`}
-          />
-        ))}
+      {null}
     </>
   )
 }
