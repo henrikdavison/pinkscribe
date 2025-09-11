@@ -7,6 +7,13 @@ import Selection from './Selection.js'
 import ListSelection from './ListSelection.js'
 import { costString, findId, sumCosts } from '../utils.js'
 import { pathToForce } from '../validate.js'
+import Box from '@mui/material/Box/index.js'
+import Typography from '@mui/material/Typography/index.js'
+import Button from '@mui/material/Button/index.js'
+import Table from '@mui/material/Table/index.js'
+import TableBody from '@mui/material/TableBody/index.js'
+import TableRow from '@mui/material/TableRow/index.js'
+import TableCell from '@mui/material/TableCell/index.js'
 
 const Force = () => {
   const gameData = useSystem()
@@ -76,19 +83,27 @@ const Force = () => {
   const cost = costString(sumCosts(force))
 
   return (
-    <section>
-      <h6>
-        {force.catalogueName}
-        <small>{force.name}</small>
-        {cost && <small>{cost}</small>}
-        {errors && (
-          <span className="errors" data-tooltip-id="tooltip" data-tooltip-html={errors.join('<br />')}>
-            Validation errors
-          </span>
+    <Box component="section">
+      <Typography variant="h6" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+        {force.catalogueName} <Typography component="span">{force.name}</Typography>
+        {cost && (
+          <Typography component="span" variant="caption">
+            {cost}
+          </Typography>
         )}
-        <span
-          role="link"
-          className="outline"
+        {errors && (
+          <Typography
+            component="span"
+            color="error"
+            data-tooltip-id="tooltip"
+            data-tooltip-html={errors.join('<br />')}
+          >
+            Validation errors
+          </Typography>
+        )}
+        <Button
+          size="small"
+          variant="outlined"
           onClick={async () => {
             await confirmDelete(() => {
               _.pull(roster.forces.force, force)
@@ -96,10 +111,11 @@ const Force = () => {
               setPath('')
             })
           }}
+          sx={{ ml: 'auto' }}
         >
           Remove
-        </span>
-      </h6>
+        </Button>
+      </Typography>
       {!!globalErrors?.length && (
         <ul className="errors">
           {globalErrors.map((e, i) => (
@@ -144,21 +160,21 @@ const Force = () => {
           ))}
         </ul>
       )}
-      <div className="grid columns">
-        <div className="selections">
-          <h6>Selections</h6>
-          <table>
-            <tbody>
-              <tr className={path === forcePath ? 'selected' : ''} onClick={() => setPath(forcePath)}>
-                <td colSpan="3">Add Unit</td>
-              </tr>
+      <Box className="grid columns">
+        <Box className="selections">
+          <Typography variant="h6">Selections</Typography>
+          <Table size="small">
+            <TableBody>
+              <TableRow className={path === forcePath ? 'selected' : ''} onClick={() => setPath(forcePath)}>
+                <TableCell colSpan={3}>Add Unit</TableCell>
+              </TableRow>
               {categories}
-            </tbody>
-          </table>
-        </div>
+            </TableBody>
+          </Table>
+        </Box>
         {path === forcePath ? <AddUnit errors={errors} /> : <Selection errors={errors} />}
-      </div>
-    </section>
+      </Box>
+    </Box>
   )
 }
 

@@ -6,6 +6,12 @@ import pluralize from 'pluralize'
 import { useRoster, useRosterErrors, useSystem, useOpenCategories, usePath } from '../Context.js'
 import { costString, addSelection, findId, gatherCatalogues, getCatalogue, getMaxCount } from '../utils.js'
 import { getEntry } from '../validate.js'
+import Box from '@mui/material/Box/index.js'
+import Typography from '@mui/material/Typography/index.js'
+import Table from '@mui/material/Table/index.js'
+import TableBody from '@mui/material/TableBody/index.js'
+import TableRow from '@mui/material/TableRow/index.js'
+import TableCell from '@mui/material/TableCell/index.js'
 
 // Helper function to check if there’s a validation error for a given category name
 const hasMatchingError = (errors, name) => {
@@ -95,41 +101,41 @@ const AddUnit = () => {
     const error = hasMatchingError(rosterErrors[path], category.name) // Check if there’s an error for this category
     return (
       <Fragment key={category.name}>
-        <tr has-error={error} className="category">
-          <th
-            colSpan="2"
+        <TableRow has-error={error} className="category">
+          <TableCell
+            colSpan={2}
             data-tooltip-id="tooltip"
-            data-tooltip-html={error} // Display error as tooltip
+            data-tooltip-html={error}
             open={open}
             onClick={() =>
               setOpenCategories({
                 ...openCategories,
-                [category.name]: !open, // Toggle open/closed state on click
+                [category.name]: !open,
               })
             }
           >
             {category.name}
-          </th>
-        </tr>
+          </TableCell>
+        </TableRow>
         {open &&
           catEntries.map((entry) => {
             const error = hasMatchingError(rosterErrors[path], entry.name)
             return (
-              <tr
+              <TableRow
                 has-error={error}
                 key={entry.id}
                 className="add-unit"
                 onClick={() => {
-                  addSelection(force, entry, gameData, null, catalogue) // Add entry to roster on click
-                  setRoster(roster) // Update roster state
-                  setPath(`${path}.selections.selection.${force.selections.selection.length - 1}`) // Update path to new selection
+                  addSelection(force, entry, gameData, null, catalogue)
+                  setRoster(roster)
+                  setPath(`${path}.selections.selection.${force.selections.selection.length - 1}`)
                 }}
               >
-                <td data-tooltip-id="tooltip" data-tooltip-html={error}>
+                <TableCell data-tooltip-id="tooltip" data-tooltip-html={error}>
                   {entry.name}
-                </td>
-                <td className="cost">{costString(sumDefaultCosts(entry))}</td>
-              </tr>
+                </TableCell>
+                <TableCell className="cost">{costString(sumDefaultCosts(entry))}</TableCell>
+              </TableRow>
             )
           })}
       </Fragment>
@@ -138,13 +144,13 @@ const AddUnit = () => {
 
   // Render the Add Unit section with categories and entries
   return (
-    <div className="selections">
-      <h6>Add Unit</h6>
+    <Box className="selections">
+      <Typography variant="h6">Add Unit</Typography>
       {categoryErrors.length > 0 && <ul className="errors">{categoryErrors}</ul>}
-      <table role="grid">
-        <tbody>{categories}</tbody>
-      </table>
-    </div>
+      <Table size="small" role="grid">
+        <TableBody>{categories}</TableBody>
+      </Table>
+    </Box>
   )
 }
 
