@@ -9,21 +9,7 @@ h6 {
   --typography-spacing-vertical: 0.5rem;
 }
 
-nav [data-tooltip-html] {
-  border-bottom: none;
-}
-
-nav a {
-  margin-left: 0.2em;
-}
-
-nav .icon {
-  width: 1.25em;
-}
-
-small {
-  --font-size: 0.75em;
-}
+/* Remove legacy nav/layout overrides; rely on MUI */
 
 /* Typography utilities for consistent sizing */
 .clamp-2 {
@@ -38,35 +24,9 @@ small {
   margin: auto;
 }
 
-h1,
-h2,
-h3,
-h4,
-h5,
-h6 {
-  text-align: center;
-  position: relative;
-}
+/* Headings use MUI Typography; no global alignment here */
 
-form > label {
-  margin-bottom: 1.5em;
-}
-
-h2 {
-  --form-element-spacing-vertical: 0.25rem;
-  --form-element-spacing-horizontal: 0.5rem;
-}
-
-nav select {
-  max-width: 20em;
-}
-
-h2 button {
-  width: auto;
-  float: right;
-  display: inline-block;
-  margin: 0.5em;
-}
+/* Remove old Pico form spacing and nav tweaks */
 
 .errors {
   color: #cd3232;
@@ -213,17 +173,7 @@ summary {
   position: relative;
 }
 
-.selection nav {
-  float: right;
-  position: relative;
-  z-index: 1;
-}
-
-.selection nav button {
-  margin: 0 calc(var(--spacing) / 2);
-  padding: 0 calc(var(--spacing) / 2);
-  width: auto;
-}
+/* Selection toolbar uses MUI; no custom nav styles */
 
 .add-unit {
   cursor: copy;
@@ -233,14 +183,7 @@ summary {
   cursor: pointer;
 }
 
-.selection article {
-  --block-spacing-vertical: 1rem;
-  --block-spacing-horizontal: 1.5rem;
-}
-
-.selection article + article {
-  margin-top: calc(var(--spacing) * -1.5);
-}
+/* Article spacing handled by MUI components */
 
 .profile {
   margin-bottom: calc(var(--spacing) / 2);
@@ -262,9 +205,7 @@ header[data-tooltip-html] {
   border-bottom: 1px dotted;
 }
 
-button[data-tooltip-html] {
-  border-bottom: 1px solid;
-}
+/* Tooltip underline left to MUI/React-Tooltip defaults */
 
 details[role='list'] summary + ul li {
   margin-bottom: 0.5em;
@@ -298,19 +239,9 @@ dialog code {
   }
 }
 
-.container > article {
-  margin-bottom: -1px;
-  margin-top: 0;
-  padding: 0;
-}
+/* Container spacing now managed via MUI layout */
 
-.selection input[type='number'] {
-  display: inline-block;
-  width: 3rem;
-  padding: 0.5rem;
-  height: auto;
-  margin: 0 0.5rem 0 0;
-}
+/* Numeric inputs styled via MUI TextField */
 
 #tooltip {
   max-width: 40rem;
@@ -322,26 +253,7 @@ dialog code {
   --box-shadow: 0 0 0 var(--outline-width) var(--form-element-focus-color);
 }
 
-nav ol:first-of-type,
-nav ul:first-of-type {
-  margin-left: 0;
-}
-
-nav {
-  --nav-link-spacing-vertical: 0.75rem;
-  --nav-element-spacing-vertical: 0.75rem;
-  --form-element-spacing-vertical: 0.25rem;
-}
-
-nav li {
-  line-height: 1em;
-}
-
-div > button {
-  width: auto;
-  display: inline-block;
-  margin-right: var(--spacing);
-}
+/* Nav spacing handled by AppBar/Toolbar; remove legacy nav tweaks */
 
 .category th[open]::after {
   transform: rotate(0);
@@ -399,14 +311,7 @@ dialog article article {
   width: auto;
 }
 
-.add-entry {
-  float: right;
-  width: auto;
-  margin-left: var(--spacing);
-  --form-element-spacing-vertical: 0.1rem;
-  --form-element-spacing-horizontal: 0.25rem;
-  --line-height: 1;
-}
+/* Add-entry button uses MUI spacing */
 
 .edit-file input[disabled] {
   width: calc(100% - 3rem);
