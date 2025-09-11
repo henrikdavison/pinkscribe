@@ -5,6 +5,7 @@ import { useRoster, useRosterErrors, usePath, useSystem } from '../Context.js'
 import { getEntry, pathParent } from '../validate.js'
 import TableRow from '@mui/material/TableRow/index.js'
 import TableCell from '@mui/material/TableCell/index.js'
+import Typography from '@mui/material/Typography/index.js'
 
 const ListSelection = ({ indent, selectionPath, selection }) => {
   const gameData = useSystem()
@@ -75,8 +76,12 @@ const ListSelection = ({ indent, selectionPath, selection }) => {
         data-indent={indent}
       >
         <TableCell data-tooltip-id="tooltip" data-tooltip-html={selectionErrors.join('<br />') || undefined}>
-          <span className="unit-title">{selectionName(selection)}</span>
-          {!!upgrades && <div className="unit-summary clamp-2">{upgrades}</div>}
+          <Typography variant="unitName">{selectionName(selection)}</Typography>
+          {!!upgrades && (
+            <Typography variant="body2" color="text.secondary" className="clamp-2">
+              {upgrades}
+            </Typography>
+          )}
         </TableCell>
         <TableCell className="cost">{costString(sumCosts(selection))}</TableCell>
         <TableCell align="right">

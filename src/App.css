@@ -26,14 +26,6 @@ small {
 }
 
 /* Typography utilities for consistent sizing */
-.unit-title {
-  font-weight: 600;
-  font-size: 1rem;
-}
-.unit-summary {
-  font-size: 0.85rem;
-  color: var(--muted-color, #90a4ae);
-}
 .clamp-2 {
   display: -webkit-box;
   -webkit-line-clamp: 2;
@@ -120,7 +112,6 @@ h4 + h6 {
 }
 
 .selections td {
-  --font-size: 0.8em;
   --spacing: 0.5rem;
   cursor: pointer;
 }
