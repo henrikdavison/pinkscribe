@@ -19,15 +19,39 @@ const ListSelection = ({ indent, selectionPath, selection }) => {
       .map(([key, value]) => value),
   )
 
-  const upgrades = (
-    selection.selections?.selection.filter((s, i) => {
-      const entry = getEntry(roster, `${selectionPath}.selections.selection.${i}`, s.entryId, gameData)
-      return entry && !entry.selectionEntries && !entry.selectionEntryGroups && !s.selections
-    }) || []
-  )
-    .map(selectionName)
-    .sort()
-    .join(', ')
+  // Build a concise summary of meaningful choices, de-emphasising repeated weapons
+  const upgrades = (() => {
+    const items = (selection.selections?.selection || [])
+      .map((s, i) => ({
+        s,
+        entry: getEntry(roster, `${selectionPath}.selections.selection.${i}`, s.entryId, gameData),
+      }))
+      .filter(({ s, entry }) => entry && !entry.selectionEntries && !entry.selectionEntryGroups && !s.selections)
+
+    const important = items.filter(({ entry }) => {
+      const costs = Object.values(sumCosts(entry))
+      const hasCost = costs.some((v) => v)
+      const hasRules = (entry.rules || []).length > 0
+      const profileTypes = (entry.profiles || []).map((p) => (p.typeName || '').toLowerCase())
+      const onlyWeapons = profileTypes.length > 0 && profileTypes.every((t) => t.includes('weapon'))
+      const hasNonWeaponProfile = profileTypes.some((t) => t && !t.includes('weapon'))
+      const categoryHints = (entry.categoryLinks || []).some((c) =>
+        /enhance|relic|warlord|trait|psych|power|spell|artefact|upgrade/i.test(c.name || ''),
+      )
+      return hasCost || hasRules || hasNonWeaponProfile || categoryHints || !onlyWeapons
+    })
+
+    // Aggregate duplicates: "Name ×N"
+    const counts = {}
+    important.forEach(({ s }) => {
+      const name = s.name
+      counts[name] = (counts[name] || 0) + (typeof s.number === 'number' ? s.number : 1)
+    })
+    return Object.entries(counts)
+      .map(([name, n]) => (n > 1 ? `${name} ×${n}` : name))
+      .sort()
+      .join(', ')
+  })()
 
   // Determine whether this selection can be deleted without violating min constraints
   const parent = _.get(roster, pathParent(selectionPath))
