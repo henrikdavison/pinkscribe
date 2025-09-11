@@ -19,29 +19,47 @@ const ListSelection = ({ indent, selectionPath, selection }) => {
       .map(([key, value]) => value),
   )
 
-  // Build a concise summary of all leaf choices recursively; aggregates duplicates
+  // Build a concise summary of immediate children only (indent 2).
+  // For each immediate child, include its own leaf summary inline: "Label - a, b ×2".
   const upgrades = (() => {
-    const counts = {}
-    const walk = (baseSel, basePath) => {
-      const children = baseSel.selections?.selection || []
-      children.forEach((child, idx) => {
-        const childPath = `${basePath}.selections.selection.${idx}`
-        const entry = getEntry(roster, childPath, child.entryId, gameData)
-        if (!entry) return
-        const hasChildren = entry.selectionEntries || entry.selectionEntryGroups || child.selections?.selection?.length
-        if (hasChildren) {
-          walk(child, childPath)
-        } else {
-          const name = child.name
-          counts[name] = (counts[name] || 0) + (typeof child.number === 'number' ? child.number : 1)
-        }
-      })
+    const summarizeLeaves = (baseSel, basePath) => {
+      const leafCounts = {}
+      const walk = (sel, path) => {
+        const kids = sel.selections?.selection || []
+        kids.forEach((c, i) => {
+          const cPath = `${path}.selections.selection.${i}`
+          const entry = getEntry(roster, cPath, c.entryId, gameData)
+          if (!entry) return
+          const hasKids = entry.selectionEntries || entry.selectionEntryGroups || c.selections?.selection?.length
+          if (hasKids) {
+            walk(c, cPath)
+          } else {
+            const name = c.name
+            leafCounts[name] = (leafCounts[name] || 0) + (typeof c.number === 'number' ? c.number : 1)
+          }
+        })
+      }
+      walk(baseSel, basePath)
+      return Object.entries(leafCounts)
+        .map(([name, n]) => (n > 1 ? `${name} ×${n}` : name))
+        .sort()
+        .join(', ')
     }
-    walk(selection, selectionPath)
-    return Object.entries(counts)
-      .map(([name, n]) => (n > 1 ? `${name} ×${n}` : name))
-      .sort()
-      .join(', ')
+
+    const children = selection.selections?.selection || []
+    const parts = children.map((child, i) => {
+      const childPath = `${selectionPath}.selections.selection.${i}`
+      const entry = getEntry(roster, childPath, child.entryId, gameData)
+      if (!entry) return null
+      const hasKids = entry.selectionEntries || entry.selectionEntryGroups || child.selections?.selection?.length
+      if (hasKids) {
+        const leafs = summarizeLeaves(child, childPath)
+        return `${selectionName(child)}${leafs ? ` - ${leafs}` : ''}`
+      } else {
+        return selectionName(child)
+      }
+    })
+    return parts.filter(Boolean).join(' · ')
   })()
 
   // Determine whether this selection can be deleted without violating min constraints
@@ -83,7 +101,11 @@ const ListSelection = ({ indent, selectionPath, selection }) => {
       >
         <TableCell data-tooltip-id="tooltip" data-tooltip-html={selectionErrors.join('<br />') || undefined}>
           {selectionName(selection)}
-          {!!upgrades && <small>{' - ' + upgrades}</small>}
+          {!!upgrades && (
+            <div>
+              <small>{upgrades}</small>
+            </div>
+          )}
         </TableCell>
         <TableCell className="cost">{costString(sumCosts(selection))}</TableCell>
         <TableCell align="right">
