@@ -5,6 +5,9 @@ import './index.css'
 import App from './App.js'
 import { FSContext } from './Context.js'
 import { ErrorBoundary } from 'react-error-boundary'
+import CssBaseline from '@mui/material/CssBaseline/index.js'
+import { ThemeProvider } from '@mui/material/styles/index.js'
+import theme from './theme.js'
 
 import FS from '@isomorphic-git/lightning-fs'
 
@@ -16,28 +19,31 @@ const rosterPath = '/rosters'
 const root = ReactDOM.createRoot(document.getElementById('root'))
 root.render(
   <React.StrictMode>
-    <FSContext.Provider value={{ fs, gameSystemPath, rosterPath }}>
-      <ErrorBoundary
-        fallbackRender={({ error, resetErrorBoundary }) => (
-          <div style={{ padding: 16 }}>
-            <h3>BlueScribe failed to start</h3>
-            <p>{error?.message}</p>
-            <button
-              onClick={() => {
-                try {
-                  localStorage.removeItem('system')
-                } catch {}
-                resetErrorBoundary()
-              }}
-            >
-              Reset and retry
-            </button>
-          </div>
-        )}
-      >
-        <App />
-      </ErrorBoundary>
-    </FSContext.Provider>
+    <ThemeProvider theme={theme}>
+      <CssBaseline />
+      <FSContext.Provider value={{ fs, gameSystemPath, rosterPath }}>
+        <ErrorBoundary
+          fallbackRender={({ error, resetErrorBoundary }) => (
+            <div style={{ padding: 16 }}>
+              <h3>PinkScribe failed to start</h3>
+              <p>{error?.message}</p>
+              <button
+                onClick={() => {
+                  try {
+                    localStorage.removeItem('system')
+                  } catch {}
+                  resetErrorBoundary()
+                }}
+              >
+                Reset and retry
+              </button>
+            </div>
+          )}
+        >
+          <App />
+        </ErrorBoundary>
+      </FSContext.Provider>
+    </ThemeProvider>
   </React.StrictMode>,
 )
 ;(async () => {

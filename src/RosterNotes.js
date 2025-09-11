@@ -1,22 +1,26 @@
-import { DebounceInput } from 'react-debounce-input'
-
 import { useRoster } from './Context.js'
+import Box from '@mui/material/Box/index.js'
+import Typography from '@mui/material/Typography/index.js'
+import TextField from '@mui/material/TextField/index.js'
 
 const RosterNotes = () => {
   const [roster, setRoster] = useRoster()
   return (
-    <label>
-      <h6>NotesROSTERNOTES</h6>
-      <DebounceInput
-        debounceTimeout={300}
-        value={roster.customNotes}
-        element="textarea"
+    <Box sx={{ mt: 2 }}>
+      <Typography variant="h6" gutterBottom>
+        Notes
+      </Typography>
+      <TextField
+        multiline
+        minRows={3}
+        fullWidth
+        value={roster.customNotes || ''}
         onChange={(e) => {
           roster.customNotes = e.target.value
           setRoster(roster)
         }}
       />
-    </label>
+    </Box>
   )
 }
 

@@ -1,6 +1,9 @@
 import _ from 'lodash'
 
 import { useRoster, useSystem, useUpdateRoster } from './Context.js'
+import Box from '@mui/material/Box/index.js'
+import Typography from '@mui/material/Typography/index.js'
+import TextField from '@mui/material/TextField/index.js'
 
 const CostLimits = () => {
   const gameData = useSystem()
@@ -8,55 +11,48 @@ const CostLimits = () => {
   const updateRoster = useUpdateRoster()
 
   return (
-    <>
-      <h6>Cost Limits</h6>
-      <div className="grid">
+    <Box>
+      <Typography variant="h6" gutterBottom>
+        Cost Limits
+      </Typography>
+      <Box
+        sx={{
+          display: 'grid',
+          gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)', md: 'repeat(3, 1fr)', lg: 'repeat(4, 1fr)' },
+          gap: 2,
+        }}
+      >
         {gameData.gameSystem.costTypes?.map((type) => {
           const index = _.findIndex(roster.costLimits?.costLimit, ['typeId', type.id])
-          if (index !== -1) {
-            return (
-              <label key={type.id}>
-                {type.name}
-                <input
-                  type="number"
-                  min="-1"
-                  value={roster.costLimits.costLimit[index].value}
-                  step="1"
-                  onChange={(e) => {
-                    if (e.target.value > -1) {
-                      updateRoster(`costLimits.costLimit.${index}.value`, e.target.value)
-                    } else {
-                      roster.costLimits.costLimit.splice(index, 1)
-                      setRoster(roster)
-                    }
-                  }}
-                />
-              </label>
-            )
-          }
+          const value = index !== -1 ? roster.costLimits.costLimit[index].value : -1
           return (
-            <label key={type.id}>
-              {type.name}
-              <input
-                type="number"
-                min="-1"
-                value="-1"
-                step="1"
-                onChange={(e) => {
+            <TextField
+              key={type.id}
+              size="small"
+              type="number"
+              label={type.name}
+              value={value}
+              inputProps={{ min: -1, step: 1 }}
+              onChange={(e) => {
+                const v = parseInt(e.target.value, 10)
+                if (Number.isNaN(v) || v < 0) {
+                  if (index !== -1) {
+                    roster.costLimits.costLimit.splice(index, 1)
+                    setRoster(roster)
+                  }
+                } else if (index !== -1) {
+                  updateRoster(`costLimits.costLimit.${index}.value`, v)
+                } else {
                   roster.costLimits = roster.costLimits || { costLimit: [] }
-                  roster.costLimits.costLimit.push({
-                    typeId: type.id,
-                    name: type.name,
-                    value: e.target.value,
-                  })
+                  roster.costLimits.costLimit.push({ typeId: type.id, name: type.name, value: v })
                   setRoster(roster)
-                }}
-              />
-            </label>
+                }
+              }}
+            />
           )
         })}
-      </div>
-    </>
+      </Box>
+    </Box>
   )
 }
 

@@ -3,6 +3,13 @@ import path from 'path-browserify'
 import { BounceLoader } from 'react-spinners'
 import useStorage from 'squirrel-gill'
 import { FileDrop } from 'react-file-drop'
+import Box from '@mui/material/Box/index.js'
+import Button from '@mui/material/Button/index.js'
+import TextField from '@mui/material/TextField/index.js'
+import MSelect from '@mui/material/Select/index.js'
+import MenuItem from '@mui/material/MenuItem/index.js'
+import Typography from '@mui/material/Typography/index.js'
+import Stack from '@mui/material/Stack/index.js'
 
 import { listRosters, loadRoster, importRoster, deleteRoster, deleteAllRosters } from './repo/rosters.js'
 import { useFs, useNative, useRoster, useSystem, useConfirm } from './Context.js'
@@ -41,8 +48,10 @@ const SelectRoster = () => {
   }, [rosters, gameData, newName, selected, setSelected, fs, rosterPath])
 
   return (
-    <>
-      <h2>Select Roster</h2>
+    <Box>
+      <Typography variant="h5" gutterBottom>
+        Select Roster
+      </Typography>
       <FileDrop
         onFrameDrop={async (event) => {
           if (event.dataTransfer?.items[0]?.kind === 'file') {
@@ -54,13 +63,12 @@ const SelectRoster = () => {
           }
         }}
       >
-        <p>
-          To import a <code>.rosz</code> SELECT ROSTER file, drop it anywhere on the page, or{' '}
-          <span role="link" onClick={() => document.getElementById('import-roster').click()}>
-            click here to select one
-          </span>
-          .
-        </p>
+        <Typography variant="body2" sx={{ mb: 1 }}>
+          To import a .rosz SELECT ROSTER file, drop it anywhere on the page, or{' '}
+          <Button variant="text" size="small" onClick={() => document.getElementById('import-roster').click()}>
+            choose a file
+          </Button>
+        </Typography>
         <input
           type="file"
           accept=".rosz,.ros"
@@ -75,40 +83,47 @@ const SelectRoster = () => {
       </FileDrop>
       {rosters ? (
         <>
-          <select onChange={(e) => setSelected(e.target.value)} value={selected}>
+          <MSelect
+            size="small"
+            value={selected}
+            onChange={(e) => setSelected(e.target.value)}
+            sx={{ mb: 2, minWidth: 320 }}
+          >
             {Object.entries(rosters).map(([roster, name]) => (
-              <option key={roster} value={roster}>
+              <MenuItem key={roster} value={roster}>
                 {roster} - {typeof name === 'string' ? name : 'Error'}
-              </option>
+              </MenuItem>
             ))}
-            <option key="new" value="New">
-              New
-            </option>
-          </select>
+            <MenuItem value="New">New</MenuItem>
+          </MSelect>
           {selected === 'New' ? (
-            <>
-              <label>
-                Filename
-                <input value={newName} onChange={(e) => setNewFilename(e.target.value)} />
-              </label>
-              <button
+            <Stack spacing={1} direction="row" alignItems="center" sx={{ mb: 2 }}>
+              <TextField
+                size="small"
+                label="Filename"
+                value={newName}
+                onChange={(e) => setNewFilename(e.target.value)}
+              />
+              <Button
+                variant="contained"
                 onClick={async () => {
                   const roster = await createRoster(newName, gameData.gameSystem)
                   setRoster(roster)
                 }}
               >
-                Create <code>{newName}.rosz</code>
-              </button>
-            </>
+                Create {newName}.rosz
+              </Button>
+            </Stack>
           ) : (
-            <>
+            <Stack spacing={1} direction="row" sx={{ mb: 2 }}>
               {typeof rosters[selected] !== 'string' && (
-                <ul>
-                  BlueScribe is having trouble parsing <code>{selected}</code>. It may not be a valid roster file, or
-                  this could be a bug.
-                </ul>
+                <Typography color="error">
+                  PinkScribe is having trouble parsing {selected}. It may not be a valid roster file, or this could be a
+                  bug.
+                </Typography>
               )}
-              <button
+              <Button
+                variant="contained"
                 disabled={typeof rosters[selected] !== 'string'}
                 onClick={async () => {
                   const systemRosterPath = path.join(rosterPath, gameData.gameSystem.id)
@@ -116,9 +131,10 @@ const SelectRoster = () => {
                 }}
               >
                 Load
-              </button>
-              <button
-                className="secondary outline"
+              </Button>
+              <Button
+                variant="outlined"
+                color="error"
                 onClick={async () =>
                   await confirmDelete(async () => {
                     const systemRosterPath = path.join(rosterPath, gameData.gameSystem.id)
@@ -128,9 +144,9 @@ const SelectRoster = () => {
                 }
               >
                 Delete
-              </button>
-              <button
-                className="secondary outline"
+              </Button>
+              <Button
+                variant="outlined"
                 onClick={async () => {
                   const systemRosterPath = path.join(rosterPath, gameData.gameSystem.id)
                   await deleteAllRosters(fs, systemRosterPath)
@@ -138,25 +154,25 @@ const SelectRoster = () => {
                 }}
               >
                 Delete all (this system)
-              </button>
-            </>
+              </Button>
+            </Stack>
           )}
           {!!shellOpen && (
-            <button
-              className="secondary outline"
+            <Button
+              variant="outlined"
               onClick={async () => {
                 const systemRosterPath = path.join(rosterPath, gameData.gameSystem.id)
                 await shellOpen(systemRosterPath)
               }}
             >
               Open roster directory
-            </button>
+            </Button>
           )}
         </>
       ) : (
         <BounceLoader color="#36d7b7" className="loading" />
       )}
-    </>
+    </Box>
   )
 }
 

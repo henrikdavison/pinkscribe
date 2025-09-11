@@ -1,6 +1,8 @@
 module.exports = {
   webpack: function webpack(config, env) {
     const webpack = require('webpack')
+    // Allow extension-less ESM imports in node_modules (e.g., MUI)
+    config.resolve.fullySpecified = false
     config.resolve.fallback = {
       buffer: require.resolve('buffer'),
       stream: require.resolve('stream-browserify'),
@@ -18,6 +20,24 @@ module.exports = {
     //  Our entry point should be `index-tauri.js` instead of `index.js`
     if (process.env.TAURI_PLATFORM_TYPE) {
       config.entry = config.entry.replace('index.js', 'index-tauri.js')
+    }
+
+    // Silence source-map-loader errors for missing source maps in deps
+    const walk = (rules) => {
+      rules.forEach((r) => {
+        if (r && r.use) {
+          r.use.forEach((u) => {
+            if (u && u.loader && u.loader.includes('source-map-loader')) {
+              u.exclude = /node_modules/ // ignore node_modules
+            }
+          })
+        }
+        if (r && r.oneOf) walk(r.oneOf)
+        if (r && r.rules) walk(r.rules)
+      })
+    }
+    if (config.module && Array.isArray(config.module.rules)) {
+      walk(config.module.rules)
     }
 
     return config

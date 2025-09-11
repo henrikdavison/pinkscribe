@@ -9,7 +9,11 @@
   "type": "module",
   "config-overrides-path": "config-overrides.cjs",
   "dependencies": {
+    "@emotion/react": "^11.14.0",
+    "@emotion/styled": "^11.14.1",
     "@isomorphic-git/lightning-fs": "^4.6.0",
+    "@mui/icons-material": "^5.18.0",
+    "@mui/material": "^5.18.0",
     "@picocss/pico": "^1.5.7",
     "@tauri-apps/api": "^2.0.0-alpha.5",
     "@tauri-apps/cli": "^2.0.0-alpha.10",
@@ -76,6 +80,7 @@
   },
   "devDependencies": {
     "@babel/plugin-proposal-private-property-in-object": "^7.21.11",
+    "@babel/plugin-syntax-import-attributes": "^7.24.7",
     "cross-env": "^7.0.3",
     "eslint-config-prettier": "^8.8.0",
     "eslint-plugin-prettier": "^4.2.1",
@@ -83,9 +88,8 @@
     "husky": "^8.0.3",
     "internal-ip": "^8.0.0",
     "lint-staged": "^13.2.2",
-    "prettier": "^2.8.8",
     "patch-package": "^8.0.0",
-    "@babel/plugin-syntax-import-attributes": "^7.24.7",
+    "prettier": "^2.8.8",
     "react-app-rewired": "^2.2.1",
     "run-script-os": "^1.1.6",
     "web-streams-polyfill": "^3.2.1"

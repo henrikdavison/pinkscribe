@@ -2,6 +2,12 @@ import { useEffect, useState } from 'react'
 import path from 'path-browserify'
 import { BounceLoader } from 'react-spinners'
 import _ from 'lodash'
+import Box from '@mui/material/Box/index.js'
+import Typography from '@mui/material/Typography/index.js'
+import Button from '@mui/material/Button/index.js'
+import Select from '@mui/material/Select/index.js'
+import MenuItem from '@mui/material/MenuItem/index.js'
+import Stack from '@mui/material/Stack/index.js'
 
 import {
   listGameSystems,
@@ -49,41 +55,43 @@ const SelectSystem = ({ setSystemInfo, setMode, previouslySelected, error }) => 
   }, [selected, available])
 
   return (
-    <div>
-      <h2>Select Game System</h2>
+    <Box>
+      <Typography variant="h5" gutterBottom>
+        Select Game System
+      </Typography>
       {systems ? (
         <>
-          <select
+          <Select
+            size="small"
             value={selected}
-            onChange={(e) => {
-              setSelected(e.target.value)
-            }}
+            onChange={(e) => setSelected(e.target.value)}
+            sx={{ mb: 2, minWidth: 320 }}
           >
             {_.reverse(_.sortBy(Object.values(systems), 'lastUpdated')).map((system) => (
-              <option key={system.name} value={system.name}>
+              <MenuItem key={system.name} value={system.name}>
                 {system.description} - {system.version}
-              </option>
+              </MenuItem>
             ))}
-            <option key="add">Add New</option>
-          </select>
+            <MenuItem value="Add New">Add New</MenuItem>
+          </Select>
           {selected === 'Add New' ? (
-            <label>
+            <Box>
               {available ? (
-                <>
-                  <select onChange={(e) => setSelectedAvailable(e.target.value)}>
+                <Stack spacing={1} sx={{ mb: 2 }}>
+                  <Select size="small" value={selectedAvailable} onChange={(e) => setSelectedAvailable(e.target.value)}>
                     {available.map((system, index) => (
-                      <option key={system.name} value={index}>
+                      <MenuItem key={system.name} value={index}>
                         {system.description}
-                      </option>
+                      </MenuItem>
                     ))}
-                  </select>
-                  <p>
+                  </Select>
+                  <Typography variant="body2">
                     Or{' '}
-                    <span role="link" onClick={() => document.getElementById('import-system').click()}>
+                    <Button size="small" onClick={() => document.getElementById('import-system').click()}>
                       select a folder
-                    </span>{' '}
-                    containing a <code>.gst</code> and <code>.cat</code> files.
-                  </p>
+                    </Button>{' '}
+                    containing a .gst and .cat files.
+                  </Typography>
                   {!isOffline ? (
                     <input
                       type="file"
@@ -95,83 +103,66 @@ const SelectSystem = ({ setSystemInfo, setMode, previouslySelected, error }) => 
                       }}
                     />
                   ) : (
-                    <div
+                    <Box
                       id="import-system"
-                      onClick={async (e) => {
+                      onClick={async () => {
                         const externalDir = await selectDirectory()
-                        if (externalDir === null) {
-                          return null
-                        }
+                        if (externalDir === null) return null
                         const system = await addExternalGameSystem(externalDir, fs, gameSystemPath)
-                        if (system) {
-                          setSystemInfo(system)
-                        }
+                        if (system) setSystemInfo(system)
                       }}
                     />
                   )}
-                </>
+                </Stack>
               ) : (
                 <BounceLoader color="#36d7b7" className="loading" />
               )}
-            </label>
+            </Box>
           ) : (
-            <>
+            <Box sx={{ mb: 2 }}>
               {error && previouslySelected.name === selected && (
-                <article className="errors">
-                  <p className="errors">
-                    BlueScribe is having an issue loading this data. This is a bug; please report it.{' '}
-                    <span role="link" onClick={() => console.log(error)}>
-                      Log error to console.
-                    </span>
-                  </p>
-                  <details>
-                    <summary>{error.message}</summary>
-                    <code>{error.stack}</code>
-                  </details>
-                </article>
+                <Box className="errors">
+                  <Typography color="error">
+                    PinkScribe is having an issue loading this data. This is a bug; please report it.
+                  </Typography>
+                </Box>
               )}
-              <article>
-                <header>{systems[selected].description}</header>
-                <p>
-                  Version {systems[selected].version} - {systems[selected].lastUpdateDescription || '—'}
-                </p>
-                <p>
-                  Last updated{' '}
-                  {systems[selected].lastUpdated && !isNaN(Date.parse(systems[selected].lastUpdated))
-                    ? new Date(Date.parse(systems[selected].lastUpdated)).toLocaleDateString()
-                    : 'Unknown'}
-                  .{' '}
-                  {systems[selected].bugTrackerUrl && (
-                    <>
-                      <a target="_blank" rel="noreferrer" href={systems[selected].bugTrackerUrl}>
-                        Repository
-                      </a>
-                      {' | '}
-                    </>
-                  )}
-                  {systems[selected].reportBugUrl && (
-                    <>
-                      <a target="_blank" rel="noreferrer" href={systems[selected].reportBugUrl}>
-                        Report a bug
-                      </a>
-                      {' | '}
-                    </>
-                  )}
-                  <span
-                    role="link"
-                    onClick={() => {
-                      clearGameSystem(systems[selected], fs, gameSystemPath).then(() => {
-                        setSystems(null)
-                      })
-                    }}
-                  >
-                    Clear data
-                  </span>
-                </p>
-              </article>
-            </>
+              <Typography variant="h6">{systems[selected].description}</Typography>
+              <Typography variant="body2">
+                Version {systems[selected].version} - {systems[selected].lastUpdateDescription || '—'}
+              </Typography>
+              <Typography variant="body2" sx={{ mb: 1 }}>
+                Last updated{' '}
+                {systems[selected].lastUpdated && !isNaN(Date.parse(systems[selected].lastUpdated))
+                  ? new Date(Date.parse(systems[selected].lastUpdated)).toLocaleDateString()
+                  : 'Unknown'}
+                .{' '}
+                {systems[selected].bugTrackerUrl && (
+                  <>
+                    <a target="_blank" rel="noreferrer" href={systems[selected].bugTrackerUrl}>
+                      Repository
+                    </a>
+                    {' | '}
+                  </>
+                )}
+                {systems[selected].reportBugUrl && (
+                  <>
+                    <a target="_blank" rel="noreferrer" href={systems[selected].reportBugUrl}>
+                      Report a bug
+                    </a>
+                  </>
+                )}{' '}
+                <Button
+                  size="small"
+                  onClick={() => clearGameSystem(systems[selected], fs, gameSystemPath).then(() => setSystems(null))}
+                >
+                  Clear data
+                </Button>
+              </Typography>
+            </Box>
           )}
-          <button
+          <Button
+            variant="contained"
             disabled={updatingSystem ? true : undefined}
             onClick={async () => {
               setMode('editRoster')
@@ -209,9 +200,9 @@ const SelectSystem = ({ setSystemInfo, setMode, previouslySelected, error }) => 
             }}
           >
             {updatingSystem ? `${updatingSystem.done} files downloaded` : 'Load'}
-          </button>
+          </Button>
           {selected !== 'Add New' && !updatingSystem && !systems[selected].externalPath && (
-            <button
+            <Button
               onClick={async () => {
                 if (updatingSystem) {
                   return
@@ -232,13 +223,13 @@ const SelectSystem = ({ setSystemInfo, setMode, previouslySelected, error }) => 
                 setSystems(null)
                 setUpdatingSystem(false)
               }}
-              className="outline"
+              variant="outlined"
             >
               Update data
-            </button>
+            </Button>
           )}
           {selected !== 'Add New' && !updatingSystem && (
-            <button
+            <Button
               onClick={async () => {
                 try {
                   const cacheFile = path.join(gameSystemPath, systems[selected].name, 'cache.json')
@@ -247,27 +238,27 @@ const SelectSystem = ({ setSystemInfo, setMode, previouslySelected, error }) => 
                   // Cache file doesn't exist
                 }
               }}
-              className="outline"
+              variant="outlined"
             >
               Clear cache
-            </button>
+            </Button>
           )}
           {false && selected !== 'Add New' && !updatingSystem && (
-            <button
+            <Button
               onClick={async () => {
                 setMode('editSystem')
                 setSystemInfo(systems[selected])
               }}
-              className="outline"
+              variant="outlined"
             >
               Edit data
-            </button>
+            </Button>
           )}
         </>
       ) : (
         <BounceLoader color="#36d7b7" className="loading" />
       )}
-    </div>
+    </Box>
   )
 }
 

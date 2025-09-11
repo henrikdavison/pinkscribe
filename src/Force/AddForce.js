@@ -4,6 +4,14 @@ import _ from 'lodash'
 import { usePath, useRoster, useRosterErrors, useSystem } from '../Context.js'
 import { addForce, costString, gatherCatalogues, sumCosts } from '../utils.js'
 import { gatherForces } from './SelectForce.js'
+import Box from '@mui/material/Box/index.js'
+import Typography from '@mui/material/Typography/index.js'
+import FormControl from '@mui/material/FormControl/index.js'
+import InputLabel from '@mui/material/InputLabel/index.js'
+import Select from '@mui/material/Select/index.js'
+import MenuItem from '@mui/material/MenuItem/index.js'
+import Button from '@mui/material/Button/index.js'
+import Stack from '@mui/material/Stack/index.js'
 
 const gatherForceEntries = (faction, gameData) =>
   _.sortBy(_.flatten(gatherCatalogues(gameData.catalogues[faction], gameData).map((c) => c.forceEntries || [])), 'name')
@@ -23,80 +31,91 @@ const AddForce = () => {
   const forces = gatherForces(roster)
 
   return (
-    <div className="grid">
-      <div>
-        <h5>Forces</h5>
-        {forces.map((path) => {
-          const force = _.get(roster, path)
-          const forceErrors = _.flatten(
-            Object.keys(errors)
-              .filter((p) => p.startsWith(path))
-              .map((p) => errors[p]),
-          )
-          const cost = costString(sumCosts(force))
-          return (
-            <h6 key={path} className="left">
-              {forceErrors.length ? (
-                <span className="errors" data-tooltip-id="tooltip" data-tooltip-html={forceErrors.join('<br />')}>
-                  !!
-                </span>
-              ) : (
-                ''
-              )}
-              <span
-                onClick={() => setPath(path)}
-                role="link"
+    <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, gap: 2 }}>
+      <Box>
+        <Typography variant="h6" gutterBottom>
+          Forces
+        </Typography>
+        <Stack spacing={1}>
+          {forces.map((p) => {
+            const f = _.get(roster, p)
+            const forceErrors = _.flatten(
+              Object.keys(errors)
+                .filter((key) => key.startsWith(p))
+                .map((key) => errors[key]),
+            )
+            const cost = costString(sumCosts(f))
+            return (
+              <Typography
+                key={p}
+                variant="subtitle2"
+                sx={{ cursor: 'pointer' }}
+                color={forceErrors.length ? 'error' : 'inherit'}
                 data-tooltip-id="tooltip"
-                data-tooltip-html={cost || undefined}
+                data-tooltip-html={forceErrors.length ? forceErrors.join('<br />') : cost || undefined}
+                onClick={() => setPath(p)}
               >
-                {force.catalogueName}
-                <small>{force.name}</small>
-              </span>
-            </h6>
-          )
-        })}
-      </div>
-      <div>
-        <h6>Add Force</h6>
-        <label>
-          Faction
-          <select
-            onChange={(e) => {
-              setFaction(e.target.value)
-              setForce(gatherForceEntries(e.target.value, gameData)[0].id)
-            }}
-          >
-            {catalogues.map((f, index) => (
-              <option key={f.id} value={f.id}>
-                {f.name}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label>
-          Detachment
-          <select onChange={(e) => setForce(e.target.value)}>
-            {forceEntries.map((f, index) => (
-              <option key={f.id} value={f.id}>
-                {f.name}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label>
-          &nbsp;
-          <button
-            onClick={() => {
-              addForce(roster, force, faction, gameData)
-              setRoster(roster)
-              setPath(`forces.force.${roster.forces.force.length - 1}`)
-            }}
-          >
-            Add
-          </button>
-        </label>
-      </div>
-    </div>
+                {f.catalogueName} <Typography component="span">{f.name}</Typography>
+              </Typography>
+            )
+          })}
+        </Stack>
+      </Box>
+      <Box>
+        <Typography variant="h6" gutterBottom>
+          Add Force
+        </Typography>
+        <Stack spacing={2}>
+          <FormControl fullWidth size="small">
+            <InputLabel id="faction-label">Faction</InputLabel>
+            <Select
+              labelId="faction-label"
+              label="Faction"
+              value={faction}
+              onChange={(e) => {
+                setFaction(e.target.value)
+                setForce(gatherForceEntries(e.target.value, gameData)[0].id)
+              }}
+            >
+              {catalogues.map((f) => (
+                <MenuItem key={f.id} value={f.id}>
+                  {f.name}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+
+          <FormControl fullWidth size="small">
+            <InputLabel id="detachment-label">Detachment</InputLabel>
+            <Select
+              labelId="detachment-label"
+              label="Detachment"
+              value={force}
+              onChange={(e) => setForce(e.target.value)}
+            >
+              {forceEntries.map((f) => (
+                <MenuItem key={f.id} value={f.id}>
+                  {f.name}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+
+          <Box>
+            <Button
+              variant="contained"
+              onClick={() => {
+                addForce(roster, force, faction, gameData)
+                setRoster(roster)
+                setPath(`forces.force.${roster.forces.force.length - 1}`)
+              }}
+            >
+              Add
+            </Button>
+          </Box>
+        </Stack>
+      </Box>
+    </Box>
   )
 }
 

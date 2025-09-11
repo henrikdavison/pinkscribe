@@ -32,8 +32,15 @@ import { refreshRoster } from './utils.js'
 import EditSystem from './repo/EditSystem.js'
 import { pathToForce, validateRoster } from './validate.js'
 import packageJson from '../package.json'
-import discordIcon from './discord-icon.png'
-import githubIcon from './github-icon.png'
+
+import AppBar from '@mui/material/AppBar/index.js'
+import Toolbar from '@mui/material/Toolbar/index.js'
+import Typography from '@mui/material/Typography/index.js'
+import Button from '@mui/material/Button/index.js'
+import Box from '@mui/material/Box/index.js'
+import Menu from '@mui/material/Menu/index.js'
+import MenuItem from '@mui/material/MenuItem/index.js'
+import Stack from '@mui/material/Stack/index.js'
 
 const Body = ({ children, systemInfo, setSystemInfo }) => {
   const [roster, setRoster] = useRoster()
@@ -45,135 +52,94 @@ const Body = ({ children, systemInfo, setSystemInfo }) => {
   const [path, setPath] = usePath()
 
   const [open, setOpen] = useState(false)
+  const [menuEl, setMenuEl] = useState(null)
   const { fs, rosterPath } = useFs()
 
   return (
     <div className="container">
       <Tooltip id="tooltip" />
-      <header>
-        <nav>
-          <ul>
-            <li>
-              <strong
-                data-tooltip-id="tooltip"
-                data-tooltip-html="BlueScribe is an army list builder for tabletop wargames; it is heavily inspired by and 100% compatible with BattleScribe, reading the same format datafiles and writing rosters in the same format.<br /><br />No tracking, no subscription, no paid features. BlueScribe is GNU GPL 3.0 licensed."
-              >
-                BlueScribe
-              </strong>
-              <a href="https://discord.gg/m4q2BbxDQV" target="discord">
-                <img className="icon" src={discordIcon} alt="Discord" title="Discord" />
-              </a>
-              <a href="https://github.com/BlueWinds/bluescribe" target="github">
-                <img className="icon" src={githubIcon} alt="Github" title="Github" />
-              </a>
-              <div>
-                <small>{packageJson.version}</small>
-              </div>
-            </li>
+      <AppBar position="static" color="transparent" elevation={0} sx={{ mb: 2 }}>
+        <Toolbar sx={{ display: 'flex', gap: 2 }}>
+          <Stack direction="row" spacing={1} alignItems="center" sx={{ flexGrow: 1 }}>
+            <Typography variant="h6">PinkScribe</Typography>
+            <Typography variant="caption">{packageJson.version}</Typography>
             {roster && (
-              <li>
+              <Box sx={{ ml: 2 }}>
                 <SelectForce value={pathToForce(path)} onChange={setPath}>
                   <option value="">Manage Roster</option>
                 </SelectForce>
-              </li>
+              </Box>
             )}
-          </ul>
+          </Stack>
+
           {system && (
-            <ul>
+            <Stack direction="row" spacing={1} alignItems="center">
               {roster && (
-                <li>
-                  <button className="outline" onClick={() => setOpen(!open)}>
-                    View/Print
-                  </button>
-                </li>
+                <Button variant="outlined" onClick={() => setOpen(!open)}>
+                  View/Print
+                </Button>
               )}
               {roster && (
-                <li>
-                  <button className="outline" onClick={() => downloadRoster(roster)}>
-                    Download
-                  </button>
-                </li>
+                <Button variant="outlined" onClick={() => downloadRoster(roster)}>
+                  Download
+                </Button>
               )}
               {roster && (
-                <li>
-                  <button
-                    className="outline"
-                    disabled={!roster.__.updated}
-                    onClick={async () => {
-                      await saveRoster(roster, fs, rosterPath)
-                      setRoster(roster, false)
+                <Button
+                  variant="contained"
+                  disabled={!roster.__.updated}
+                  onClick={async () => {
+                    await saveRoster(roster, fs, rosterPath)
+                    setRoster(roster, false)
+                  }}
+                >
+                  Save
+                </Button>
+              )}
+              <Button variant="outlined" onClick={(e) => setMenuEl(e.currentTarget)}>
+                Menu
+              </Button>
+              <Menu anchorEl={menuEl} open={!!menuEl} onClose={() => setMenuEl(null)}>
+                {roster && (
+                  <MenuItem
+                    onClick={() => {
+                      setMenuEl(null)
+                      setRoster(refreshRoster(roster, system))
                     }}
                   >
-                    Save
-                  </button>
-                </li>
-              )}
-              <li>
-                <details role="list" dir="rtl">
-                  <summary aria-haspopup="listbox" role="link">
-                    ≡
-                  </summary>
-                  <ul role="listbox">
-                    {roster && (
-                      <li
-                        data-tooltip-id="tooltip"
-                        data-tooltip-html="This can be useful if the game system has been updated or if the roster was generated by a different tool and something seems incorrect."
-                      >
-                        <span
-                          role="link"
-                          onClick={() => {
-                            document.querySelectorAll('details').forEach((d) => d.removeAttribute('open'))
-                            setRoster(refreshRoster(roster, system))
-                          }}
-                        >
-                          Refresh Roster
-                        </span>
-                      </li>
-                    )}
-                    {roster && (
-                      <li data-tooltip-id="tooltip" data-tooltip-html="Load a different roster">
-                        <span
-                          role="link"
-                          onClick={async () =>
-                            await confirmLeaveRoster(() => {
-                              document.querySelectorAll('details').forEach((d) => d.removeAttribute('open'))
-                              setPath('')
-                              setRoster()
-                            })
-                          }
-                        >
-                          Roster
-                          <div>
-                            <small>{roster.__.filename.split('/').at(-1)}</small>
-                          </div>
-                        </span>
-                      </li>
-                    )}
-                    <li data-tooltip-id="tooltip" data-tooltip-html="Load a different game system">
-                      <span
-                        role="link"
-                        onClick={async () =>
-                          await confirmLeaveRoster(() => {
-                            document.querySelectorAll('details').forEach((d) => d.removeAttribute('open'))
-                            setPath('')
-                            setRoster()
-                            setSystemInfo({ name: systemInfo.name })
-                          })
-                        }
-                      >
-                        Game System
-                        <div>
-                          <small>{system?.gameSystem.name}</small>
-                        </div>
-                      </span>
-                    </li>
-                  </ul>
-                </details>
-              </li>
-            </ul>
+                    Refresh Roster
+                  </MenuItem>
+                )}
+                {roster && (
+                  <MenuItem
+                    onClick={async () =>
+                      await confirmLeaveRoster(() => {
+                        setMenuEl(null)
+                        setPath('')
+                        setRoster()
+                      })
+                    }
+                  >
+                    Roster ({roster.__.filename.split('/').at(-1)})
+                  </MenuItem>
+                )}
+                <MenuItem
+                  onClick={async () =>
+                    await confirmLeaveRoster(() => {
+                      setMenuEl(null)
+                      setPath('')
+                      setRoster()
+                      setSystemInfo({ name: systemInfo.name })
+                    })
+                  }
+                >
+                  Game System ({system?.gameSystem.name})
+                </MenuItem>
+              </Menu>
+            </Stack>
           )}
-        </nav>
-      </header>
+        </Toolbar>
+      </AppBar>
       {children}
       <SelectionModal open={open} setOpen={setOpen}>
         {roster && <ViewRoster />}
