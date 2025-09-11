@@ -20,46 +20,21 @@ const ListSelection = ({ indent, selectionPath, selection }) => {
   )
 
   // Build a concise summary of immediate children only (indent 2).
-  // For each immediate child, include its own leaf summary inline: "Label - a, b ×2".
+  // Do NOT include deeper data to keep this view uncluttered.
   const upgrades = (() => {
-    const summarizeLeaves = (baseSel, basePath) => {
-      const leafCounts = {}
-      const walk = (sel, path) => {
-        const kids = sel.selections?.selection || []
-        kids.forEach((c, i) => {
-          const cPath = `${path}.selections.selection.${i}`
-          const entry = getEntry(roster, cPath, c.entryId, gameData)
-          if (!entry) return
-          const hasKids = entry.selectionEntries || entry.selectionEntryGroups || c.selections?.selection?.length
-          if (hasKids) {
-            walk(c, cPath)
-          } else {
-            const name = c.name
-            leafCounts[name] = (leafCounts[name] || 0) + (typeof c.number === 'number' ? c.number : 1)
-          }
-        })
-      }
-      walk(baseSel, basePath)
-      return Object.entries(leafCounts)
-        .map(([name, n]) => (n > 1 ? `${name} ×${n}` : name))
-        .sort()
-        .join(', ')
-    }
-
     const children = selection.selections?.selection || []
-    const parts = children.map((child, i) => {
-      const childPath = `${selectionPath}.selections.selection.${i}`
-      const entry = getEntry(roster, childPath, child.entryId, gameData)
-      if (!entry) return null
-      const hasKids = entry.selectionEntries || entry.selectionEntryGroups || child.selections?.selection?.length
-      if (hasKids) {
-        const leafs = summarizeLeaves(child, childPath)
-        return `${selectionName(child)}${leafs ? ` - ${leafs}` : ''}`
-      } else {
-        return selectionName(child)
-      }
+    const counts = {}
+    children.forEach((child, i) => {
+      const entry = getEntry(roster, `${selectionPath}.selections.selection.${i}`, child.entryId, gameData)
+      if (!entry) return
+      const name = child.name
+      const amount = typeof child.number === 'number' ? child.number : 1
+      counts[name] = (counts[name] || 0) + amount
     })
-    return parts.filter(Boolean).join(' · ')
+    return Object.entries(counts)
+      .map(([name, n]) => (n > 1 ? `${n}x ${name}` : name))
+      .sort()
+      .join(' · ')
   })()
 
   // Determine whether this selection can be deleted without violating min constraints
@@ -103,7 +78,16 @@ const ListSelection = ({ indent, selectionPath, selection }) => {
           {selectionName(selection)}
           {!!upgrades && (
             <div>
-              <small>{upgrades}</small>
+              <small
+                style={{
+                  display: '-webkit-box',
+                  WebkitLineClamp: 2,
+                  WebkitBoxOrient: 'vertical',
+                  overflow: 'hidden',
+                }}
+              >
+                {upgrades}
+              </small>
             </div>
           )}
         </TableCell>
