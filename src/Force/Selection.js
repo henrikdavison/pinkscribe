@@ -2,6 +2,13 @@ import _ from 'lodash'
 import { useState } from 'react'
 import pluralize from 'pluralize'
 import { Tooltip } from 'react-tooltip'
+import Box from '@mui/material/Box/index.js'
+import Button from '@mui/material/Button/index.js'
+import Typography from '@mui/material/Typography/index.js'
+import FormControlLabel from '@mui/material/FormControlLabel/index.js'
+import Radio from '@mui/material/Radio/index.js'
+import Checkbox from '@mui/material/Checkbox/index.js'
+import TextField from '@mui/material/TextField/index.js'
 import { DebounceInput } from 'react-debounce-input'
 
 import { useSystem, useRoster, useRosterErrors, usePath } from '../Context.js'
@@ -40,7 +47,7 @@ const Selection = () => {
 
   return (
     <div className="selection">
-      <nav>
+      <Box component="nav" sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
         <Tooltip id="move-tooltip" openOnClick={true} clickable={true}>
           <label>
             Move to different force
@@ -60,16 +67,16 @@ const Selection = () => {
             />
           </label>
         </Tooltip>
-        <button className="outline" data-tooltip-id="move-tooltip">
+        <Button variant="outlined" size="small" data-tooltip-id="move-tooltip">
           <span data-tooltip-id="tooltip" data-tooltip-html="Move to different force">
             ->
           </span>
-        </button>
-        <button className="outline" data-tooltip-id="custom-name-tooltip">
+        </Button>
+        <Button variant="outlined" size="small" data-tooltip-id="custom-name-tooltip">
           <span data-tooltip-id="tooltip" data-tooltip-html="Customize">
             ✍
           </span>
-        </button>
+        </Button>
         <Tooltip
           id="custom-name-tooltip"
           openOnClick={true}
@@ -95,8 +102,9 @@ const Selection = () => {
           </label>
         </Tooltip>
 
-        <button
-          className="outline"
+        <Button
+          variant="outlined"
+          size="small"
           onClick={() => {
             const parent = _.get(roster, pathParent(path))
             parent.selections.selection.push(copySelection(selection))
@@ -106,9 +114,10 @@ const Selection = () => {
           data-tooltip-html="Duplicate"
         >
           ⎘
-        </button>
-        <button
-          className="outline"
+        </Button>
+        <Button
+          variant="outlined"
+          size="small"
           onClick={(e) => {
             const parent = _.get(roster, pathParent(path))
             _.pull(parent.selections.selection, selection)
@@ -123,9 +132,11 @@ const Selection = () => {
           data-tooltip-html="Remove"
         >
           x
-        </button>
-      </nav>
-      <h6 onClick={() => setOpen(true)}>{selectionName(selection)}</h6>
+        </Button>
+      </Box>
+      <Typography variant="h6" onClick={() => setOpen(true)}>
+        {selectionName(selection)}
+      </Typography>
       {selectionEntry ? (
         <>
           {selectionEntry.selectionEntries && (
@@ -312,43 +323,52 @@ const Radio = ({ catalogue, selection, entryGroup, onSelect }) => {
   return (
     <>
       {min === 0 && max === 1 && (
-        <label>
-          <input
-            type="radio"
-            name={entryGroup.id}
-            onChange={() =>
-              onSelect(
-                entries.find((e) => e.id === selectedOption.entryId),
-                0,
-              )
-            }
-            checked={!selectedOption}
-          />
-          (None)
-        </label>
+        <FormControlLabel
+          control={
+            <Radio
+              checked={!selectedOption}
+              onChange={() =>
+                onSelect(
+                  entries.find((e) => e.id === selectedOption?.entryId),
+                  0,
+                )
+              }
+              name={entryGroup.id}
+            />
+          }
+          label="(None)"
+        />
       )}
-      {_.sortBy(entries, 'name').map((option, index) => {
+      {_.sortBy(entries, 'name').map((option) => {
         const cost = costString(sumCosts(option))
         const checked = selectedOption?.entryId === option.id
-        if (option.hidden && !checked) {
-          return null
-        }
+        if (option.hidden && !checked) return null
+        const isRadio = max === 1 && entries.length > 1
+        const control = isRadio ? (
+          <Radio
+            checked={checked}
+            onChange={() => onSelect(option, !isRadio && checked ? 0 : 1)}
+            name={entryGroup.id}
+          />
+        ) : (
+          <Checkbox checked={checked} onChange={() => onSelect(option, !isRadio && checked ? 0 : 1)} />
+        )
         return (
-          <label key={option.id}>
-            <input
-              type={max === 1 && entries.length > 1 ? 'radio' : 'checkbox'}
-              name={entryGroup.id}
-              checked={checked}
-              onChange={() => onSelect(option, (max !== 1 || entries.length > 1) && checked ? 0 : 1)}
-            />
-            <span
-              data-tooltip-id="tooltip"
-              data-tooltip-html={textProfile(collectEntryProfiles(option, gameData, catalogue))}
-            >
-              {option.name}
-            </span>
-            {cost && ` (${cost})`}
-          </label>
+          <FormControlLabel
+            key={option.id}
+            control={control}
+            label={
+              <>
+                <span
+                  data-tooltip-id="tooltip"
+                  data-tooltip-html={textProfile(collectEntryProfiles(option, gameData, catalogue))}
+                >
+                  {option.name}
+                </span>
+                {cost && ` (${cost})`}
+              </>
+            }
+          />
         )
       })}
     </>
@@ -373,21 +393,26 @@ const Checkbox = ({ catalogue, selection, option, onSelect, entryGroup }) => {
   }
 
   return (
-    <label>
-      <input
-        type="checkbox"
-        checked={checked}
-        onChange={() => onSelect(option, checked ? 0 : 1)}
-        disabled={checked && min === 1}
-      />
-      <span
-        data-tooltip-id="tooltip"
-        data-tooltip-html={textProfile(collectEntryProfiles(option, gameData, catalogue))}
-      >
-        {option.name}
-      </span>
-      {cost && ` (${cost})`}
-    </label>
+    <FormControlLabel
+      control={
+        <Checkbox
+          checked={checked}
+          onChange={() => onSelect(option, checked ? 0 : 1)}
+          disabled={checked && min === 1}
+        />
+      }
+      label={
+        <>
+          <span
+            data-tooltip-id="tooltip"
+            data-tooltip-html={textProfile(collectEntryProfiles(option, gameData, catalogue))}
+          >
+            {option.name}
+          </span>
+          {cost && ` (${cost})`}
+        </>
+      }
+    />
   )
 }
 
@@ -401,16 +426,16 @@ const Count = ({ catalogue, selection, option, min, max, onSelect, entryGroup })
     min === max ? `${min} ${pluralize(option.name)}` : max === -1 ? '' : `${min}-${max} ${pluralize(option.name)}`
 
   return (
-    <label>
-      <input
+    <>
+      <TextField
         type="number"
+        size="small"
         value={value}
-        min={min}
-        max={max === -1 ? 1000 : max}
-        step="1"
+        inputProps={{ min, max: max === -1 ? 1000 : max, step: 1 }}
         onChange={(e) => onSelect(option, parseInt(e.target.value, 10))}
         data-tooltip-id="tooltip"
         data-tooltip-html={numberTip}
+        sx={{ width: 100, mr: 1 }}
       />
       <span
         data-tooltip-id="tooltip"
@@ -419,6 +444,6 @@ const Count = ({ catalogue, selection, option, min, max, onSelect, entryGroup })
         {option.name}
       </span>
       {cost && ` (${cost})`}
-    </label>
+    </>
   )
 }
