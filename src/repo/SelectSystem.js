@@ -54,6 +54,15 @@ const SelectSystem = ({ setSystemInfo, setMode, previouslySelected, error }) => 
     }
   }, [selected, available])
 
+  // Ensure `selected` always points at a valid installed system key
+  useEffect(() => {
+    if (!systems) return
+    if (selected !== 'Add New' && !systems[selected]) {
+      const fallback = _.reverse(_.sortBy(Object.values(systems), 'lastUpdated'))[0]?.name || 'Add New'
+      setSelected(fallback)
+    }
+  }, [systems, selected])
+
   return (
     <Box>
       <Typography variant="h5" gutterBottom>
@@ -127,27 +136,27 @@ const SelectSystem = ({ setSystemInfo, setMode, previouslySelected, error }) => 
                   </Typography>
                 </Box>
               )}
-              <Typography variant="h6">{systems[selected].description}</Typography>
+              <Typography variant="h6">{systems[selected]?.description || selected}</Typography>
               <Typography variant="body2">
-                Version {systems[selected].version} - {systems[selected].lastUpdateDescription || '—'}
+                Version {systems[selected]?.version || '—'} - {systems[selected]?.lastUpdateDescription || '—'}
               </Typography>
               <Typography variant="body2" sx={{ mb: 1 }}>
                 Last updated{' '}
-                {systems[selected].lastUpdated && !isNaN(Date.parse(systems[selected].lastUpdated))
-                  ? new Date(Date.parse(systems[selected].lastUpdated)).toLocaleDateString()
+                {systems[selected]?.lastUpdated && !isNaN(Date.parse(systems[selected].lastUpdated))
+                  ? new Date(Date.parse(systems[selected]?.lastUpdated)).toLocaleDateString()
                   : 'Unknown'}
                 .{' '}
-                {systems[selected].bugTrackerUrl && (
+                {systems[selected]?.bugTrackerUrl && (
                   <>
-                    <a target="_blank" rel="noreferrer" href={systems[selected].bugTrackerUrl}>
+                    <a target="_blank" rel="noreferrer" href={systems[selected]?.bugTrackerUrl}>
                       Repository
                     </a>
                     {' | '}
                   </>
                 )}
-                {systems[selected].reportBugUrl && (
+                {systems[selected]?.reportBugUrl && (
                   <>
-                    <a target="_blank" rel="noreferrer" href={systems[selected].reportBugUrl}>
+                    <a target="_blank" rel="noreferrer" href={systems[selected]?.reportBugUrl}>
                       Report a bug
                     </a>
                   </>

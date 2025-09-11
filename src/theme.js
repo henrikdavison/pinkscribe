@@ -28,12 +28,8 @@ export const getTheme = (mode = 'dark') => {
       fontFamily: 'Inter, sans-serif',
     },
     shape: { borderRadius: 8 },
-    shadows: [
-      'none',
-      '0px 2px 4px rgba(0, 0, 0, 0.1)',
-      '0px 3px 6px rgba(0, 0, 0, 0.1)',
-      '0px 4px 8px rgba(0, 0, 0, 0.12)',
-    ],
+    // Use MUI's default 25-level shadow scale to satisfy components (e.g., Paper elevation=8)
+    // We can customize later with a full-length array if desired
     spacing: 8,
     components: {
       MuiTypography: {
