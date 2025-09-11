@@ -48,6 +48,40 @@ const Selection = () => {
   const selectionEntry = getEntry(roster, path, selection.entryId, gameData)
   const forcePath = pathToForce(path)
 
+  // Build concise summary of currently equipped/selected options
+  const summary = (() => {
+    const leaves = (selection.selections?.selection || []).map((s, i) => ({
+      s,
+      entry: getEntry(roster, `${path}.selections.selection.${i}`, s.entryId, gameData),
+    }))
+
+    const important = leaves.filter(({ entry }) => {
+      if (!entry) return false
+      // Ignore non-leaf options that still contain choices
+      if (entry.selectionEntries || entry.selectionEntryGroups) return false
+      const costs = Object.values(sumCosts(entry))
+      const hasCost = costs.some((v) => v)
+      const hasRules = (entry.rules || []).length > 0
+      const profileTypes = (entry.profiles || []).map((p) => (p.typeName || '').toLowerCase())
+      const onlyWeapons = profileTypes.length > 0 && profileTypes.every((t) => t.includes('weapon'))
+      const hasNonWeaponProfile = profileTypes.some((t) => t && !t.includes('weapon'))
+      const categoryHints = (entry.categoryLinks || []).some((c) =>
+        /enhance|relic|warlord|trait|psych|power|spell|artefact|upgrade/i.test(c.name || ''),
+      )
+      return hasCost || hasRules || hasNonWeaponProfile || categoryHints || !onlyWeapons
+    })
+
+    const counts = {}
+    important.forEach(({ s }) => {
+      const name = s.name
+      counts[name] = (counts[name] || 0) + (typeof s.number === 'number' ? s.number : 1)
+    })
+    return Object.entries(counts)
+      .map(([name, n]) => (n > 1 ? `${name} ×${n}` : name))
+      .sort()
+      .join(', ')
+  })()
+
   // Determine whether this selection can be deleted without violating min constraints
   const parent = _.get(roster, pathParent(path))
   const groupEntry = selection.entryGroupId ? getEntry(roster, path, selection.entryGroupId, gameData) : null
@@ -165,6 +199,11 @@ const Selection = () => {
       <Typography variant="h6" onClick={() => setOpen(true)}>
         {selectionName(selection)}
       </Typography>
+      {!!summary && (
+        <Typography variant="body2" sx={{ color: 'text.secondary', mb: 1 }}>
+          {summary}
+        </Typography>
+      )}
       {selectionEntry ? (
         <>
           {selectionEntry.selectionEntries && (
