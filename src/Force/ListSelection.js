@@ -75,21 +75,8 @@ const ListSelection = ({ indent, selectionPath, selection }) => {
         data-indent={indent}
       >
         <TableCell data-tooltip-id="tooltip" data-tooltip-html={selectionErrors.join('<br />') || undefined}>
-          {selectionName(selection)}
-          {!!upgrades && (
-            <div>
-              <small
-                style={{
-                  display: '-webkit-box',
-                  WebkitLineClamp: 2,
-                  WebkitBoxOrient: 'vertical',
-                  overflow: 'hidden',
-                }}
-              >
-                {upgrades}
-              </small>
-            </div>
-          )}
+          <span className="unit-title">{selectionName(selection)}</span>
+          {!!upgrades && <div className="unit-summary clamp-2">{upgrades}</div>}
         </TableCell>
         <TableCell className="cost">{costString(sumCosts(selection))}</TableCell>
         <TableCell align="right">

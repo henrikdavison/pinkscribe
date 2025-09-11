@@ -405,6 +405,7 @@ const Radio = ({ catalogue, selection, entryGroup, onSelect }) => {
               name={entryGroup.id}
             />
           }
+          sx={{ display: 'block', m: 0, py: 0.25 }}
           label="(None)"
         />
       )}
@@ -426,6 +427,7 @@ const Radio = ({ catalogue, selection, entryGroup, onSelect }) => {
           <FormControlLabel
             key={option.id}
             control={control}
+            sx={{ display: 'block', m: 0, py: 0.25 }}
             label={
               <>
                 <span
@@ -470,6 +472,7 @@ const Checkbox = ({ catalogue, selection, option, onSelect, entryGroup }) => {
           disabled={checked && min === 1}
         />
       }
+      sx={{ display: 'block', m: 0, py: 0.25 }}
       label={
         <>
           <span
@@ -504,7 +507,7 @@ const Count = ({ catalogue, selection, option, min, max, onSelect, entryGroup })
         onChange={(e) => onSelect(option, parseInt(e.target.value, 10))}
         data-tooltip-id="tooltip"
         data-tooltip-html={numberTip}
-        sx={{ width: 100, mr: 1 }}
+        sx={{ width: 90, mr: 1 }}
       />
       <span
         data-tooltip-id="tooltip"

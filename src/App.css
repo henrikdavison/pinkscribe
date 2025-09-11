@@ -25,6 +25,22 @@ small {
   --font-size: 0.75em;
 }
 
+/* Typography utilities for consistent sizing */
+.unit-title {
+  font-weight: 600;
+  font-size: 1rem;
+}
+.unit-summary {
+  font-size: 0.85rem;
+  color: var(--muted-color, #90a4ae);
+}
+.clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
 .loading {
   display: block;
   margin: auto;
