@@ -6,8 +6,8 @@ import Box from '@mui/material/Box/index.js'
 import Button from '@mui/material/Button/index.js'
 import Typography from '@mui/material/Typography/index.js'
 import FormControlLabel from '@mui/material/FormControlLabel/index.js'
-import Radio from '@mui/material/Radio/index.js'
-import Checkbox from '@mui/material/Checkbox/index.js'
+import MuiRadio from '@mui/material/Radio/index.js'
+import MuiCheckbox from '@mui/material/Checkbox/index.js'
 import TextField from '@mui/material/TextField/index.js'
 import { DebounceInput } from 'react-debounce-input'
 
@@ -33,6 +33,9 @@ import Rules, { collectRules } from './Rules.js'
 import Categories, { collectCategories } from './Categories.js'
 import SelectionModal from './SelectionModal.js'
 import { pathParent } from '../validate.js'
+import Accordion from '@mui/material/Accordion/index.js'
+import AccordionSummary from '@mui/material/AccordionSummary/index.js'
+import AccordionDetails from '@mui/material/AccordionDetails/index.js'
 
 const Selection = () => {
   const gameData = useSystem()
@@ -264,8 +267,8 @@ const EntryGroup = ({ path, entryGroup, selection, selectionEntry }) => {
   }
 
   return (
-    <article>
-      <header
+    <Accordion defaultExpanded disableGutters>
+      <AccordionSummary
         data-tooltip-id="tooltip"
         data-tooltip-html={
           selectionErrors
@@ -275,40 +278,42 @@ const EntryGroup = ({ path, entryGroup, selection, selectionEntry }) => {
             .join('<br />') || null
         }
       >
-        {entryGroup.name}
-        {min > 1 && ` - min ${min}`}
-        {max > 1 && ` - max ${max}`}
+        <Typography sx={{ mr: 1 }}>{entryGroup.name}</Typography>
+        {min > 1 && <Typography variant="caption">{` - min ${min}`}</Typography>}
+        {max > 1 && <Typography variant="caption">{` - max ${max}`}</Typography>}
         {entryGroup.publicationId && (
-          <small>
+          <Typography variant="caption" sx={{ ml: 1 }}>
             {findId(gameData, catalogue, entryGroup.publicationId).name}, {entryGroup.page}
-          </small>
+          </Typography>
         )}
-      </header>
-      {max === 1 && !entryGroup.selectionEntryGroups ? (
-        <Radio selection={selection} entryGroup={entryGroup} onSelect={onSelect} catalogue={catalogue} />
-      ) : (
-        _.sortBy(entryGroup.selectionEntries || [], 'name').map((subEntry) => (
-          <Entry
-            key={subEntry.id}
-            entry={subEntry}
+      </AccordionSummary>
+      <AccordionDetails>
+        {max === 1 && !entryGroup.selectionEntryGroups ? (
+          <Radio selection={selection} entryGroup={entryGroup} onSelect={onSelect} catalogue={catalogue} />
+        ) : (
+          _.sortBy(entryGroup.selectionEntries || [], 'name').map((subEntry) => (
+            <Entry
+              key={subEntry.id}
+              entry={subEntry}
+              path={path}
+              selection={selection}
+              selectionEntry={selectionEntry}
+              entryGroup={entryGroup}
+              catalogue={catalogue}
+            />
+          ))
+        )}
+        {entryGroup.selectionEntryGroups?.map((subGroup) => (
+          <EntryGroup
+            key={subGroup.id}
             path={path}
+            entryGroup={subGroup}
             selection={selection}
             selectionEntry={selectionEntry}
-            entryGroup={entryGroup}
-            catalogue={catalogue}
           />
-        ))
-      )}
-      {entryGroup.selectionEntryGroups?.map((subGroup) => (
-        <EntryGroup
-          key={subGroup.id}
-          path={path}
-          entryGroup={subGroup}
-          selection={selection}
-          selectionEntry={selectionEntry}
-        />
-      ))}
-    </article>
+        ))}
+      </AccordionDetails>
+    </Accordion>
   )
 }
 
@@ -325,7 +330,7 @@ const Radio = ({ catalogue, selection, entryGroup, onSelect }) => {
       {min === 0 && max === 1 && (
         <FormControlLabel
           control={
-            <Radio
+            <MuiRadio
               checked={!selectedOption}
               onChange={() =>
                 onSelect(
@@ -345,13 +350,13 @@ const Radio = ({ catalogue, selection, entryGroup, onSelect }) => {
         if (option.hidden && !checked) return null
         const isRadio = max === 1 && entries.length > 1
         const control = isRadio ? (
-          <Radio
+          <MuiRadio
             checked={checked}
             onChange={() => onSelect(option, !isRadio && checked ? 0 : 1)}
             name={entryGroup.id}
           />
         ) : (
-          <Checkbox checked={checked} onChange={() => onSelect(option, !isRadio && checked ? 0 : 1)} />
+          <MuiCheckbox checked={checked} onChange={() => onSelect(option, !isRadio && checked ? 0 : 1)} />
         )
         return (
           <FormControlLabel
@@ -395,7 +400,7 @@ const Checkbox = ({ catalogue, selection, option, onSelect, entryGroup }) => {
   return (
     <FormControlLabel
       control={
-        <Checkbox
+        <MuiCheckbox
           checked={checked}
           onChange={() => onSelect(option, checked ? 0 : 1)}
           disabled={checked && min === 1}

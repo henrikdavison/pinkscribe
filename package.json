@@ -11,9 +11,11 @@
   "dependencies": {
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.1",
+    "@fontsource/inter": "^5.1.0",
     "@isomorphic-git/lightning-fs": "^4.6.0",
     "@mui/icons-material": "^5.18.0",
     "@mui/material": "^5.18.0",
+    "lucide-react": "^0.454.0",
     "@picocss/pico": "^1.5.7",
     "@tauri-apps/api": "^2.0.0-alpha.5",
     "@tauri-apps/cli": "^2.0.0-alpha.10",

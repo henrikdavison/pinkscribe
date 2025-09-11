@@ -2,6 +2,11 @@ import _ from 'lodash'
 
 import { findId, getMinCount } from '../utils.js'
 import { useSystem } from '../Context.js'
+import Table from '@mui/material/Table/index.js'
+import TableBody from '@mui/material/TableBody/index.js'
+import TableRow from '@mui/material/TableRow/index.js'
+import TableHead from '@mui/material/TableHead/index.js'
+import TableCell from '@mui/material/TableCell/index.js'
 
 const Profiles = ({ profiles, number }) => {
   const gameData = useSystem()
@@ -10,31 +15,31 @@ const Profiles = ({ profiles, number }) => {
     <>
       {gameData.gameSystem.profileTypes?.map(({ name, characteristicTypes = [] }) =>
         profiles[name] ? (
-          <table className="profile" key={name}>
-            <thead>
-              <tr>
-                <th>{name}</th>
+          <Table size="small" className="profile" key={name}>
+            <TableHead>
+              <TableRow>
+                <TableCell>{name}</TableCell>
                 {characteristicTypes.map((ct) => (
-                  <th key={ct.name}>{ct.name}</th>
+                  <TableCell key={ct.name}>{ct.name}</TableCell>
                 ))}
-              </tr>
-            </thead>
-            <tbody>
+              </TableRow>
+            </TableHead>
+            <TableBody>
               {_.sortBy(profiles[name], '1.name').map(([number, profile]) => (
-                <tr key={profile.id}>
-                  <td>
+                <TableRow key={profile.id}>
+                  <TableCell>
                     {number > 1 ? `x${number} ` : ''}
                     {profile.name}
-                  </td>
+                  </TableCell>
                   {profile.characteristics?.characteristic.map((c) => (
-                    <td className="profile" key={c.name}>
+                    <TableCell className="profile" key={c.name}>
                       {c['#text']}
-                    </td>
+                    </TableCell>
                   ))}
-                </tr>
+                </TableRow>
               ))}
-            </tbody>
-          </table>
+            </TableBody>
+          </Table>
         ) : null,
       )}
     </>

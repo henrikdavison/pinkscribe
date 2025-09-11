@@ -49,6 +49,7 @@ export const findId = (gameData, catalogue, id) => {
 }
 
 export const sumCosts = (entry, costs = {}) => {
+  if (!entry) return costs
   if (entry.forces) {
     entry.forces?.force.forEach((force) => {
       sumCosts(force, costs)

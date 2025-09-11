@@ -1,4 +1,6 @@
-import { findId } from '../utils.js' // Import utility function to retrieve IDs
+import { findId } from '../utils.js'
+import Box from '@mui/material/Box/index.js'
+import Typography from '@mui/material/Typography/index.js'
 
 // Functional component to display categories as a comma-separated string
 const Categories = ({ categories }) => {
@@ -9,10 +11,12 @@ const Categories = ({ categories }) => {
   }
 
   return (
-    <article>
-      <strong>Categories: </strong>
-      <em>{string}</em> {/* Display sorted categories in italics */}
-    </article>
+    <Box>
+      <Typography component="span" fontWeight={600}>
+        Categories:{' '}
+      </Typography>
+      <Typography component="em">{string}</Typography>
+    </Box>
   )
 }
 
