@@ -72,7 +72,9 @@ const FileContents = ({ filename }) => {
             </tbody>
           </table>
         </div>
-        <div className="edit-entry">{entryElement(file, filename, selectedPath)}</div>
+        <div className="edit-entry" style={{ maxHeight: 'calc(100vh - 7em)', overflow: 'auto' }}>
+          {entryElement(file, filename, selectedPath)}
+        </div>
       </div>
     </details>
   )

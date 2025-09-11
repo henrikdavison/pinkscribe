@@ -1,166 +1,14 @@
-iframe {
-  display: none;
-}
+/* Minimal app CSS: rely on MUI for layout/spacing/typography */
 
-h2 {
-  --typography-spacing-vertical: 0.625rem;
-}
-h6 {
-  --typography-spacing-vertical: 0.5rem;
-}
-
-/* Remove legacy nav/layout overrides; rely on MUI */
-
-/* Typography utilities for consistent sizing */
 .clamp-2 {
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
-
 .loading {
   display: block;
   margin: auto;
-}
-
-/* Headings use MUI Typography; no global alignment here */
-
-/* Remove old Pico form spacing and nav tweaks */
-
-.errors {
-  color: #cd3232;
-}
-
-.errors code {
-  white-space: pre-line;
-  line-height: 1.8em;
-}
-
-h6 .errors:first-child {
-  margin-right: -1rem;
-}
-
-ul.errors {
-  padding-top: 1rem;
-  padding-left: 2rem;
-  padding-right: 2rem;
-}
-
-h6 span,
-h6 a,
-h6 small {
-  margin-left: 1.25rem;
-}
-
-h6.left {
-  text-align: left;
-}
-
-h4 + h6 {
-  margin-top: -1.5em;
-}
-
-.selection,
-.edit-entry {
-  max-height: calc(100vh - 7em);
-  overflow: auto;
-}
-
-.selections table {
-  --spacing: 0.5rem;
-}
-
-.selections td {
-  --spacing: 0.5rem;
-  cursor: pointer;
-}
-
-.selections th {
-  cursor: pointer;
-}
-
-[data-indent='2'] td:first-child {
-  padding-left: calc(var(--spacing) * 2);
-}
-[data-indent='3'] td:first-child {
-  padding-left: calc(var(--spacing) * 3);
-}
-[data-indent='4'] td:first-child {
-  padding-left: calc(var(--spacing) * 4);
-}
-[data-indent='5'] td:first-child {
-  padding-left: calc(var(--spacing) * 5);
-}
-
-.selections th {
-  padding-left: 0;
-}
-
-.selections .cost {
-  white-space: nowrap;
-}
-
-article section {
-  border: 1px solid var(--secondary);
-  border-bottom-width: 0;
-  margin: 0;
-  padding: calc(var(--spacing) / 2);
-}
-
-article section:first-child {
-  border-top-left-radius: var(--border-radius);
-  border-top-right-radius: var(--border-radius);
-}
-
-article section:last-child {
-  border-bottom-width: 1px;
-  border-bottom-left-radius: var(--border-radius);
-  border-bottom-right-radius: var(--border-radius);
-}
-
-summary {
-  padding: 0;
-}
-
-.grid.colums {
-  grid-column-gap: 0;
-}
-
-.grid.columns > div {
-  border-right: 1px solid var(--secondary);
-  padding: 0 var(--spacing);
-}
-
-.grid.columns > div:first-child {
-  padding-left: 0;
-}
-
-.grid.columns > div:last-child {
-  padding-right: 0;
-  border-right: none;
-}
-
-:where(table) {
-  border-collapse: initial;
-}
-
-.selections [has-error] td,
-.selections [has-error] th {
-  border-color: red !important;
-  border: 1px dotted;
-}
-
-.selections [has-error] td:first-child {
-  border-right: 0px;
-}
-
-.selections [has-error] td:nth-child(2) {
-  border-right: 0px;
-  border-left: 0px;
-}
-.selections [has-error] td:last-child {
-  border-left: 0px;
 }
 
 .selections .selected td:first-child,
@@ -169,96 +17,9 @@ summary {
   text-decoration: underline;
 }
 
-.selection {
-  position: relative;
-}
-
-/* Selection toolbar uses MUI; no custom nav styles */
-
-.add-unit {
-  cursor: copy;
-}
-
-.selection > h6 {
-  cursor: pointer;
-}
-
-/* Article spacing handled by MUI components */
-
-.profile {
-  margin-bottom: calc(var(--spacing) / 2);
-  padding-bottom: calc(var(--spacing) / 2);
-}
-
-.profile td,
-.profile th {
-  padding-left: calc(var(--spacing) / 2);
-  padding-right: calc(var(--spacing) / 2);
-}
-
-header[data-tooltip-html] {
-  border-color: red !important;
-  border: 1px dotted;
-}
-
-[data-tooltip-html] {
-  border-bottom: 1px dotted;
-}
-
-/* Tooltip underline left to MUI/React-Tooltip defaults */
-
-details[role='list'] summary + ul li {
-  margin-bottom: 0.5em;
-}
-
-input[data-tooltip-html] {
-  border-bottom: var(--border-width) solid var(--border-color);
-}
-
-article > article {
-  margin-left: calc(var(--block-spacing-horizontal) * -1);
-}
-
-dialog article {
-  width: 100%;
-}
-
-dialog fieldset {
-  text-align: center;
-}
-
-dialog code {
-  margin: auto;
-  display: block;
-  width: fit-content;
-}
-
-@media (min-width: 1200px) {
-  dialog article {
-    max-width: 1130px;
-  }
-}
-
-/* Container spacing now managed via MUI layout */
-
-/* Numeric inputs styled via MUI TextField */
-
-#tooltip {
-  max-width: 40rem;
-  white-space: break-spaces;
-  z-index: 1000;
-}
-
-#clickable-tooltip input {
-  --box-shadow: 0 0 0 var(--outline-width) var(--form-element-focus-color);
-}
-
-/* Nav spacing handled by AppBar/Toolbar; remove legacy nav tweaks */
-
 .category th[open]::after {
   transform: rotate(0);
 }
-
 .category th::after {
   display: block;
   width: 1rem;
@@ -275,61 +36,105 @@ dialog code {
   transition: transform var(--transition);
 }
 
-.rule,
-.profile {
+#tooltip {
+  max-width: 40rem;
   white-space: break-spaces;
-}
-
-[role='link'] {
-  cursor: pointer;
+  z-index: 1000;
 }
 
 input[type='file'] {
   display: none;
 }
-
 .text-roster {
   white-space: break-spaces;
 }
-
-.view-roster article {
-  margin: 0;
-  padding: 0.5rem;
+.rule,
+.profile {
+  white-space: break-spaces;
 }
 
-.view-roster header {
-  margin: 0;
-  padding: 0.5rem;
+/* React-Select styling for data editor */
+.react-select__placeholder,
+.react-select__single-value {
+  padding: 0 var(--form-element-spacing-horizontal);
+}
+.react-select__indicators {
+  margin-right: var(--form-element-spacing-horizontal);
+}
+.react-select__control {
+  background: var(--form-element-background-color);
+  border: 1px solid var(--form-element-border-color);
+  border-radius: var(--border-radius);
+}
+.react-select__control--menu-is-open {
+  border-bottom: none;
+  border-radius: var(--border-radius) var(--border-radius) 0 0;
+}
+.react-select input {
+  position: relative;
+  left: var(--form-element-spacing-horizontal);
+  --box-shadow: none !important;
+}
+.react-select__menu-list {
+  background: var(--form-element-background-color);
+  border: 1px solid var(--form-element-border-color);
+  border-top: none;
+  border-radius: 0 0 var(--border-radius) var(--border-radius);
+}
+.react-select__option {
+  padding: var(--form-element-spacing-vertical) var(--form-element-spacing-horizontal);
 }
 
-dialog article article {
-  max-height: inherit;
+.publication {
+  width: calc(100% - 5rem);
 }
-
-.refresh-id {
+input.page {
   float: right;
-  width: auto;
+  width: 4.5rem;
 }
 
-/* Add-entry button uses MUI spacing */
-
-.edit-file input[disabled] {
-  width: calc(100% - 3rem);
+/* Print styles */
+.grid.print {
+  margin: auto;
+  width: 24em;
+}
+.grid.print button {
+  align-self: center;
+  justify-self: center;
+  margin: 0;
+  padding: 0 calc(var(--spacing) / 2);
 }
 
-.edit-file {
-  --spacing: 0.5rem;
-  --form-element-spacing-horizontal: 0.5rem;
-  --form-element-spacing-vertical: 0.25rem;
-}
-
-.edit-file input,
-.edit-file select {
-  margin-bottom: 0;
-}
-
-.edit-file label {
-  display: inline;
+@media print {
+  .container > header,
+  .container > article {
+    display: none;
+  }
+  .container {
+    max-width: inherit;
+  }
+  .modal-is-open {
+    overflow: auto;
+  }
+  .print {
+    display: none;
+  }
+  .view-roster {
+    width: 100%;
+    max-width: 100%;
+    background: var(--card-background-color);
+    min-height: 100vh;
+  }
+  .view-roster.onePerPage > article {
+    break-after: page;
+  }
+  .view-roster.onePerPage > article:last-child {
+    break-after: auto;
+  }
+  .view-roster.onePerPage > h4,
+  .view-roster.onePerPage > h5 {
+    display: none;
+  }
 }
 
 .react-select__placeholder,

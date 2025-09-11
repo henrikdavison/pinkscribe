@@ -85,7 +85,7 @@ const ListSelection = ({ indent, selectionPath, selection }) => {
             </Typography>
           )}
         </TableCell>
-        <TableCell className="cost">{costString(sumCosts(selection))}</TableCell>
+        <TableCell sx={{ whiteSpace: 'nowrap' }}>{costString(sumCosts(selection))}</TableCell>
         <TableCell align="right">
           {canDelete && (
             <span

@@ -161,7 +161,7 @@ const Force = () => {
         </ul>
       )}
       <Box className="grid columns">
-        <Box className="selections">
+        <Box className="selections" sx={{ pr: 2, borderRight: (theme) => `1px solid ${theme.palette.divider}` }}>
           <Typography variant="subtitle1" fontWeight={600}>
             Selections
           </Typography>
@@ -174,7 +174,7 @@ const Force = () => {
             </TableBody>
           </Table>
         </Box>
-        {path === forcePath ? <AddUnit errors={errors} /> : <Selection errors={errors} />}
+        <Box sx={{ pl: 2 }}>{path === forcePath ? <AddUnit errors={errors} /> : <Selection errors={errors} />}</Box>
       </Box>
     </Box>
   )

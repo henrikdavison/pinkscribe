@@ -107,7 +107,7 @@ const Selection = () => {
   }
 
   return (
-    <div className="selection">
+    <Box className="selection" sx={{ maxHeight: 'calc(100vh - 7em)', overflow: 'auto' }}>
       <Box component="nav" sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
         <Tooltip id="move-tooltip" openOnClick={true} clickable={true}>
           <label>
@@ -247,7 +247,7 @@ const Selection = () => {
       ) : (
         <>{selectionName(selection)} does not exist in the game data. It may have been removed in a data update.</>
       )}
-    </div>
+    </Box>
   )
 }
 
