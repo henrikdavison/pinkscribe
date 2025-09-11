@@ -1,0 +1,7 @@
+{
+  "default": {
+    "enabled": true,
+    "categoryNames": ["Configuration"],
+    "inlineEdit": true
+  }
+}

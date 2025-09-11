@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useDeferredValue } from 'react'
 import { BounceLoader } from 'react-spinners'
 import 'react-tooltip/dist/react-tooltip.css'
 import { Tooltip } from 'react-tooltip'
@@ -6,7 +6,6 @@ import useStorage from 'squirrel-gill'
 import { ErrorBoundary } from 'react-error-boundary'
 import path from 'path-browserify'
 
-import '@picocss/pico'
 import './App.css'
 import { readFiles } from './repo/index.js'
 import SelectSystem from './repo/SelectSystem.js'
@@ -203,6 +202,23 @@ function App() {
 
   window.gameData = gameData
 
+  // Always define hooks at top-level (before any early returns)
+  // Defer and debounce validation to reduce jank during rapid edits
+  const deferredRoster = useDeferredValue(roster)
+  const [errors, setErrors] = useState({})
+  useEffect(() => {
+    if (!gameData) return
+    const id = setTimeout(() => {
+      try {
+        setErrors(validateRoster(deferredRoster, gameData))
+      } catch (e) {
+        console.error(e)
+      }
+    }, 150)
+    return () => clearTimeout(id)
+  }, [deferredRoster, gameData])
+  window.errors = errors
+
   if (loading) {
     return (
       <Body systemInfo={systemInfo} setSystemInfo={setSystemInfo}>
@@ -222,9 +238,6 @@ function App() {
   if (mode === 'editSystem') {
     return <EditSystem systemInfo={systemInfo} setSystemInfo={setSystemInfo} />
   }
-
-  const errors = validateRoster(roster, gameData)
-  window.errors = errors
 
   return (
     <GameContext.Provider value={gameData}>

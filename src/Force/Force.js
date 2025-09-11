@@ -9,6 +9,11 @@ import { pathToForce } from '../validate.js'
 import Box from '@mui/material/Box/index.js'
 import Typography from '@mui/material/Typography/index.js'
 import Button from '@mui/material/Button/index.js'
+import Fab from '@mui/material/Fab/index.js'
+import AddUnitDrawer from './AddUnitDrawer.js'
+import useMediaQuery from '@mui/material/useMediaQuery/index.js'
+import { useTheme } from '@mui/material/styles/index.js'
+import { Plus, Copy } from 'lucide-react'
 import List from '@mui/material/List/index.js'
 import ListSubheader from '@mui/material/ListSubheader/index.js'
 import ListItemButton from '@mui/material/ListItemButton/index.js'
@@ -17,7 +22,10 @@ import IconButton from '@mui/material/IconButton/index.js'
 import Divider from '@mui/material/Divider/index.js'
 import { Trash2 } from 'lucide-react'
 import { getEntry, pathParent } from '../validate.js'
-import { getMinCount } from '../utils.js'
+import { getMinCount, copySelection } from '../utils.js'
+import ConfigPills from './ConfigPills.js'
+import Collapse from '@mui/material/Collapse/index.js'
+import { TransitionGroup } from 'react-transition-group'
 
 const Force = () => {
   const gameData = useSystem()
@@ -29,28 +37,27 @@ const Force = () => {
   const confirmDelete = useConfirm(true, `Delete ${force.name}?`)
 
   const [openSections, setOpenSections] = useState({})
+  const [addOpen, setAddOpen] = useState(false)
+  const theme = useTheme()
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'))
 
   const errors = useRosterErrors()[forcePath]
 
+  // Build grouping fresh so UI reflects immediate add/remove without relying on array identity
+  const selectionIndex = new Map()
   const selections = {}
-  const parseSelection = (selection) => {
-    const primary = _.find(selection.categories?.category, 'primary')?.entryId || '(No Category)'
-    if (!primary) {
-      debugger
-    }
+  force.selections?.selection?.forEach((s, i) => {
+    selectionIndex.set(s, i)
+    const primary = _.find(s.categories?.category, 'primary')?.entryId || '(No Category)'
     selections[primary] = selections[primary] || []
-    selections[primary].push(selection)
-  }
-
-  force.selections?.selection.forEach(parseSelection)
+    selections[primary].push(s)
+  })
 
   // Helpers for list rendering
-  const summarizeChildren = (selection, selectionPath) => {
+  const summarizeChildren = (selection /*, selectionPath */) => {
     const children = selection.selections?.selection || []
     const counts = {}
-    children.forEach((child, i) => {
-      const entry = getEntry(roster, `${selectionPath}.selections.selection.${i}`, child.entryId, gameData)
-      if (!entry) return
+    children.forEach((child) => {
       const amount = typeof child.number === 'number' ? child.number : 1
       counts[child.name] = (counts[child.name] || 0) + amount
     })
@@ -88,71 +95,92 @@ const Force = () => {
     return true
   }
 
-  const categories = force.categories.category
-    .filter((category) => category.entryId !== 'Configuration')
-    .map((category) => {
-      if (!selections[category.entryId]) return null
-      const { name } = findId(gameData, gameData.catalogues[force.catalogueId], category.entryId)
-      const open = openSections[name] || openSections[name] === undefined
-      return (
-        <Fragment key={name}>
-          <ListSubheader
-            component="div"
-            onClick={() => setOpenSections({ ...openSections, [name]: !open })}
-            sx={{
-              position: 'sticky',
-              top: (theme) => theme.spacing(8),
-              zIndex: (theme) => theme.zIndex.appBar - 1,
-              cursor: 'pointer',
-            }}
-          >
-            <Typography variant="subtitle2" fontWeight={600}>
-              {name}
-            </Typography>
-          </ListSubheader>
-          {open &&
-            _.sortBy(selections[category.entryId], 'name').map((selection) => {
-              const selectionPath = `${forcePath}.selections.selection.${force.selections.selection.indexOf(selection)}`
-              const summary = summarizeChildren(selection, selectionPath)
+  const categories = force.categories.category.map((category) => {
+    if (!selections[category.entryId]) return null
+    const { name } = findId(gameData, gameData.catalogues[force.catalogueId], category.entryId)
+    if (name === 'Configuration') return null
+    const open = openSections[name] || openSections[name] === undefined
+    return (
+      <Fragment key={name}>
+        <ListSubheader
+          component="div"
+          onClick={() => setOpenSections({ ...openSections, [name]: !open })}
+          sx={{
+            position: 'sticky',
+            top: (theme) => theme.spacing(8),
+            zIndex: (theme) => theme.zIndex.appBar - 1,
+            cursor: 'pointer',
+          }}
+        >
+          <Typography variant="subtitle2" fontWeight={600}>
+            {name}
+          </Typography>
+        </ListSubheader>
+        {open && (
+          <TransitionGroup component={null}>
+            {_.sortBy(selections[category.entryId], 'name').map((selection) => {
+              const idx = selectionIndex.get(selection)
+              const selectionPath = `${forcePath}.selections.selection.${idx}`
+              const summary = summarizeChildren(selection)
               const selectedRow = selectionPath === path
               const cost = costString(sumCosts(selection))
               const canDelete = canDeleteSelection(selection, selectionPath)
               return (
-                <Fragment key={selection.id}>
+                <Collapse key={selection.id}>
                   <ListItemButton
                     dense
                     selected={selectedRow}
                     onClick={() => setPath(selectionPath)}
-                    sx={{ px: 2, py: 1 }}
+                    sx={{ px: 2, py: 1, alignItems: 'flex-start', display: 'flex' }}
                   >
                     <ListItemText
-                      primary={
-                        <Typography variant="subtitle1" fontWeight={600}>
-                          {selection.name}
-                        </Typography>
-                      }
-                      secondary={
-                        summary ? (
-                          <Typography
-                            variant="body2"
-                            color="text.secondary"
-                            sx={{
-                              display: '-webkit-box',
-                              WebkitLineClamp: 2,
-                              WebkitBoxOrient: 'vertical',
-                              overflow: 'hidden',
-                            }}
-                          >
-                            {summary}
-                          </Typography>
-                        ) : null
-                      }
+                      primary={selection.name}
+                      primaryTypographyProps={{
+                        component: 'div',
+                        variant: 'subtitle1',
+                        fontWeight: 600,
+                        sx: { whiteSpace: 'normal', wordBreak: 'keep-all', overflowWrap: 'normal', hyphens: 'manual' },
+                      }}
+                      secondary={summary || null}
+                      secondaryTypographyProps={{
+                        component: 'div',
+                        variant: 'body2',
+                        color: 'text.secondary',
+                        sx: {
+                          display: '-webkit-box',
+                          WebkitLineClamp: 2,
+                          WebkitBoxOrient: 'vertical',
+                          overflow: 'hidden',
+                          whiteSpace: 'normal',
+                          wordBreak: 'keep-all',
+                          overflowWrap: 'normal',
+                          hyphens: 'manual',
+                        },
+                      }}
                     />
                     {cost && (
                       <Typography variant="caption" sx={{ ml: 2, whiteSpace: 'nowrap' }}>
                         {cost}
                       </Typography>
                     )}
+                    <IconButton
+                      edge="end"
+                      size="small"
+                      aria-label="duplicate"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        const parent = _.get(roster, pathParent(selectionPath))
+                        parent.selections = parent.selections || { selection: [] }
+                        parent.selections.selection.push(copySelection(selection))
+                        setRoster(roster)
+                        const newIdx = parent.selections.selection.length - 1
+                        const basePath = pathParent(selectionPath)
+                        setPath(`${basePath}.selections.selection.${newIdx}`)
+                      }}
+                      sx={{ ml: 1 }}
+                    >
+                      <Copy size={18} />
+                    </IconButton>
                     <IconButton
                       edge="end"
                       size="small"
@@ -173,12 +201,14 @@ const Force = () => {
                     </IconButton>
                   </ListItemButton>
                   <Divider component="div" />
-                </Fragment>
+                </Collapse>
               )
             })}
-        </Fragment>
-      )
-    })
+          </TransitionGroup>
+        )}
+      </Fragment>
+    )
+  })
 
   const globalErrors = _.uniq(errors?.filter((e) => !e.includes('must have')))
 
@@ -262,32 +292,44 @@ const Force = () => {
           ))}
         </ul>
       )}
-      <Box className="grid columns">
-        <Box className="selections" sx={{ pr: 2, borderRight: (theme) => `1px solid ${theme.palette.divider}` }}>
+      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '420px 1fr 0.8fr' }, gap: 2 }}>
+        {/* Left: Add Unit (desktop) */}
+        <Box sx={{ display: { xs: 'none', md: 'block' } }}>
+          <Typography variant="subtitle1" fontWeight={600} sx={{ px: 2, py: 1 }}>
+            Add Unit
+          </Typography>
+          <Box sx={{ px: 2 }}>
+            <AddUnit />
+          </Box>
+        </Box>
+
+        {/* Middle: Selections list */}
+        <Box
+          className="selections"
+          sx={{ pr: { md: 2 }, borderRight: { md: (theme) => `1px solid ${theme.palette.divider}` } }}
+        >
           <Typography variant="subtitle1" fontWeight={600} sx={{ px: 2, py: 1 }}>
             Selections
           </Typography>
-          <List sx={{ pt: 0 }}>
-            <ListItemButton
-              dense
-              selected={path === forcePath}
-              onClick={() => setPath(forcePath)}
-              sx={{ px: 2, py: 1 }}
-            >
-              <ListItemText
-                primary={
-                  <Typography variant="subtitle1" fontWeight={600}>
-                    Add Unit
-                  </Typography>
-                }
-              />
-            </ListItemButton>
-            <Divider component="div" />
-            {categories}
-          </List>
+          <ConfigPills forcePath={forcePath} getEntry={getEntry} />
+          <List sx={{ pt: 0, pl: 0, listStyle: 'none' }}>{categories}</List>
         </Box>
-        <Box sx={{ pl: 2 }}>{path === forcePath ? <AddUnit errors={errors} /> : <Selection errors={errors} />}</Box>
+        {/* Right: Unit details */}
+        <Box sx={{ pl: { md: 2 } }}>{path === forcePath ? null : <Selection errors={errors} />}</Box>
       </Box>
+      {isMobile && (
+        <>
+          <Fab
+            color="primary"
+            aria-label="Add unit"
+            onClick={() => setAddOpen(true)}
+            sx={{ position: 'fixed', bottom: theme.spacing(3), right: theme.spacing(3) }}
+          >
+            <Plus size={20} />
+          </Fab>
+          <AddUnitDrawer open={addOpen} onClose={() => setAddOpen(false)} />
+        </>
+      )}
     </Box>
   )
 }

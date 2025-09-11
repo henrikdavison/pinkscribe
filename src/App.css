@@ -11,6 +11,14 @@
   margin: auto;
 }
 
+/* Ensure MUI list text wraps normally (override any legacy globals) */
+.MuiListItemText-root p {
+  white-space: normal !important;
+  word-break: keep-all !important;
+  overflow-wrap: normal !important;
+  hyphens: manual !important;
+}
+
 #tooltip {
   max-width: 40rem;
   white-space: break-spaces;

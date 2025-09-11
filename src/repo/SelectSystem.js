@@ -212,7 +212,7 @@ const SelectSystem = ({ setSystemInfo, setMode, previouslySelected, error }) => 
           >
             {updatingSystem ? `${updatingSystem.done} files downloaded` : 'Load'}
           </Button>
-          {selected !== 'Add New' && !updatingSystem && !systems[selected].externalPath && (
+          {selected !== 'Add New' && !updatingSystem && systems?.[selected] && !systems[selected].externalPath && (
             <Button
               onClick={async () => {
                 if (updatingSystem) {
@@ -239,7 +239,7 @@ const SelectSystem = ({ setSystemInfo, setMode, previouslySelected, error }) => 
               Update data
             </Button>
           )}
-          {selected !== 'Add New' && !updatingSystem && (
+          {selected !== 'Add New' && !updatingSystem && systems?.[selected] && (
             <Button
               onClick={async () => {
                 try {

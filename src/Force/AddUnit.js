@@ -1,17 +1,20 @@
 import _ from 'lodash'
-import { Fragment } from 'react'
+import { Fragment, useMemo } from 'react'
 import pluralize from 'pluralize'
 
 // Import functions and hooks for roster management and game data
 import { useRoster, useRosterErrors, useSystem, useOpenCategories, usePath } from '../Context.js'
 import { costString, addSelection, findId, gatherCatalogues, getCatalogue, getMaxCount } from '../utils.js'
-import { getEntry } from '../validate.js'
+import { getEntry, pathToForce } from '../validate.js'
 import Box from '@mui/material/Box/index.js'
 import Typography from '@mui/material/Typography/index.js'
-import Table from '@mui/material/Table/index.js'
-import TableBody from '@mui/material/TableBody/index.js'
-import TableRow from '@mui/material/TableRow/index.js'
-import TableCell from '@mui/material/TableCell/index.js'
+import List from '@mui/material/List/index.js'
+import ListSubheader from '@mui/material/ListSubheader/index.js'
+import ListItemButton from '@mui/material/ListItemButton/index.js'
+import ListItemText from '@mui/material/ListItemText/index.js'
+import IconButton from '@mui/material/IconButton/index.js'
+import { Plus } from 'lucide-react'
+import config from '../config/configPills.json'
 
 // Helper function to check if there’s a validation error for a given category name
 const hasMatchingError = (errors, name) => {
@@ -62,33 +65,34 @@ const AddUnit = () => {
   const rosterErrors = useRosterErrors() // Validation errors for the roster
   const [openCategories, setOpenCategories] = useOpenCategories() // Track open/closed state of categories
 
-  const force = _.get(roster, path) // Get the current force in the roster based on path
+  const forcePath = pathToForce(path)
+  const force = _.get(roster, forcePath) // Always resolve to force, even when a selection is focused
   const catalogue = getCatalogue(roster, path, gameData) // Get the catalogue associated with this force
+  // no transition here — update list synchronously for immediate feedback
 
-  const entries = {} // Object to store entries by category
-  const categoryErrors = [] // Array to store errors related to categories
+  const entries = useMemo(() => {
+    const map = {}
+    const cats = new Set()
+    const parseEntry = (entryLink) => {
+      try {
+        const entry = getEntry(roster, path, entryLink.id, gameData)
+        if (!entry.hidden && getMaxCount(entry) !== 0) {
+          let primary = _.find(entry.categoryLinks, 'primary')?.targetId || '(No Category)'
+          map[primary] = map[primary] || []
+          map[primary].push(entry)
+          cats.add(primary)
+        }
+      } catch {}
+    }
+    gatherCatalogues(catalogue, gameData).forEach((c) => {
+      c.entryLinks?.forEach(parseEntry)
+      c.selectionEntries?.forEach(parseEntry)
+    })
+    return map
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [catalogue, gameData, force?.id])
 
-  // Parse each entry link and add it to `entries` if it’s valid
-  const parseEntry = (entryLink) => {
-    try {
-      const entry = getEntry(roster, path, entryLink.id, gameData)
-
-      // Only add entries that are visible and have a non-zero max count
-      if (!entry.hidden && getMaxCount(entry) !== 0) {
-        let primary = _.find(entry.categoryLinks, 'primary')?.targetId || '(No Category)'
-        entries[primary] = entries[primary] || []
-        entries[primary].push(entry)
-      }
-    } catch {}
-  }
-
-  // Gather all catalogues associated with this force and parse each entry
-  gatherCatalogues(catalogue, gameData).forEach((c) => {
-    c.entryLinks?.forEach(parseEntry)
-    c.selectionEntries?.forEach(parseEntry)
-  })
-
-  // Create category rows to display available units for each category in the UI
+  // Create list sections per category (expand non-configuration by default)
   const categories = force.categories.category.map((category) => {
     if (!entries[category.entryId]) {
       return null // Skip if no entries exist for this category
@@ -97,61 +101,89 @@ const AddUnit = () => {
     const catEntries = _.sortBy(entries[category.entryId], 'name') // Sort entries alphabetically
     category = findId(gameData, catalogue, category.entryId) || category // Find category details from game data
 
-    const open = openCategories[category.name] // Check if this category is open in the UI
+    const sysId = gameData?.gameSystem?.id
+    const sysName = gameData?.gameSystem?.name
+    const sysCfg = config[sysId] ||
+      config[sysName] ||
+      config.default || { enabled: true, categoryNames: ['Configuration'] }
+    const isConfig = (sysCfg.categoryNames || ['Configuration']).includes(category.name)
+    const open = openCategories[category.name] ?? !isConfig // default open unless config
     const error = hasMatchingError(rosterErrors[path], category.name) // Check if there’s an error for this category
     return (
       <Fragment key={category.name}>
-        <TableRow has-error={error} className="category">
-          <TableCell
-            colSpan={2}
-            data-tooltip-id="tooltip"
-            data-tooltip-html={error}
-            open={open}
-            onClick={() =>
-              setOpenCategories({
-                ...openCategories,
-                [category.name]: !open,
-              })
-            }
-          >
+        <ListSubheader
+          component="div"
+          data-tooltip-id="tooltip"
+          data-tooltip-html={error}
+          onClick={() =>
+            setOpenCategories({
+              ...openCategories,
+              [category.name]: !open,
+            })
+          }
+          sx={{
+            position: 'sticky',
+            top: (theme) => theme.spacing(8),
+            zIndex: (theme) => theme.zIndex.appBar - 1,
+            cursor: 'pointer',
+          }}
+        >
+          <Typography variant="subtitle2" fontWeight={600}>
             {category.name}
-          </TableCell>
-        </TableRow>
+          </Typography>
+        </ListSubheader>
         {open &&
           catEntries.map((entry) => {
             const error = hasMatchingError(rosterErrors[path], entry.name)
+            const costsObj = sumDefaultCosts(entry)
+            const cost = costString(costsObj)
+            const perUnitCost = Object.values(costsObj).reduce((a, b) => a + (typeof b === 'number' ? b : 0), 0)
+            const count =
+              force.selections?.selection?.filter(
+                (s) => _.last((s.entryId || '').split('::')) === _.last((entry.id || '').split('::')),
+              ).length || 0
+            const secondary =
+              count > 0 ? `${count} selected${perUnitCost ? ` • ${count * perUnitCost} pts total` : ''}` : null
             return (
-              <TableRow
-                has-error={error}
+              <ListItemButton
                 key={entry.id}
-                className="add-unit"
+                dense
                 onClick={() => {
                   addSelection(force, entry, gameData, null, catalogue)
                   setRoster(roster)
-                  setPath(`${path}.selections.selection.${force.selections.selection.length - 1}`)
+                  setPath(`${forcePath}.selections.selection.${force.selections.selection.length - 1}`)
                 }}
+                data-tooltip-id="tooltip"
+                data-tooltip-html={error}
+                selected={count > 0}
+                sx={{ px: 2, py: 1, alignItems: 'flex-start' }}
               >
-                <TableCell data-tooltip-id="tooltip" data-tooltip-html={error}>
-                  {entry.name}
-                </TableCell>
-                <TableCell className="cost">{costString(sumDefaultCosts(entry))}</TableCell>
-              </TableRow>
+                <ListItemText
+                  primary={entry.name}
+                  primaryTypographyProps={{ variant: 'subtitle1', fontWeight: 600 }}
+                  secondary={secondary}
+                  secondaryTypographyProps={{ variant: 'body2', color: 'text.secondary' }}
+                />
+                {cost && (
+                  <Typography variant="caption" sx={{ ml: 2, whiteSpace: 'nowrap' }}>
+                    {cost}
+                  </Typography>
+                )}
+                <IconButton edge="end" size="small" aria-label="Add">
+                  <Plus size={18} />
+                </IconButton>
+              </ListItemButton>
             )
           })}
       </Fragment>
     )
   })
 
-  // Render the Add Unit section with categories and entries
+  // Render the Add Unit list with sticky subheaders
   return (
-    <Box className="selections">
-      <Typography variant="subtitle1" fontWeight={600}>
-        Add Unit
-      </Typography>
-      {categoryErrors.length > 0 && <ul className="errors">{categoryErrors}</ul>}
-      <Table size="small" role="grid">
-        <TableBody>{categories}</TableBody>
-      </Table>
+    <Box>
+      {/* Reserved for category-level errors */}
+      <List sx={{ pt: 0, pl: 0, listStyle: 'none' }}>{categories}</List>
     </Box>
   )
 }

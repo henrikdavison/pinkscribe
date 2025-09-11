@@ -2,7 +2,7 @@ import _ from 'lodash'
 import an from 'indefinite'
 import pluralize from 'pluralize'
 
-import { findId, gatherCatalogues, getCatalogue, randomId } from './utils.js'
+import { findId, gatherCatalogues, getCatalogue, randomId, sumCosts } from './utils.js'
 
 // Lightweight debugging hooks to trace where validation messages come from
 const recordErrorDetail = (message, detail) => {
@@ -75,11 +75,15 @@ export const validateRoster = (roster, gameData) => {
       return errors
     }
 
+    // Compute live totals once to avoid depending on roster.costs recompute on every keystroke
+    const totals = sumCosts(roster)
     roster.costLimits?.costLimit.forEach((cl) => {
-      const cost = roster.costs?.cost.find((c) => c.typeId === cl.typeId)
-      if (cost && cl.value !== -1 && cost.value > cl.value) {
+      const type = gameData.gameSystem.costTypes?.find((ct) => ct.id === cl.typeId)
+      if (!type) return
+      const value = totals[type.name] || 0
+      if (cl.value !== -1 && value > cl.value) {
         errors[''] = errors[''] || []
-        errors[''].push(`Roster has ${cost.value}${cost.name}, more than the limit of ${cl.value}${cl.name}`)
+        errors[''].push(`Roster has ${value}${type.name}, more than the limit of ${cl.value}${cl.name}`)
       }
     })
 
@@ -371,8 +375,8 @@ const checkConstraints = (roster, path, entry, gameData, group = false) => {
           actual = countBy(subject, entry.id, constraint, collectGroupIds(entry))
         }
 
-        // Find up to 20 concrete matches for debugging (for counts only)
-        const matches = costConstraint ? [] : collectSelectionMatches(subject, entry.id, path).slice(0, 20)
+        // Find a limited number of concrete matches for debugging (counts only)
+        const matches = costConstraint ? [] : collectSelectionMatches(subject, entry.id, path).slice(0, 8)
         const name = getSubjectName(subject, constraint)
         const entryName = entry.name.replace(/[^A-z]+$/, '')
 
@@ -627,7 +631,7 @@ const applyModifiers = (roster, path, entry, gameData, catalogue) => {
         throw new Error("modifier.type === 'remove' while modifier.field !== 'category'")
       }
 
-      entry.categoryLinks = entry.categoryLinks.filter((link) => link.targetId !== modifier.value)
+      entry.categoryLinks = (entry.categoryLinks || []).filter((link) => link.targetId !== modifier.value)
     } else if (modifier.type === 'set-primary' || modifier.type === 'unset-primary') {
       if (modifier.field !== 'category') {
         debugger

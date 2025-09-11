@@ -27,18 +27,23 @@ export const useRoster = () => {
 
   return [
     roster,
-    (r, updated = true) =>
+    // recalcCosts: skip total roster cost recomputation for cheap edits (names/notes)
+    (r, updated = true, recalcCosts = true) =>
       setRoster(
         r && {
           ...r,
           __: { ...r.__, updated },
-          costs: {
-            cost: Object.entries(sumCosts(r)).map(([name, value]) => ({
-              name,
-              value,
-              typeId: gameData.gameSystem.costTypes.find((ct) => ct.name === name).id,
-            })),
-          },
+          ...(recalcCosts
+            ? {
+                costs: {
+                  cost: Object.entries(sumCosts(r)).map(([name, value]) => ({
+                    name,
+                    value,
+                    typeId: gameData.gameSystem.costTypes.find((ct) => ct.name === name).id,
+                  })),
+                },
+              }
+            : {}),
         },
       ),
   ]
@@ -48,7 +53,15 @@ export const useUpdateRoster = () => {
   const [roster, setRoster] = useRoster()
 
   return (path, value) => {
-    setRoster(_.set(roster, path, value))
+    // Heuristic: text-only edits shouldn't trigger a full cost recompute
+    const cheapEdit =
+      path === 'name' ||
+      path === 'customNotes' ||
+      /\.customName$/.test(path) ||
+      path.endsWith('.page') ||
+      path.endsWith('.publicationId') ||
+      path.startsWith('costLimits.')
+    setRoster(_.set(roster, path, value), true, !cheapEdit)
   }
 }
 

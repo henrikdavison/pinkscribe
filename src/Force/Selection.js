@@ -1,19 +1,15 @@
 import _ from 'lodash'
-import { useState } from 'react'
+import { useMemo, useState, useEffect, memo } from 'react'
 import pluralize from 'pluralize'
-import { Tooltip } from 'react-tooltip'
 import Box from '@mui/material/Box/index.js'
-import Button from '@mui/material/Button/index.js'
 import Typography from '@mui/material/Typography/index.js'
 import FormControlLabel from '@mui/material/FormControlLabel/index.js'
 import MuiRadio from '@mui/material/Radio/index.js'
 import MuiCheckbox from '@mui/material/Checkbox/index.js'
 import TextField from '@mui/material/TextField/index.js'
-import { DebounceInput } from 'react-debounce-input'
 
 import { useSystem, useRoster, useRosterErrors, usePath } from '../Context.js'
 import { getEntry, pathToForce } from '../validate.js'
-import SelectForce from './SelectForce.js'
 import {
   costString,
   findId,
@@ -26,7 +22,6 @@ import {
   getMaxCount,
   isCollective,
   selectionName,
-  copySelection,
 } from '../utils.js'
 import Profiles, { collectSelectionProfiles, collectEntryProfiles } from './Profiles.js'
 import Rules, { collectRules } from './Rules.js'
@@ -45,19 +40,16 @@ const Selection = () => {
 
   const catalogue = getCatalogue(roster, path, gameData)
   const selection = _.get(roster, path)
-  const selectionEntry = getEntry(roster, path, selection.entryId, gameData)
-  const forcePath = pathToForce(path)
 
-  // Build concise summary of currently equipped/selected options
-  const summary = (() => {
+  // Build concise summary at top-level to satisfy hooks rules
+  const summary = useMemo(() => {
+    if (!selection) return ''
     const leaves = (selection.selections?.selection || []).map((s, i) => ({
       s,
       entry: getEntry(roster, `${path}.selections.selection.${i}`, s.entryId, gameData),
     }))
-
     const important = leaves.filter(({ entry }) => {
       if (!entry) return false
-      // Ignore non-leaf options that still contain choices
       if (entry.selectionEntries || entry.selectionEntryGroups) return false
       const costs = Object.values(sumCosts(entry))
       const hasCost = costs.some((v) => v)
@@ -70,7 +62,6 @@ const Selection = () => {
       )
       return hasCost || hasRules || hasNonWeaponProfile || categoryHints || !onlyWeapons
     })
-
     const counts = {}
     important.forEach(({ s }) => {
       const name = s.name
@@ -80,122 +71,25 @@ const Selection = () => {
       .map(([name, n]) => (n > 1 ? `${name} ×${n}` : name))
       .sort()
       .join(', ')
-  })()
+  }, [gameData, path, roster, selection])
 
-  // Determine whether this selection can be deleted without violating min constraints
-  const parent = _.get(roster, pathParent(path))
-  const groupEntry = selection.entryGroupId ? getEntry(roster, path, selection.entryGroupId, gameData) : null
-  const entryMin = selectionEntry ? getMinCount(selectionEntry) : 0
-  const groupMin = groupEntry ? getMinCount(groupEntry) : 0
-  const siblings = parent?.selections?.selection || []
-  let canDelete = true
-  if (groupEntry && groupMin > 0) {
-    const groupCount = siblings.filter((s) => s.entryGroupId === selection.entryGroupId).length
-    canDelete = groupCount > groupMin
-  } else if (selectionEntry && entryMin > 0) {
-    if (selectionEntry.collective) {
-      const total = _.sum(
-        siblings
-          .filter((s) => s.entryId === selection.entryId)
-          .map((s) => (typeof s.number === 'number' ? s.number : 1)),
-      )
-      canDelete = total > entryMin
-    } else {
-      const count = siblings.filter((s) => s.entryId === selection.entryId).length
-      canDelete = count > entryMin
-    }
+  if (!selection || !selection.entryId) {
+    return (
+      <div className="selection">
+        <Typography variant="body2" color="text.secondary">
+          Select a unit to see its details.
+        </Typography>
+      </div>
+    )
   }
+  const selectionEntry = getEntry(roster, path, selection.entryId, gameData)
+
+  // summary already computed
+
+  // Deletion gating not needed in this pane (removed actions)
 
   return (
     <Box className="selection" sx={{ maxHeight: 'calc(100vh - 7em)', overflow: 'auto' }}>
-      <Box component="nav" sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-        <Tooltip id="move-tooltip" openOnClick={true} clickable={true}>
-          <label>
-            Move to different force
-            <SelectForce
-              value={forcePath}
-              onChange={(newPath) => {
-                const oldForce = _.get(roster, forcePath)
-                _.pull(oldForce.selections.selection, selection)
-
-                const newForce = _.get(roster, newPath)
-                newForce.selections = newForce.selections || { selection: [] }
-                newForce.selections.selection.push(selection)
-
-                setRoster(roster)
-                setPath(forcePath)
-              }}
-            />
-          </label>
-        </Tooltip>
-        <Button variant="outlined" size="small" data-tooltip-id="move-tooltip">
-          <span data-tooltip-id="tooltip" data-tooltip-html="Move to different force">
-            ->
-          </span>
-        </Button>
-        <Button variant="outlined" size="small" data-tooltip-id="custom-name-tooltip">
-          <span data-tooltip-id="tooltip" data-tooltip-html="Customize">
-            ✍
-          </span>
-        </Button>
-        <Tooltip
-          id="custom-name-tooltip"
-          openOnClick={true}
-          clickable={true}
-          afterShow={(e) => {
-            setTimeout(
-              () => document.getElementById('custom-name-tooltip').getElementsByTagName('input')[0].focus(),
-              10,
-            )
-          }}
-        >
-          <label>
-            Custom Name
-            <DebounceInput
-              minLength={2}
-              debounceTimeout={300}
-              value={selection.customName}
-              onChange={(e) => {
-                selection.customName = e.target.value
-                setRoster(roster)
-              }}
-            />
-          </label>
-        </Tooltip>
-
-        <Button
-          variant="outlined"
-          size="small"
-          onClick={() => {
-            const parent = _.get(roster, pathParent(path))
-            parent.selections.selection.push(copySelection(selection))
-            setRoster(roster)
-          }}
-          data-tooltip-id="tooltip"
-          data-tooltip-html="Duplicate"
-        >
-          ⎘
-        </Button>
-        <Button
-          variant="outlined"
-          size="small"
-          onClick={(e) => {
-            const parent = _.get(roster, pathParent(path))
-            _.pull(parent.selections.selection, selection)
-            setRoster(roster)
-
-            setPath(pathParent(path))
-
-            e.stopPropagation()
-            e.preventDefault()
-          }}
-          data-tooltip-id="tooltip"
-          data-tooltip-html="Remove"
-          disabled={!canDelete}
-        >
-          x
-        </Button>
-      </Box>
       <Typography variant="subtitle1" fontWeight={600} onClick={() => setOpen(true)}>
         {selectionName(selection)}
       </Typography>
@@ -287,7 +181,7 @@ const useOnSelect = (path, selection, entryGroup) => {
   }
 }
 
-const Entry = ({ catalogue, entry, path, selection, selectionEntry, entryGroup }) => {
+const Entry = memo(({ catalogue, entry, path, selection, selectionEntry, entryGroup }) => {
   const onSelect = useOnSelect(path, selection, entryGroup)
 
   const min = getMinCount(entry) * selection.number
@@ -310,9 +204,9 @@ const Entry = ({ catalogue, entry, path, selection, selectionEntry, entryGroup }
       catalogue={catalogue}
     />
   )
-}
+})
 
-const EntryGroup = ({ path, entryGroup, selection, selectionEntry }) => {
+const EntryGroup = memo(({ path, entryGroup, selection, selectionEntry }) => {
   const gameData = useSystem()
   const [roster] = useRoster()
   const onSelect = useOnSelect(path, selection, entryGroup)
@@ -379,9 +273,9 @@ const EntryGroup = ({ path, entryGroup, selection, selectionEntry }) => {
       </AccordionDetails>
     </Accordion>
   )
-}
+})
 
-const Radio = ({ catalogue, selection, entryGroup, onSelect }) => {
+const Radio = memo(({ catalogue, selection, entryGroup, onSelect }) => {
   const gameData = useSystem()
   const min = getMinCount(entryGroup)
   const max = getMaxCount(entryGroup)
@@ -444,9 +338,9 @@ const Radio = ({ catalogue, selection, entryGroup, onSelect }) => {
       })}
     </>
   )
-}
+})
 
-const Checkbox = ({ catalogue, selection, option, onSelect, entryGroup }) => {
+const Checkbox = memo(({ catalogue, selection, option, onSelect, entryGroup }) => {
   const gameData = useSystem()
 
   const cost = costString(sumCosts(option))
@@ -486,25 +380,42 @@ const Checkbox = ({ catalogue, selection, option, onSelect, entryGroup }) => {
       }
     />
   )
-}
+})
 
-const Count = ({ catalogue, selection, option, min, max, onSelect, entryGroup }) => {
+const Count = memo(({ catalogue, selection, option, min, max, onSelect, entryGroup }) => {
   const gameData = useSystem()
 
   const value = _.sum(selection.selections?.selection.map((s) => (s.entryId === option.id ? s.number : 0))) || 0
+  const [inputValue, setInputValue] = useState(value)
   const cost = costString(sumCosts(option))
+
+  // Keep local input in sync when underlying value changes externally
+  useEffect(() => setInputValue(value), [value])
 
   const numberTip =
     min === max ? `${min} ${pluralize(option.name)}` : max === -1 ? '' : `${min}-${max} ${pluralize(option.name)}`
+
+  // Debounce committing number changes to reduce churn
+  const commit = useMemo(() => _.debounce((n) => onSelect(option, n), 150), [onSelect, option])
+
+  useEffect(() => () => commit.cancel(), [commit])
 
   return (
     <>
       <TextField
         type="number"
         size="small"
-        value={value}
+        value={inputValue}
         inputProps={{ min, max: max === -1 ? 1000 : max, step: 1 }}
-        onChange={(e) => onSelect(option, parseInt(e.target.value, 10))}
+        onChange={(e) => {
+          const n = parseInt(e.target.value, 10)
+          setInputValue(Number.isNaN(n) ? '' : n)
+          if (!Number.isNaN(n)) commit(n)
+        }}
+        onBlur={() => {
+          const n = parseInt(inputValue, 10)
+          if (!Number.isNaN(n)) onSelect(option, n)
+        }}
         data-tooltip-id="tooltip"
         data-tooltip-html={numberTip}
         sx={{ width: 90, mr: 1 }}
@@ -518,4 +429,4 @@ const Count = ({ catalogue, selection, option, min, max, onSelect, entryGroup })
       {cost && ` (${cost})`}
     </>
   )
-}
+})
