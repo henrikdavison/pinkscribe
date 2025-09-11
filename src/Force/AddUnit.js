@@ -145,7 +145,9 @@ const AddUnit = () => {
   // Render the Add Unit section with categories and entries
   return (
     <Box className="selections">
-      <Typography variant="h6">Add Unit</Typography>
+      <Typography variant="subtitle1" fontWeight={600}>
+        Add Unit
+      </Typography>
       {categoryErrors.length > 0 && <ul className="errors">{categoryErrors}</ul>}
       <Table size="small" role="grid">
         <TableBody>{categories}</TableBody>

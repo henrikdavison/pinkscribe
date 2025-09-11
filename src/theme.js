@@ -1,6 +1,4 @@
 import { createTheme, alpha } from '@mui/material/styles/index.js'
-import typography from './theme/typography.js'
-import spacing from './theme/spacing.js'
 
 import '@fontsource/inter/400.css'
 import '@fontsource/inter/500.css'
@@ -24,38 +22,16 @@ export const getTheme = (mode = 'dark') => {
       },
     },
     typography: {
-      ...typography,
-      fontFamily: 'Inter, sans-serif',
+      fontFamily: 'Inter, Arial, sans-serif',
+      h6: { fontWeight: 600 },
+      subtitle1: { fontWeight: 600 },
+      button: { textTransform: 'none' },
     },
     shape: { borderRadius: 8 },
     // Use MUI's default 25-level shadow scale to satisfy components (e.g., Paper elevation=8)
     // We can customize later with a full-length array if desired
     spacing: 8,
     components: {
-      MuiTypography: {
-        variants: [
-          {
-            props: { variant: 'pointsValue' },
-            style: ({ theme }) => ({
-              fontSize: '0.75rem',
-              fontWeight: 600,
-              color: mode === 'dark' ? theme.palette.primary.light : theme.palette.primary.dark,
-              backgroundColor: theme.palette.shades?.primaryShade,
-              borderRadius: 8,
-              paddingLeft: theme.spacing(1),
-              paddingRight: theme.spacing(1),
-              paddingTop: theme.spacing(0.5),
-              paddingBottom: theme.spacing(0.5),
-              lineHeight: '1rem',
-              whiteSpace: 'nowrap',
-            }),
-          },
-          {
-            props: { variant: 'unitName' },
-            style: { fontSize: '1rem', fontWeight: 500 },
-          },
-        ],
-      },
       MuiDrawer: {
         styleOverrides: {
           paper: {
@@ -64,48 +40,14 @@ export const getTheme = (mode = 'dark') => {
         },
       },
       MuiButton: {
-        variants: [
-          {
-            props: { variant: 'options' },
-            style: ({ theme }) => ({
-              borderRadius: 16,
-              borderColor: theme.palette.text.secondary,
-              color: theme.palette.text.secondary,
-              paddingBottom: 4,
-              paddingTop: 4,
-              borderWidth: 1,
-              borderStyle: 'solid',
-              '&:hover': {
-                borderColor: theme.palette.text.secondary,
-                backgroundColor: alpha(theme.palette.text.secondary, 0.1),
-              },
-            }),
-          },
-        ],
+        styleOverrides: {
+          root: { textTransform: 'none' },
+        },
       },
     },
   })
 
-  // Derived color shades for quick UI accents
-  theme.palette.shades = {
-    primaryShade: alpha(theme.palette.primary.main, 0.2),
-    secondaryShade: alpha(theme.palette.secondary.main, 0.2),
-    errorShade: alpha(theme.palette.error.main, 0.2),
-    infoShade: alpha(theme.palette.info.main, 0.2),
-    warningShade: alpha(theme.palette.warning.main, 0.2),
-    successShade: alpha(theme.palette.success.main, 0.2),
-  }
-
-  // Attach simple utils for layout
-  theme.utils = {
-    giveOuterPadding: {
-      px: {
-        xs: spacing.outerAppPadding.xs,
-        sm: spacing.outerAppPadding.sm,
-        md: spacing.outerAppPadding.md,
-      },
-    },
-  }
+  // Note: spacing is 8 by default (8pt grid). Use theme.spacing(n).
 
   return theme
 }

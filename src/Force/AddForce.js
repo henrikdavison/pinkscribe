@@ -33,7 +33,7 @@ const AddForce = () => {
   return (
     <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, gap: 2 }}>
       <Box>
-        <Typography variant="h6" gutterBottom>
+        <Typography variant="subtitle1" fontWeight={600} gutterBottom>
           Forces
         </Typography>
         <Stack spacing={1}>
@@ -62,7 +62,7 @@ const AddForce = () => {
         </Stack>
       </Box>
       <Box>
-        <Typography variant="h6" gutterBottom>
+        <Typography variant="subtitle1" fontWeight={600} gutterBottom>
           Add Force
         </Typography>
         <Stack spacing={2}>

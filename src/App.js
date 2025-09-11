@@ -61,7 +61,9 @@ const Body = ({ children, systemInfo, setSystemInfo }) => {
       <AppBar position="static" color="transparent" elevation={0} sx={{ mb: 2 }}>
         <Toolbar sx={{ display: 'flex', gap: 2 }}>
           <Stack direction="row" spacing={1} alignItems="center" sx={{ flexGrow: 1 }}>
-            <Typography variant="h6">PinkScribe</Typography>
+            <Typography variant="subtitle1" fontWeight={600}>
+              PinkScribe
+            </Typography>
             <Typography variant="caption">{packageJson.version}</Typography>
             {roster && (
               <Box sx={{ ml: 2 }}>

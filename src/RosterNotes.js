@@ -7,7 +7,7 @@ const RosterNotes = () => {
   const [roster, setRoster] = useRoster()
   return (
     <Box sx={{ mt: 2 }}>
-      <Typography variant="h6" gutterBottom>
+      <Typography variant="subtitle1" fontWeight={600} gutterBottom>
         Notes
       </Typography>
       <TextField

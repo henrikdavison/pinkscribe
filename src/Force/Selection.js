@@ -196,7 +196,7 @@ const Selection = () => {
           x
         </Button>
       </Box>
-      <Typography variant="h6" onClick={() => setOpen(true)}>
+      <Typography variant="subtitle1" fontWeight={600} onClick={() => setOpen(true)}>
         {selectionName(selection)}
       </Typography>
       {!!summary && (

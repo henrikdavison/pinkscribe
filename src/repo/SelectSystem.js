@@ -65,7 +65,7 @@ const SelectSystem = ({ setSystemInfo, setMode, previouslySelected, error }) => 
 
   return (
     <Box>
-      <Typography variant="h5" gutterBottom>
+      <Typography variant="subtitle1" fontWeight={600} gutterBottom>
         Select Game System
       </Typography>
       {systems ? (
@@ -136,7 +136,9 @@ const SelectSystem = ({ setSystemInfo, setMode, previouslySelected, error }) => 
                   </Typography>
                 </Box>
               )}
-              <Typography variant="h6">{systems[selected]?.description || selected}</Typography>
+              <Typography variant="subtitle1" fontWeight={600}>
+                {systems[selected]?.description || selected}
+              </Typography>
               <Typography variant="body2">
                 Version {systems[selected]?.version || '—'} - {systems[selected]?.lastUpdateDescription || '—'}
               </Typography>

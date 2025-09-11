@@ -12,7 +12,7 @@ const CostLimits = () => {
 
   return (
     <Box>
-      <Typography variant="h6" gutterBottom>
+      <Typography variant="subtitle1" fontWeight={600} gutterBottom>
         Cost Limits
       </Typography>
       <Box

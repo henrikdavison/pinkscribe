@@ -76,7 +76,9 @@ const ListSelection = ({ indent, selectionPath, selection }) => {
         data-indent={indent}
       >
         <TableCell data-tooltip-id="tooltip" data-tooltip-html={selectionErrors.join('<br />') || undefined}>
-          <Typography variant="unitName">{selectionName(selection)}</Typography>
+          <Typography variant="subtitle1" fontWeight={600}>
+            {selectionName(selection)}
+          </Typography>
           {!!upgrades && (
             <Typography variant="body2" color="text.secondary" className="clamp-2">
               {upgrades}

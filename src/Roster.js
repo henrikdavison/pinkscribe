@@ -34,7 +34,7 @@ const Roster = ({ currentForce, setCurrentForce }) => {
       )}
       {path === '' ? (
         <Box component="section">
-          <Typography variant="h6" gutterBottom>
+          <Typography variant="subtitle1" fontWeight={600} gutterBottom>
             Roster
           </Typography>
           <TextField

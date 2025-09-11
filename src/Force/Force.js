@@ -84,7 +84,7 @@ const Force = () => {
 
   return (
     <Box component="section">
-      <Typography variant="h6" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+      <Typography variant="subtitle1" fontWeight={600} sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
         {force.catalogueName} <Typography component="span">{force.name}</Typography>
         {cost && (
           <Typography component="span" variant="caption">
@@ -162,7 +162,9 @@ const Force = () => {
       )}
       <Box className="grid columns">
         <Box className="selections">
-          <Typography variant="h6">Selections</Typography>
+          <Typography variant="subtitle1" fontWeight={600}>
+            Selections
+          </Typography>
           <Table size="small">
             <TableBody>
               <TableRow className={path === forcePath ? 'selected' : ''} onClick={() => setPath(forcePath)}>
