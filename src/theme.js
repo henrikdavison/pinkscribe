@@ -1,4 +1,4 @@
-import { createTheme, alpha } from '@mui/material/styles'
+import { createTheme, alpha } from '@mui/material/styles/index.js'
 import typography from './theme/typography.js'
 import spacing from './theme/spacing.js'
 
