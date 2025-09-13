@@ -810,8 +810,12 @@ const checkCondition = (roster, path, condition, gameData) => {
 
 let lastRoster
 let cache = {}
-window.cacheHits = 0
-window.cacheMisses = 0
+try {
+  if (typeof window !== 'undefined') {
+    window.cacheHits = 0
+    window.cacheMisses = 0
+  }
+} catch {}
 
 export const getEntry = (roster, path, id, gameData, ignoreCache) => {
   if (id[0] === ':') {
@@ -823,7 +827,9 @@ export const getEntry = (roster, path, id, gameData, ignoreCache) => {
     cache = {}
     lastRoster = roster
   } else if (!ignoreCache && cache[cachePath]) {
-    window.cacheHits++
+    try {
+      if (typeof window !== 'undefined') window.cacheHits++
+    } catch {}
     return cache[cachePath]
   }
 
@@ -948,7 +954,9 @@ export const getEntry = (roster, path, id, gameData, ignoreCache) => {
   })
 
   cache[cachePath] = entry
-  window.cacheMisses++
+  try {
+    if (typeof window !== 'undefined') window.cacheMisses++
+  } catch {}
 
   return entry
 }
