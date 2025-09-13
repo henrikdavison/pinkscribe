@@ -115,8 +115,9 @@ const Force = () => {
           onClick={() => setOpenSections({ ...openSections, [name]: !open })}
           sx={{
             position: 'sticky',
-            top: (t) => t.spacing(8),
-            zIndex: (t) => t.zIndex.appBar,
+            // Stay below AppBar + roster header
+            top: { xs: 112, md: 120 },
+            zIndex: (t) => t.zIndex.appBar - 2,
             cursor: 'pointer',
             bgcolor: 'background.default',
             px: 2,

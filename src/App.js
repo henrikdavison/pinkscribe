@@ -65,7 +65,12 @@ const Body = ({ children, systemInfo, setSystemInfo }) => {
   return (
     <div>
       <Tooltip id="tooltip" />
-      <AppBar position="static" color="transparent" elevation={0} sx={{ mb: 2 }}>
+      <AppBar
+        position="sticky"
+        color="transparent"
+        elevation={0}
+        sx={{ mb: 2, top: 0, zIndex: (t) => t.zIndex.appBar }}
+      >
         <Toolbar sx={{ display: 'flex', gap: 2, px: { xs: 2, sm: 3 } }}>
           <Stack direction="row" spacing={1} alignItems="center" sx={{ flexGrow: 1 }}>
             <RostaraLogo withText />
