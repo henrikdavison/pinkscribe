@@ -129,13 +129,14 @@ const AddUnit = () => {
           }
           sx={{
             position: 'sticky',
-            top: (t) => t.spacing(8),
-            zIndex: (t) => t.zIndex.appBar,
+            top: 8,
+            zIndex: (t) => t.zIndex.appBar + 2,
             cursor: 'pointer',
             bgcolor: 'background.default',
+            boxShadow: (t) => `0 1px 0 ${t.palette.divider}`,
             px: 2,
             py: 0.75,
-            borderBottom: (t) => `1px solid ${t.palette.divider}`,
+            borderBottom: 'none',
           }}
         >
           <Box sx={{ display: 'flex', alignItems: 'center' }}>
@@ -183,6 +184,7 @@ const AddUnit = () => {
                 data-tooltip-html={error}
                 selected={selected}
                 sx={{
+                  zIndex: 0,
                   px: 2,
                   py: 1,
                   alignItems: 'center',

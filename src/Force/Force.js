@@ -117,12 +117,13 @@ const Force = () => {
             position: 'sticky',
             // Stay below AppBar + roster header
             top: { xs: 112, md: 120 },
-            zIndex: (t) => t.zIndex.appBar - 2,
+            zIndex: (t) => t.zIndex.appBar + 2,
             cursor: 'pointer',
             bgcolor: 'background.default',
+            boxShadow: (t) => `0 1px 0 ${t.palette.divider}`,
             px: 2,
             py: 0.75,
-            borderBottom: (t) => `1px solid ${t.palette.divider}`,
+            borderBottom: 'none',
           }}
         >
           <Box sx={{ display: 'flex', alignItems: 'center' }}>
@@ -187,6 +188,7 @@ const Force = () => {
                           : 'transparent',
                       transition: 'background-color 160ms ease',
                     }}
+                    sx={{ zIndex: 0 }}
                   >
                     <Box sx={{ position: 'relative', flex: 1, minWidth: 0, mr: 1 }}>
                       {/* Primary line wrapper so icon can center against title, not the whole block */}

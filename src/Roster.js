@@ -79,7 +79,7 @@ const Roster = ({ currentForce, setCurrentForce }) => {
       <Box
         sx={{
           position: 'sticky',
-          top: { xs: 56, sm: 64 },
+          top: 0,
           zIndex: (t) => t.zIndex.appBar - 1,
           bgcolor: 'background.default',
           pb: 1,
