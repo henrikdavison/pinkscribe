@@ -2,12 +2,12 @@ import { useEffect, useState } from 'react'
 import path from 'path-browserify'
 import { BounceLoader } from 'react-spinners'
 import _ from 'lodash'
-import Box from '@mui/material/Box/index.js'
-import Typography from '@mui/material/Typography/index.js'
-import Button from '@mui/material/Button/index.js'
-import Select from '@mui/material/Select/index.js'
-import MenuItem from '@mui/material/MenuItem/index.js'
-import Stack from '@mui/material/Stack/index.js'
+import Box from '@mui/material/Box'
+import Typography from '@mui/material/Typography'
+import Button from '@mui/material/Button'
+import Select from '@mui/material/Select'
+import MenuItem from '@mui/material/MenuItem'
+import Stack from '@mui/material/Stack'
 
 import {
   listGameSystems,
@@ -132,7 +132,7 @@ const SelectSystem = ({ setSystemInfo, setMode, previouslySelected, error }) => 
               {error && previouslySelected.name === selected && (
                 <Box className="errors">
                   <Typography color="error">
-                    PinkScribe is having an issue loading this data. This is a bug; please report it.
+                    Rostara is having an issue loading this data. This is a bug; please report it.
                   </Typography>
                 </Box>
               )}

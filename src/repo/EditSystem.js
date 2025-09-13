@@ -94,7 +94,7 @@ const EditSystem = ({ systemInfo, setSystemInfo }) => {
             <nav>
               <ul>
                 <li>
-                  <strong>PinkScribe</strong>
+                  <strong>Rostara</strong>
                 </li>
                 {gameData && (
                   <li>

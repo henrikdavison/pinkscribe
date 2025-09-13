@@ -1,11 +1,13 @@
-import { createTheme } from '@mui/material/styles/index.js'
+import { createTheme, alpha } from '@mui/material/styles'
+import { getSharedTheme } from './theme/sharedTheme.js'
 
 import '@fontsource/inter/400.css'
 import '@fontsource/inter/500.css'
 import '@fontsource/inter/600.css'
 import '@fontsource/inter/700.css'
 
-export const getTheme = (mode = 'dark') => {
+export const getTheme = (mode = 'dark', useShared = false) => {
+  if (useShared) return getSharedTheme(mode)
   const theme = createTheme({
     palette: {
       mode: mode === 'dark' ? 'dark' : 'light',
@@ -32,6 +34,7 @@ export const getTheme = (mode = 'dark') => {
     // We can customize later with a full-length array if desired
     spacing: 8,
     components: {
+      // Adopt key bits from MUI Dashboard template
       MuiDrawer: {
         styleOverrides: {
           paper: {
@@ -44,6 +47,42 @@ export const getTheme = (mode = 'dark') => {
           root: { textTransform: 'none' },
         },
       },
+      MuiListItemButton: {
+        styleOverrides: {
+          root: ({ theme }) => ({
+            borderRadius: theme.shape.borderRadius,
+            '&.Mui-selected': {
+              backgroundColor: alpha(theme.palette.primary.main, theme.palette.mode === 'dark' ? 0.18 : 0.12),
+              '&:hover': {
+                backgroundColor: alpha(theme.palette.primary.main, theme.palette.mode === 'dark' ? 0.22 : 0.16),
+              },
+            },
+          }),
+        },
+      },
+      MuiListItemIcon: {
+        styleOverrides: {
+          root: ({ theme }) => ({
+            minWidth: 0,
+            marginRight: theme.spacing(2.5),
+            color: 'inherit',
+          }),
+        },
+      },
+      MuiAvatar: {
+        styleOverrides: {
+          root: {
+            width: 32,
+            height: 32,
+          },
+        },
+      },
+      MuiAppBar: {
+        defaultProps: { elevation: 0 },
+      },
+      MuiPaper: {
+        defaultProps: { elevation: 0 },
+      },
     },
   })
 
@@ -53,5 +92,6 @@ export const getTheme = (mode = 'dark') => {
 }
 
 // Keep existing import sites working; default to dark mode
-const theme = getTheme('dark')
+// Activate the shared (dashboard) theme by default
+const theme = getTheme('dark', true)
 export default theme

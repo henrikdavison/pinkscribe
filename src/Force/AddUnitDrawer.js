@@ -1,8 +1,6 @@
-import SwipeableDrawer from '@mui/material/SwipeableDrawer/index.js'
-import Box from '@mui/material/Box/index.js'
-import Typography from '@mui/material/Typography/index.js'
-import IconButton from '@mui/material/IconButton/index.js'
-import { X } from 'lucide-react'
+import SwipeableDrawer from '@mui/material/SwipeableDrawer'
+import Box from '@mui/material/Box'
+import Button from '@mui/material/Button'
 import AddUnit from './AddUnit.js'
 
 const AddUnitDrawer = ({ open, onClose }) => {
@@ -14,23 +12,35 @@ const AddUnitDrawer = ({ open, onClose }) => {
       onOpen={() => {}}
       disableBackdropTransition
       PaperProps={{
+        elevation: 0,
         sx: {
           maxHeight: '75vh',
           borderTopLeftRadius: 2,
           borderTopRightRadius: 2,
+          bgcolor: 'background.default',
         },
       }}
     >
-      <Box sx={{ p: 2 }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-          <Typography variant="subtitle1" fontWeight={600} sx={{ flexGrow: 1 }}>
-            Add Unit
-          </Typography>
-          <IconButton onClick={onClose} aria-label="Close add unit">
-            <X size={18} />
-          </IconButton>
-        </Box>
+      <Box sx={{ pt: 1, pb: 8, px: 2 }}>
+        {/* Handle */}
+        <Box sx={{ width: 36, height: 4, bgcolor: 'text.disabled', borderRadius: 2, mx: 'auto', mb: 1 }} />
         <AddUnit />
+      </Box>
+      {/* Bottom action bar */}
+      <Box
+        sx={{
+          position: 'sticky',
+          bottom: 0,
+          left: 0,
+          right: 0,
+          p: 1,
+          bgcolor: 'background.default',
+          borderTop: (t) => `1px solid ${t.palette.divider}`,
+        }}
+      >
+        <Button fullWidth variant="contained" onClick={onClose}>
+          Close
+        </Button>
       </Box>
     </SwipeableDrawer>
   )

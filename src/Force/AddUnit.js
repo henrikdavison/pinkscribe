@@ -6,14 +6,18 @@ import pluralize from 'pluralize'
 import { useRoster, useRosterErrors, useSystem, useOpenCategories, usePath } from '../Context.js'
 import { costString, addSelection, findId, gatherCatalogues, getCatalogue, getMaxCount } from '../utils.js'
 import { getEntry, pathToForce } from '../validate.js'
-import Box from '@mui/material/Box/index.js'
-import Typography from '@mui/material/Typography/index.js'
-import List from '@mui/material/List/index.js'
-import ListSubheader from '@mui/material/ListSubheader/index.js'
-import ListItemButton from '@mui/material/ListItemButton/index.js'
-import ListItemText from '@mui/material/ListItemText/index.js'
-import IconButton from '@mui/material/IconButton/index.js'
-import { Plus } from 'lucide-react'
+import Box from '@mui/material/Box'
+import Typography from '@mui/material/Typography'
+import List from '@mui/material/List'
+import ListSubheader from '@mui/material/ListSubheader'
+import ListItemButton from '@mui/material/ListItemButton'
+import IconButton from '@mui/material/IconButton'
+import Fade from '@mui/material/Fade'
+import { Plus, AlertTriangle, ChevronDown } from 'lucide-react'
+import { alpha } from '@mui/material/styles'
+import Collapse from '@mui/material/Collapse'
+import useMediaQuery from '@mui/material/useMediaQuery'
+import { useTheme } from '@mui/material/styles'
 import config from '../config/configPills.json'
 
 // Helper function to check if there’s a validation error for a given category name
@@ -64,6 +68,8 @@ const AddUnit = () => {
   const [path, setPath] = usePath() // Current path in roster for editing
   const rosterErrors = useRosterErrors() // Validation errors for the roster
   const [openCategories, setOpenCategories] = useOpenCategories() // Track open/closed state of categories
+  const theme = useTheme()
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'))
 
   const forcePath = pathToForce(path)
   const force = _.get(roster, forcePath) // Always resolve to force, even when a selection is focused
@@ -123,17 +129,34 @@ const AddUnit = () => {
           }
           sx={{
             position: 'sticky',
-            top: (theme) => theme.spacing(8),
-            zIndex: (theme) => theme.zIndex.appBar - 1,
+            top: (t) => t.spacing(8),
+            zIndex: (t) => t.zIndex.appBar,
             cursor: 'pointer',
+            bgcolor: 'background.default',
+            px: 2,
+            py: 0.75,
+            borderBottom: (t) => `1px solid ${t.palette.divider}`,
           }}
         >
-          <Typography variant="subtitle2" fontWeight={600}>
-            {category.name}
-          </Typography>
+          <Box sx={{ display: 'flex', alignItems: 'center' }}>
+            <Typography variant="overline" sx={{ fontWeight: 700, letterSpacing: 1.1, color: 'text.secondary' }}>
+              {category.name}
+            </Typography>
+            <IconButton
+              size="small"
+              aria-label={open ? 'Collapse' : 'Expand'}
+              sx={{
+                ml: 'auto',
+                transform: open ? 'rotate(0deg)' : 'rotate(-90deg)',
+                transition: 'transform 160ms ease',
+              }}
+            >
+              <ChevronDown size={18} />
+            </IconButton>
+          </Box>
         </ListSubheader>
-        {open &&
-          catEntries.map((entry) => {
+        <Collapse in={open} timeout="auto" unmountOnExit>
+          {catEntries.map((entry) => {
             const error = hasMatchingError(rosterErrors[path], entry.name)
             const costsObj = sumDefaultCosts(entry)
             const cost = costString(costsObj)
@@ -144,6 +167,7 @@ const AddUnit = () => {
               ).length || 0
             const secondary =
               count > 0 ? `${count} selected${perUnitCost ? ` • ${count * perUnitCost} pts total` : ''}` : null
+            const selected = count > 0
             return (
               <ListItemButton
                 key={entry.id}
@@ -151,19 +175,69 @@ const AddUnit = () => {
                 onClick={() => {
                   addSelection(force, entry, gameData, null, catalogue)
                   setRoster(roster)
-                  setPath(`${forcePath}.selections.selection.${force.selections.selection.length - 1}`)
+                  if (!isMobile) {
+                    setPath(`${forcePath}.selections.selection.${force.selections.selection.length - 1}`)
+                  }
                 }}
                 data-tooltip-id="tooltip"
                 data-tooltip-html={error}
-                selected={count > 0}
-                sx={{ px: 2, py: 1, alignItems: 'flex-start' }}
+                selected={selected}
+                sx={{
+                  px: 2,
+                  py: 1,
+                  alignItems: 'center',
+                  bgcolor: error
+                    ? (t) => alpha(t.palette.warning.main, t.palette.mode === 'dark' ? 0.14 : 0.08)
+                    : selected
+                    ? (t) => alpha(t.palette.primary.main, t.palette.mode === 'dark' ? 0.24 : 0.12)
+                    : 'transparent',
+                  transition: 'background-color 160ms ease, color 160ms ease',
+                  '&.Mui-selected': {
+                    bgcolor: (t) =>
+                      `${alpha(t.palette.primary.main, t.palette.mode === 'dark' ? 0.24 : 0.12)} !important`,
+                  },
+                }}
               >
-                <ListItemText
-                  primary={entry.name}
-                  primaryTypographyProps={{ variant: 'subtitle1', fontWeight: 600 }}
-                  secondary={secondary}
-                  secondaryTypographyProps={{ variant: 'body2', color: 'text.secondary' }}
-                />
+                <Box sx={{ position: 'relative', flex: 1, minWidth: 0, mr: 1 }}>
+                  {/* Primary line wrapper so icon centers on title */}
+                  <Box sx={{ position: 'relative', display: 'block' }}>
+                    <Fade in={!!error} mountOnEnter unmountOnExit timeout={160}>
+                      <IconButton
+                        size="small"
+                        onClick={(e) => e.stopPropagation()}
+                        disableRipple
+                        disableFocusRipple
+                        data-tooltip-id="tooltip"
+                        data-tooltip-html={error}
+                        sx={{
+                          color: (t) => t.palette.warning.main,
+                          p: 0.25,
+                          position: 'absolute',
+                          left: 0,
+                          top: '50%',
+                          transform: 'translateY(-50%)',
+                        }}
+                        aria-label="Show issues"
+                        component="span"
+                      >
+                        <AlertTriangle size={16} />
+                      </IconButton>
+                    </Fade>
+                    <Typography
+                      variant="subtitle2"
+                      fontWeight={600}
+                      noWrap
+                      sx={{ pl: error ? 3 : 0, pr: 1, transition: 'padding-left 160ms ease', minWidth: 0 }}
+                    >
+                      {entry.name}
+                    </Typography>
+                  </Box>
+                  <Collapse in={!!secondary} timeout={160} unmountOnExit>
+                    <Typography variant="body2" color="text.secondary">
+                      {secondary}
+                    </Typography>
+                  </Collapse>
+                </Box>
                 {cost && (
                   <Typography variant="caption" sx={{ ml: 2, whiteSpace: 'nowrap' }}>
                     {cost}
@@ -175,6 +249,7 @@ const AddUnit = () => {
               </ListItemButton>
             )
           })}
+        </Collapse>
       </Fragment>
     )
   })

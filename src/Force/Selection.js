@@ -1,15 +1,25 @@
 import _ from 'lodash'
 import { useMemo, useState, useEffect, memo } from 'react'
 import pluralize from 'pluralize'
-import Box from '@mui/material/Box/index.js'
-import Typography from '@mui/material/Typography/index.js'
-import FormControlLabel from '@mui/material/FormControlLabel/index.js'
-import MuiRadio from '@mui/material/Radio/index.js'
-import MuiCheckbox from '@mui/material/Checkbox/index.js'
-import TextField from '@mui/material/TextField/index.js'
+import Box from '@mui/material/Box'
+import Typography from '@mui/material/Typography'
+import Tabs from '@mui/material/Tabs'
+import Tab from '@mui/material/Tab'
+import { AlertTriangle, Trash2, SlidersHorizontal, ScrollText } from 'lucide-react'
+import Stack from '@mui/material/Stack'
+import Alert from '@mui/material/Alert'
+import Collapse from '@mui/material/Collapse'
+import { TransitionGroup } from 'react-transition-group'
+import FormControlLabel from '@mui/material/FormControlLabel'
+import MuiRadio from '@mui/material/Radio'
+import MuiCheckbox from '@mui/material/Checkbox'
+import TextField from '@mui/material/TextField'
+import IconButton from '@mui/material/IconButton'
+import useMediaQuery from '@mui/material/useMediaQuery'
+import { useTheme } from '@mui/material/styles'
 
 import { useSystem, useRoster, useRosterErrors, usePath } from '../Context.js'
-import { getEntry, pathToForce } from '../validate.js'
+import { getEntry, pathParent } from '../validate.js'
 import {
   costString,
   findId,
@@ -27,16 +37,19 @@ import Profiles, { collectSelectionProfiles, collectEntryProfiles } from './Prof
 import Rules, { collectRules } from './Rules.js'
 import Categories, { collectCategories } from './Categories.js'
 import SelectionModal from './SelectionModal.js'
-import { pathParent } from '../validate.js'
-import Accordion from '@mui/material/Accordion/index.js'
-import AccordionSummary from '@mui/material/AccordionSummary/index.js'
-import AccordionDetails from '@mui/material/AccordionDetails/index.js'
+import Accordion from '@mui/material/Accordion'
+import AccordionSummary from '@mui/material/AccordionSummary'
+import AccordionDetails from '@mui/material/AccordionDetails'
 
 const Selection = () => {
   const gameData = useSystem()
   const [roster, setRoster] = useRoster()
   const [path, setPath] = usePath()
   const [open, setOpen] = useState(false)
+  const [activeTab, setActiveTab] = useState('options')
+  const errorsMap = useRosterErrors()
+  const theme = useTheme()
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'))
 
   const catalogue = getCatalogue(roster, path, gameData)
   const selection = _.get(roster, path)
@@ -44,26 +57,14 @@ const Selection = () => {
   // Build concise summary at top-level to satisfy hooks rules
   const summary = useMemo(() => {
     if (!selection) return ''
+    // Show all leaf options (including default weapons) to mirror list view
     const leaves = (selection.selections?.selection || []).map((s, i) => ({
       s,
       entry: getEntry(roster, `${path}.selections.selection.${i}`, s.entryId, gameData),
     }))
-    const important = leaves.filter(({ entry }) => {
-      if (!entry) return false
-      if (entry.selectionEntries || entry.selectionEntryGroups) return false
-      const costs = Object.values(sumCosts(entry))
-      const hasCost = costs.some((v) => v)
-      const hasRules = (entry.rules || []).length > 0
-      const profileTypes = (entry.profiles || []).map((p) => (p.typeName || '').toLowerCase())
-      const onlyWeapons = profileTypes.length > 0 && profileTypes.every((t) => t.includes('weapon'))
-      const hasNonWeaponProfile = profileTypes.some((t) => t && !t.includes('weapon'))
-      const categoryHints = (entry.categoryLinks || []).some((c) =>
-        /enhance|relic|warlord|trait|psych|power|spell|artefact|upgrade/i.test(c.name || ''),
-      )
-      return hasCost || hasRules || hasNonWeaponProfile || categoryHints || !onlyWeapons
-    })
+    const leafOptions = leaves.filter(({ entry }) => entry && !(entry.selectionEntries || entry.selectionEntryGroups))
     const counts = {}
-    important.forEach(({ s }) => {
+    leafOptions.forEach(({ s }) => {
       const name = s.name
       counts[name] = (counts[name] || 0) + (typeof s.number === 'number' ? s.number : 1)
     })
@@ -71,6 +72,34 @@ const Selection = () => {
       .map(([name, n]) => (n > 1 ? `${name} ×${n}` : name))
       .sort()
       .join(', ')
+  }, [gameData, path, roster, selection])
+
+  // Desktop-only delete control (mobile handled in Force.js dialog). Must be before any early return.
+  const canDelete = useMemo(() => {
+    if (!selection || !selection.entryId) return false
+    const parent = _.get(roster, pathParent(path))
+    const entry = getEntry(roster, `${path}`, selection.entryId, gameData)
+    const groupEntry = selection.entryGroupId ? getEntry(roster, `${path}`, selection.entryGroupId, gameData) : null
+    const entryMin = entry ? getMinCount(entry) : 0
+    const groupMin = groupEntry ? getMinCount(groupEntry) : 0
+    const siblings = parent?.selections?.selection || []
+    if (groupEntry && groupMin > 0) {
+      const groupCount = siblings.filter((s) => s.entryGroupId === selection.entryGroupId).length
+      return groupCount > groupMin
+    } else if (entry && entryMin > 0) {
+      if (entry.collective) {
+        const total = _.sum(
+          siblings
+            .filter((s) => s.entryId === selection.entryId)
+            .map((s) => (typeof s.number === 'number' ? s.number : 1)),
+        )
+        return total > entryMin
+      } else {
+        const count = siblings.filter((s) => s.entryId === selection.entryId).length
+        return count > entryMin
+      }
+    }
+    return true
   }, [gameData, path, roster, selection])
 
   if (!selection || !selection.entryId) {
@@ -84,47 +113,141 @@ const Selection = () => {
   }
   const selectionEntry = getEntry(roster, path, selection.entryId, gameData)
 
-  // summary already computed
+  // Local tab state already declared above to satisfy hooks rules
 
-  // Deletion gating not needed in this pane (removed actions)
+  // Collect errors relevant to this selection: exact path, descendants, and force-level messages that name it
+  const selectionErrors = (() => {
+    const direct = Object.entries(errorsMap)
+      .filter(([key]) => key === path || key.startsWith(path + '.'))
+      .flatMap(([, value]) => value || [])
+      .map((e) => (typeof e === 'string' ? e : e?.message || String(e)))
+    const forcePath = path.replace(/\.selections.*/, '')
+    const forceLevel = (errorsMap[forcePath] || []).filter(
+      (e) => typeof e === 'string' && (e.includes(selection.name) || e.includes(selectionEntry?.name || '')),
+    )
+    return Array.from(new Set([...direct, ...forceLevel]))
+  })()
+
+  // summary already computed
 
   return (
     <Box className="selection" sx={{ maxHeight: 'calc(100vh - 7em)', overflow: 'auto' }}>
-      <Typography variant="subtitle1" fontWeight={600} onClick={() => setOpen(true)}>
-        {selectionName(selection)}
-      </Typography>
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+        <Typography variant="h5" fontWeight={700} onClick={() => setOpen(true)} sx={{ flex: 1 }}>
+          {selectionName(selection)}
+        </Typography>
+        {!isMobile && (
+          <IconButton
+            size="small"
+            aria-label="delete selection"
+            disabled={!canDelete}
+            onClick={() => {
+              const parent = _.get(roster, pathParent(path))
+              _.pull(parent.selections?.selection || [], selection)
+              setRoster(roster)
+              let newPath = path
+              while (!_.get(roster, newPath)) newPath = pathParent(newPath)
+              setPath(newPath)
+            }}
+          >
+            <Trash2 size={18} />
+          </IconButton>
+        )}
+      </Box>
       {!!summary && (
         <Typography variant="body2" sx={{ color: 'text.secondary', mb: 1 }}>
           {summary}
         </Typography>
       )}
+      {/* Tabs: Options | Rules */}
+      <Box sx={{ borderBottom: (t) => `1px solid ${t.palette.divider}`, mb: 1 }}>
+        <Tabs
+          value={activeTab}
+          onChange={(_e, v) => setActiveTab(v)}
+          variant="fullWidth"
+          textColor="primary"
+          indicatorColor="primary"
+        >
+          <Tab
+            value="options"
+            label={
+              <Box sx={{ display: 'inline-flex', alignItems: 'center', gap: 1 }}>
+                <SlidersHorizontal size={16} />
+                <span>Options</span>
+              </Box>
+            }
+          />
+          <Tab
+            value="rules"
+            label={
+              <Box sx={{ display: 'inline-flex', alignItems: 'center', gap: 1 }}>
+                <ScrollText size={16} />
+                <span>Rules</span>
+              </Box>
+            }
+          />
+        </Tabs>
+      </Box>
+
       {selectionEntry ? (
         <>
-          {selectionEntry.selectionEntries && (
-            <article>
-              {_.sortBy(selectionEntry.selectionEntries, 'name').map((entry) => (
-                <Entry
-                  key={entry.id}
-                  entry={entry}
-                  path={path}
-                  selection={selection}
-                  selectionEntry={selectionEntry}
-                  entryGroup={null}
-                  catalogue={catalogue}
-                />
-              ))}
-            </article>
+          {activeTab === 'options' && (
+            <>
+              {!!selectionErrors.length && (
+                <Stack spacing={1} sx={{ mb: 1 }}>
+                  <TransitionGroup>
+                    {selectionErrors.map((e, i) => (
+                      <Collapse key={e + i}>
+                        <Alert
+                          variant="outlined"
+                          severity="warning"
+                          icon={<AlertTriangle size={16} />}
+                          sx={{ py: 0.5, alignItems: 'center' }}
+                        >
+                          <Typography variant="body2">{e}</Typography>
+                        </Alert>
+                      </Collapse>
+                    ))}
+                  </TransitionGroup>
+                </Stack>
+              )}
+              {selectionEntry.selectionEntries && (
+                <article>
+                  {_.sortBy(selectionEntry.selectionEntries, 'name').map((entry) => (
+                    <Entry
+                      key={entry.id}
+                      entry={entry}
+                      path={path}
+                      selection={selection}
+                      selectionEntry={selectionEntry}
+                      entryGroup={null}
+                      catalogue={catalogue}
+                    />
+                  ))}
+                </article>
+              )}
+              {selectionEntry.selectionEntryGroups &&
+                _.sortBy(selectionEntry.selectionEntryGroups, 'name').map((entryGroup) => (
+                  <EntryGroup
+                    key={entryGroup.id}
+                    path={path}
+                    entryGroup={entryGroup}
+                    selection={selection}
+                    selectionEntry={selectionEntry}
+                  />
+                ))}
+            </>
           )}
-          {selectionEntry.selectionEntryGroups &&
-            _.sortBy(selectionEntry.selectionEntryGroups, 'name').map((entryGroup) => (
-              <EntryGroup
-                key={entryGroup.id}
-                path={path}
-                entryGroup={entryGroup}
-                selection={selection}
-                selectionEntry={selectionEntry}
-              />
-            ))}
+
+          {activeTab === 'rules' && (
+            <Box sx={{ pt: 0.5 }}>
+              <Categories categories={collectCategories(selection, gameData, catalogue)} />
+              <Profiles profiles={collectSelectionProfiles(selection, gameData)} number={selection.number} />
+              <Rules catalogue={catalogue} rules={collectRules(selection)} />
+            </Box>
+          )}
+
+          {/* Keep the existing modal view for extended info */}
           <SelectionModal open={open} setOpen={setOpen}>
             {open && (
               <>
@@ -220,7 +343,9 @@ const EntryGroup = memo(({ path, entryGroup, selection, selectionEntry }) => {
   const min = getMinCount(entryGroup) * selection.number
   const max = getMaxCount(entryGroup) * selection.number
 
-  if (entryGroup.hidden || entryGroup.selectionEntries?.filter((e) => !e.hidden).length === 0) {
+  const hasVisibleOptions = (entryGroup.selectionEntries || []).some((e) => !e.hidden)
+  const hasSelectedOption = (selection.selections?.selection || []).some((s) => s.entryGroupId === entryGroup.id)
+  if (entryGroup.hidden || (!hasVisibleOptions && !hasSelectedOption)) {
     return null
   }
 
@@ -353,10 +478,6 @@ const Checkbox = memo(({ catalogue, selection, option, onSelect, entryGroup }) =
     return null
   }
 
-  if (option.name === 'Litany of Hate (Aura)') {
-    debugger
-  }
-
   return (
     <FormControlLabel
       control={
@@ -385,28 +506,50 @@ const Checkbox = memo(({ catalogue, selection, option, onSelect, entryGroup }) =
 const Count = memo(({ catalogue, selection, option, min, max, onSelect, entryGroup }) => {
   const gameData = useSystem()
 
-  const value = _.sum(selection.selections?.selection.map((s) => (s.entryId === option.id ? s.number : 0))) || 0
+  const all = selection.selections?.selection || []
+  const value = _.sum(all.map((s) => (s.entryId === option.id ? s.number : 0))) || 0
   const [inputValue, setInputValue] = useState(value)
   const cost = costString(sumCosts(option))
 
   // Keep local input in sync when underlying value changes externally
   useEffect(() => setInputValue(value), [value])
 
+  // If this option belongs to a group with its own max, cap the effective max by the remaining allowance.
+  const groupMax = entryGroup ? getMaxCount(entryGroup) * selection.number : -1
+  const groupTotal = entryGroup
+    ? _.sum(
+        all.filter((s) => s.entryGroupId === entryGroup.id).map((s) => (typeof s.number === 'number' ? s.number : 1)),
+      )
+    : 0
+  const remainingInGroup = groupMax === -1 ? Infinity : Math.max(0, groupMax - (groupTotal - value))
+  const effectiveMax = Math.min(max === -1 ? Infinity : max, remainingInGroup)
+
   const numberTip =
-    min === max ? `${min} ${pluralize(option.name)}` : max === -1 ? '' : `${min}-${max} ${pluralize(option.name)}`
+    min === effectiveMax
+      ? `${min} ${pluralize(option.name)}`
+      : effectiveMax === Infinity
+      ? ''
+      : `${min}-${effectiveMax} ${pluralize(option.name)}`
 
   // Debounce committing number changes to reduce churn
-  const commit = useMemo(() => _.debounce((n) => onSelect(option, n), 150), [onSelect, option])
+  const commit = useMemo(
+    () =>
+      _.debounce((n) => {
+        const clamped = Math.max(min, Math.min(n, effectiveMax === Infinity ? n : effectiveMax))
+        onSelect(option, clamped)
+      }, 150),
+    [onSelect, option, min, effectiveMax],
+  )
 
   useEffect(() => () => commit.cancel(), [commit])
 
   return (
-    <>
+    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, py: 0.25, flexWrap: 'wrap' }}>
       <TextField
         type="number"
         size="small"
         value={inputValue}
-        inputProps={{ min, max: max === -1 ? 1000 : max, step: 1 }}
+        inputProps={{ min, max: effectiveMax === Infinity ? 1000 : effectiveMax, step: 1 }}
         onChange={(e) => {
           const n = parseInt(e.target.value, 10)
           setInputValue(Number.isNaN(n) ? '' : n)
@@ -414,11 +557,14 @@ const Count = memo(({ catalogue, selection, option, min, max, onSelect, entryGro
         }}
         onBlur={() => {
           const n = parseInt(inputValue, 10)
-          if (!Number.isNaN(n)) onSelect(option, n)
+          if (!Number.isNaN(n)) {
+            const clamped = Math.max(min, Math.min(n, effectiveMax === Infinity ? n : effectiveMax))
+            onSelect(option, clamped)
+          }
         }}
         data-tooltip-id="tooltip"
         data-tooltip-html={numberTip}
-        sx={{ width: 90, mr: 1 }}
+        sx={{ width: 86 }}
       />
       <span
         data-tooltip-id="tooltip"
@@ -427,6 +573,6 @@ const Count = memo(({ catalogue, selection, option, min, max, onSelect, entryGro
         {option.name}
       </span>
       {cost && ` (${cost})`}
-    </>
+    </Box>
   )
 })

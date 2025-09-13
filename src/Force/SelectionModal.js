@@ -1,5 +1,5 @@
-import Dialog from '@mui/material/Dialog/index.js'
-import DialogContent from '@mui/material/DialogContent/index.js'
+import Dialog from '@mui/material/Dialog'
+import DialogContent from '@mui/material/DialogContent'
 
 const SelectionModal = ({ children, open, setOpen }) => {
   return (

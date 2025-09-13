@@ -1,4 +1,4 @@
-import { useEffect, useState, useDeferredValue } from 'react'
+import React, { useEffect, useState, useDeferredValue, useContext } from 'react'
 import { BounceLoader } from 'react-spinners'
 import 'react-tooltip/dist/react-tooltip.css'
 import { Tooltip } from 'react-tooltip'
@@ -9,6 +9,7 @@ import path from 'path-browserify'
 import './App.css'
 import { readFiles } from './repo/index.js'
 import SelectSystem from './repo/SelectSystem.js'
+import ColorModeContext from './ColorModeContext.js'
 import Roster from './Roster.js'
 import { saveRoster, downloadRoster } from './repo/rosters.js'
 import {
@@ -25,21 +26,25 @@ import {
   useSystem,
 } from './Context.js'
 import SelectionModal from './Force/SelectionModal.js'
-import SelectForce from './Force/SelectForce.js'
+// Force selector is rendered in Roster header now
 import ViewRoster from './ViewRoster.js'
 import { refreshRoster } from './utils.js'
 import EditSystem from './repo/EditSystem.js'
-import { pathToForce, validateRoster } from './validate.js'
-import packageJson from '../package.json'
+import { validateRoster } from './validate.js'
+// import packageJson from '../package.json'
+import RostaraLogo from './RostaraLogo.js'
 
-import AppBar from '@mui/material/AppBar/index.js'
-import Toolbar from '@mui/material/Toolbar/index.js'
-import Typography from '@mui/material/Typography/index.js'
-import Button from '@mui/material/Button/index.js'
-import Box from '@mui/material/Box/index.js'
-import Menu from '@mui/material/Menu/index.js'
-import MenuItem from '@mui/material/MenuItem/index.js'
-import Stack from '@mui/material/Stack/index.js'
+import AppBar from '@mui/material/AppBar'
+import Toolbar from '@mui/material/Toolbar'
+import Button from '@mui/material/Button'
+import Menu from '@mui/material/Menu'
+import MenuItem from '@mui/material/MenuItem'
+import Stack from '@mui/material/Stack'
+import useMediaQuery from '@mui/material/useMediaQuery'
+import { useTheme } from '@mui/material/styles'
+import IconButton from '@mui/material/IconButton'
+import Divider from '@mui/material/Divider'
+import { MoreVertical } from 'lucide-react'
 
 const Body = ({ children, systemInfo, setSystemInfo }) => {
   const [roster, setRoster] = useRoster()
@@ -48,59 +53,93 @@ const Body = ({ children, systemInfo, setSystemInfo }) => {
     `${roster?.__.filename} has not been saved. Are you sure you want to close it?`,
   )
   const system = useSystem()
-  const [path, setPath] = usePath()
+  const [, setPath] = usePath()
 
   const [open, setOpen] = useState(false)
   const [menuEl, setMenuEl] = useState(null)
+  const { mode, setMode } = useContext(ColorModeContext)
   const { fs, rosterPath } = useFs()
+  const theme = useTheme()
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'))
 
   return (
-    <div className="container">
+    <div>
       <Tooltip id="tooltip" />
       <AppBar position="static" color="transparent" elevation={0} sx={{ mb: 2 }}>
-        <Toolbar sx={{ display: 'flex', gap: 2 }}>
+        <Toolbar sx={{ display: 'flex', gap: 2, px: { xs: 2, sm: 3 } }}>
           <Stack direction="row" spacing={1} alignItems="center" sx={{ flexGrow: 1 }}>
-            <Typography variant="subtitle1" fontWeight={600}>
-              PinkScribe
-            </Typography>
-            <Typography variant="caption">{packageJson.version}</Typography>
-            {roster && (
-              <Box sx={{ ml: 2 }}>
-                <SelectForce value={pathToForce(path)} onChange={setPath}>
-                  <option value="">Manage Roster</option>
-                </SelectForce>
-              </Box>
-            )}
+            <RostaraLogo withText />
+            {/* Force dropdown moved to roster header */}
           </Stack>
 
           {system && (
             <Stack direction="row" spacing={1} alignItems="center">
-              {roster && (
-                <Button variant="outlined" onClick={() => setOpen(!open)}>
-                  View/Print
+              {/* Desktop actions */}
+              {roster && !isMobile && (
+                <>
+                  <Button variant="outlined" onClick={() => setOpen(!open)}>
+                    View/Print
+                  </Button>
+                  <Button variant="outlined" onClick={() => downloadRoster(roster)}>
+                    Download
+                  </Button>
+                  <Button
+                    variant="contained"
+                    disabled={!roster.__.updated}
+                    onClick={async () => {
+                      await saveRoster(roster, fs, rosterPath)
+                      setRoster(roster, false)
+                    }}
+                  >
+                    Save
+                  </Button>
+                </>
+              )}
+              {/* Mobile: collapse actions into a single options menu */}
+              {roster && isMobile && (
+                <IconButton aria-label="Options" onClick={(e) => setMenuEl(e.currentTarget)}>
+                  <MoreVertical size={20} />
+                </IconButton>
+              )}
+              {/* Always keep Menu entry point for desktop */}
+              {!isMobile && (
+                <Button variant="outlined" onClick={(e) => setMenuEl(e.currentTarget)}>
+                  Menu
                 </Button>
               )}
-              {roster && (
-                <Button variant="outlined" onClick={() => downloadRoster(roster)}>
-                  Download
-                </Button>
-              )}
-              {roster && (
-                <Button
-                  variant="contained"
-                  disabled={!roster.__.updated}
-                  onClick={async () => {
-                    await saveRoster(roster, fs, rosterPath)
-                    setRoster(roster, false)
-                  }}
-                >
-                  Save
-                </Button>
-              )}
-              <Button variant="outlined" onClick={(e) => setMenuEl(e.currentTarget)}>
-                Menu
-              </Button>
               <Menu anchorEl={menuEl} open={!!menuEl} onClose={() => setMenuEl(null)}>
+                {/* On mobile, include quick actions here */}
+                {isMobile && roster && (
+                  <>
+                    <MenuItem
+                      onClick={() => {
+                        setMenuEl(null)
+                        setOpen((o) => !o)
+                      }}
+                    >
+                      View / Print
+                    </MenuItem>
+                    <MenuItem
+                      onClick={() => {
+                        setMenuEl(null)
+                        downloadRoster(roster)
+                      }}
+                    >
+                      Download
+                    </MenuItem>
+                    <MenuItem
+                      disabled={!roster.__.updated}
+                      onClick={async () => {
+                        await saveRoster(roster, fs, rosterPath)
+                        setRoster(roster, false)
+                        setMenuEl(null)
+                      }}
+                    >
+                      Save
+                    </MenuItem>
+                    <Divider />
+                  </>
+                )}
                 {roster && (
                   <MenuItem
                     onClick={() => {
@@ -111,6 +150,14 @@ const Body = ({ children, systemInfo, setSystemInfo }) => {
                     Refresh Roster
                   </MenuItem>
                 )}
+                <MenuItem
+                  onClick={() => {
+                    setMode(mode === 'dark' ? 'light' : 'dark')
+                    setMenuEl(null)
+                  }}
+                >
+                  {mode === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+                </MenuItem>
                 {roster && (
                   <MenuItem
                     onClick={async () =>
@@ -222,7 +269,9 @@ function App() {
   if (loading) {
     return (
       <Body systemInfo={systemInfo} setSystemInfo={setSystemInfo}>
-        <BounceLoader color="#36d7b7" className="loading" />
+        <div className="container">
+          <BounceLoader color="#36d7b7" className="loading" />
+        </div>
       </Body>
     )
   }
@@ -230,7 +279,9 @@ function App() {
   if (!systemInfo?.battleScribeVersion) {
     return (
       <Body systemInfo={systemInfo} setSystemInfo={setSystemInfo}>
-        <SelectSystem setSystemInfo={setSystemInfo} setMode={setMode} previouslySelected={systemInfo} />
+        <div className="container">
+          <SelectSystem setSystemInfo={setSystemInfo} setMode={setMode} previouslySelected={systemInfo} />
+        </div>
       </Body>
     )
   }
@@ -249,15 +300,17 @@ function App() {
                 <ErrorBoundary
                   fallbackRender={({ error, resetErrorBoundary }) => {
                     return (
-                      <SelectSystem
-                        setSystemInfo={(i) => {
-                          resetErrorBoundary()
-                          setSystemInfo(i)
-                        }}
-                        setMode={setMode}
-                        previouslySelected={systemInfo}
-                        error={error}
-                      />
+                      <div className="container">
+                        <SelectSystem
+                          setSystemInfo={(i) => {
+                            resetErrorBoundary()
+                            setSystemInfo(i)
+                          }}
+                          setMode={setMode}
+                          previouslySelected={systemInfo}
+                          error={error}
+                        />
+                      </div>
                     )
                   }}
                 >

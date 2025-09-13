@@ -1,5 +1,5 @@
 // src/theme/colors.js
-import { alpha } from '@mui/material/styles/index.js'
+import { alpha } from '@mui/material/styles'
 
 // Helper to create 20% opacity shades
 const generateShade = (color) => alpha(color, 0.2)

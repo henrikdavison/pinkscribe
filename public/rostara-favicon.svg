@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="64" height="64" aria-hidden="true">
+  <!-- Rostara favicon: filled hex with plus -->
+  <title>Rostara</title>
+  <desc>Hexagon with plus symbol, derived from RostaraLogo</desc>
+  <!-- Hexagon fill using theme primary color (#1976d2) -->
+  <path d="M7.5 6h9l3 6-3 6h-9l-3-6 3-6z" fill="#1976d2" />
+  <!-- Plus symbol -->
+  <path d="M12 10.5v3M10.5 12h3" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+</svg>
+

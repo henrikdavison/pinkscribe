@@ -1,14 +1,10 @@
-import React, { useState } from 'react'
+import React from 'react'
 import _ from 'lodash'
-import Box from '@mui/material/Box/index.js'
-import Button from '@mui/material/Button/index.js'
-import Typography from '@mui/material/Typography/index.js'
-import IconButton from '@mui/material/IconButton/index.js'
-import Menu from '@mui/material/Menu/index.js'
-import MenuItem from '@mui/material/MenuItem/index.js'
-import { MoreVertical } from 'lucide-react'
+import Box from '@mui/material/Box'
+import Button from '@mui/material/Button'
+import Typography from '@mui/material/Typography'
 import { usePath, useRoster, useSystem } from '../Context.js'
-import { addSelection, refreshSelection, getCatalogue, getMaxCount } from '../utils.js'
+// no quick-edit menu; chips navigate to selection for editing
 import config from '../config/configPills.json'
 
 const summarizeChildren = (roster, selection, selectionPath, gameData, getEntry) => {
@@ -28,9 +24,8 @@ const summarizeChildren = (roster, selection, selectionPath, gameData, getEntry)
 
 const ConfigPills = ({ forcePath, getEntry }) => {
   const gameData = useSystem()
-  const [roster, setRoster] = useRoster()
+  const [roster] = useRoster()
   const [, setPath] = usePath()
-  const [menu, setMenu] = useState({ anchor: null, selPath: null, selection: null, options: [] })
 
   const force = _.get(roster, forcePath)
   if (!force) return null
@@ -53,31 +48,12 @@ const ConfigPills = ({ forcePath, getEntry }) => {
 
   if (!configSelections.length) return null
 
-  const openMenu = (anchorEl, selection, selPath) => {
-    const entry = getEntry(roster, selPath, selection.entryId, gameData)
-    const groups = entry?.selectionEntryGroups || []
-    const radioGroups = groups.filter((g) => getMaxCount(g) === 1 && (g.selectionEntries || []).length)
-    const options = radioGroups.flatMap((g) => (g.selectionEntries || []).map((opt) => ({ group: g, option: opt })))
-    setMenu({ anchor: anchorEl, selPath, selection, options })
-  }
-
-  const handleChoose = ({ group, option }) => {
-    const { selection, selPath } = menu
-    const catalogue = getCatalogue(roster, selPath, gameData)
-    selection.selections = selection.selections || { selection: [] }
-    selection.selections.selection = (selection.selections.selection || []).filter((s) => s.entryGroupId !== group.id)
-    addSelection(selection, option, gameData, group, catalogue, 1)
-    refreshSelection(roster, selPath, selection, gameData)
-    setRoster(roster)
-    setMenu({ anchor: null, selPath: null, selection: null, options: [] })
-  }
-
   return (
     <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, px: 2, pb: 1 }}>
       {configSelections.map(({ s, path: selPath }) => {
         const summary = summarizeChildren(roster, s, selPath, gameData, getEntry)
         return (
-          <Box key={s.id} sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+          <Box key={s.id}>
             <Button
               variant="outlined"
               size="small"
@@ -93,36 +69,9 @@ const ConfigPills = ({ forcePath, getEntry }) => {
                 </Typography>
               )}
             </Button>
-            {sysCfg.inlineEdit !== false && (
-              <IconButton
-                size="small"
-                onClick={(e) => {
-                  const anchorEl = e.currentTarget.parentElement?.querySelector('button') || e.currentTarget
-                  openMenu(anchorEl, s, selPath)
-                }}
-                aria-label={`Edit ${s.name}`}
-              >
-                <MoreVertical size={16} />
-              </IconButton>
-            )}
           </Box>
         )
       })}
-      <Menu
-        anchorEl={menu.anchor}
-        open={Boolean(menu.anchor)}
-        onClose={() => setMenu({ anchor: null, selPath: null, selection: null, options: [] })}
-      >
-        {menu.options.length ? (
-          menu.options.map(({ group, option }) => (
-            <MenuItem key={option.id} onClick={() => handleChoose({ group, option })}>
-              {group.name ? `${group.name}: ${option.name}` : option.name}
-            </MenuItem>
-          ))
-        ) : (
-          <MenuItem disabled>No quick options</MenuItem>
-        )}
-      </Menu>
     </Box>
   )
 }

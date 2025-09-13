@@ -1,31 +1,16 @@
-import { useState } from 'react'
 import _ from 'lodash'
 
-import { usePath, useRoster, useRosterErrors, useSystem } from '../Context.js'
-import { addForce, costString, gatherCatalogues, sumCosts } from '../utils.js'
+import { usePath, useRoster, useRosterErrors } from '../Context.js'
+import { costString, sumCosts } from '../utils.js'
 import { gatherForces } from './SelectForce.js'
-import Box from '@mui/material/Box/index.js'
-import Typography from '@mui/material/Typography/index.js'
-import FormControl from '@mui/material/FormControl/index.js'
-import InputLabel from '@mui/material/InputLabel/index.js'
-import Select from '@mui/material/Select/index.js'
-import MenuItem from '@mui/material/MenuItem/index.js'
-import Button from '@mui/material/Button/index.js'
-import Stack from '@mui/material/Stack/index.js'
-
-const gatherForceEntries = (faction, gameData) =>
-  _.sortBy(_.flatten(gatherCatalogues(gameData.catalogues[faction], gameData).map((c) => c.forceEntries || [])), 'name')
+import Box from '@mui/material/Box'
+import Typography from '@mui/material/Typography'
+import Stack from '@mui/material/Stack'
+import AddForceForm from './AddForceForm.js'
 
 const AddForce = () => {
-  const gameData = useSystem()
   const errors = useRosterErrors()
-  const catalogues = _.sortBy(gameData.catalogues, 'name').filter((c) => !c.library)
-
-  const [faction, setFaction] = useState(catalogues[0].id)
-  const forceEntries = gatherForceEntries(faction, gameData)
-
-  const [force, setForce] = useState(forceEntries[0].id)
-  const [roster, setRoster] = useRoster()
+  const [roster] = useRoster()
   const [, setPath] = usePath()
 
   const forces = gatherForces(roster)
@@ -65,55 +50,7 @@ const AddForce = () => {
         <Typography variant="subtitle1" fontWeight={600} gutterBottom>
           Add Force
         </Typography>
-        <Stack spacing={2}>
-          <FormControl fullWidth size="small">
-            <InputLabel id="faction-label">Faction</InputLabel>
-            <Select
-              labelId="faction-label"
-              label="Faction"
-              value={faction}
-              onChange={(e) => {
-                setFaction(e.target.value)
-                setForce(gatherForceEntries(e.target.value, gameData)[0].id)
-              }}
-            >
-              {catalogues.map((f) => (
-                <MenuItem key={f.id} value={f.id}>
-                  {f.name}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-
-          <FormControl fullWidth size="small">
-            <InputLabel id="detachment-label">Detachment</InputLabel>
-            <Select
-              labelId="detachment-label"
-              label="Detachment"
-              value={force}
-              onChange={(e) => setForce(e.target.value)}
-            >
-              {forceEntries.map((f) => (
-                <MenuItem key={f.id} value={f.id}>
-                  {f.name}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-
-          <Box>
-            <Button
-              variant="contained"
-              onClick={() => {
-                addForce(roster, force, faction, gameData)
-                setRoster(roster)
-                setPath(`forces.force.${roster.forces.force.length - 1}`)
-              }}
-            >
-              Add
-            </Button>
-          </Box>
-        </Stack>
+        <AddForceForm />
       </Box>
     </Box>
   )

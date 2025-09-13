@@ -1,5 +1,17 @@
 /* Minimal app CSS: rely on MUI for layout/spacing/typography */
 
+/* App-wide gutters container: use where page content needs margins */
+.container {
+  padding-left: 16px;
+  padding-right: 16px;
+}
+@media (min-width: 600px) {
+  .container {
+    padding-left: 24px;
+    padding-right: 24px;
+  }
+}
+
 .clamp-2 {
   display: -webkit-box;
   -webkit-line-clamp: 2;
@@ -22,7 +34,8 @@
 #tooltip {
   max-width: 40rem;
   white-space: break-spaces;
-  z-index: 1000;
+  /* Ensure tooltip overlays sticky headers and popovers */
+  z-index: 2000;
 }
 
 input[type='file'] {

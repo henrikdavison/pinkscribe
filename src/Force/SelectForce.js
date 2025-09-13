@@ -1,8 +1,8 @@
 import _ from 'lodash'
 
-import { useRoster, useRosterErrors } from '../Context.js'
-import Select from '@mui/material/Select/index.js'
-import MenuItem from '@mui/material/MenuItem/index.js'
+import { useRoster } from '../Context.js'
+import Select from '@mui/material/Select'
+import MenuItem from '@mui/material/MenuItem'
 
 export const gatherForces = (parent, path = '', forces = []) => {
   parent.forces?.force.forEach((f, i) => {
@@ -14,18 +14,23 @@ export const gatherForces = (parent, path = '', forces = []) => {
   return forces
 }
 
-const SelectForce = ({ children, onChange, value }) => {
+const SelectForce = ({ children, onChange, value, label, labelId, ...props }) => {
   const [roster] = useRoster()
-  const errors = useRosterErrors()
   const forces = gatherForces(roster)
 
   return (
-    <Select size="small" value={value} onChange={(e) => onChange(e.target.value)}>
+    <Select
+      size="small"
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      labelId={labelId}
+      label={label}
+      {...props}
+    >
       {children}
       {forces.map((path) => (
         <MenuItem value={path} key={path}>
           {'  '.repeat(path.split('.').length / 3)}
-          {Object.keys(errors).find((p) => p.startsWith(path)) ? '!! ' : ''}
           {_.get(roster, path).catalogueName}
           {' - '}
           {_.get(roster, path).name}

@@ -1,7 +1,7 @@
 import { useRoster } from './Context.js'
-import Box from '@mui/material/Box/index.js'
-import Typography from '@mui/material/Typography/index.js'
-import TextField from '@mui/material/TextField/index.js'
+import Box from '@mui/material/Box'
+import Typography from '@mui/material/Typography'
+import TextField from '@mui/material/TextField'
 
 const RosterNotes = () => {
   const [roster, setRoster] = useRoster()

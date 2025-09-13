@@ -13,8 +13,8 @@
     "@emotion/styled": "^11.14.1",
     "@fontsource/inter": "^5.1.0",
     "@isomorphic-git/lightning-fs": "^4.6.0",
-    "@mui/icons-material": "^5.18.0",
-    "@mui/material": "^5.18.0",
+    "@mui/icons-material": "^7.3.2",
+    "@mui/material": "^7.3.2",
     "lucide-react": "^0.454.0",
     "@picocss/pico": "^1.5.7",
     "@tauri-apps/api": "^2.0.0-alpha.5",
@@ -57,7 +57,8 @@
     "tauri": "cross-env BROWSER=none tauri",
     "prep_tauri": "run-script-os",
     "prep_tauri:linux:darwin": "mv build .build_bluescribe && mkdir build && mv .build_bluescribe build/bluescribe && cp build/bluescribe/index.html build/index.html",
-    "prep_tauri:win32": "move build .build_bluescribe && mkdir build && move .build_bluescribe build\\bluescribe && copy build\\bluescribe\\index.html build\\index.html"
+    "prep_tauri:win32": "move build .build_bluescribe && mkdir build && move .build_bluescribe build\\bluescribe && copy build\\bluescribe\\index.html build\\index.html",
+    "smoke:40k": "node scripts/smoke-40k.mjs"
   },
   "eslintConfig": {
     "extends": [

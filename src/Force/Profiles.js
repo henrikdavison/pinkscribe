@@ -2,11 +2,11 @@ import _ from 'lodash'
 
 import { findId, getMinCount } from '../utils.js'
 import { useSystem } from '../Context.js'
-import Table from '@mui/material/Table/index.js'
-import TableBody from '@mui/material/TableBody/index.js'
-import TableRow from '@mui/material/TableRow/index.js'
-import TableHead from '@mui/material/TableHead/index.js'
-import TableCell from '@mui/material/TableCell/index.js'
+import Table from '@mui/material/Table'
+import TableBody from '@mui/material/TableBody'
+import TableRow from '@mui/material/TableRow'
+import TableHead from '@mui/material/TableHead'
+import TableCell from '@mui/material/TableCell'
 
 const Profiles = ({ profiles, number }) => {
   const gameData = useSystem()

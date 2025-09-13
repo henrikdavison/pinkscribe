@@ -22,6 +22,30 @@ module.exports = {
       config.entry = config.entry.replace('index.js', 'index-tauri.js')
     }
 
+    // Inject Babel plugin to parse import attributes (for bsd-schema JSON imports)
+    try {
+      const addBabelPlugin = (rules) => {
+        rules.forEach((r) => {
+          if (r && r.loader && r.loader.includes('babel-loader')) {
+            r.options = r.options || {}
+            r.options.plugins = r.options.plugins || []
+            // Avoid duplicates
+            if (!r.options.plugins.find((p) => String(p).includes('plugin-syntax-import-attributes'))) {
+              r.options.plugins.push(require.resolve('@babel/plugin-syntax-import-attributes'))
+            }
+          }
+          if (r && r.use) addBabelPlugin(r.use)
+          if (r && r.oneOf) addBabelPlugin(r.oneOf)
+          if (r && r.rules) addBabelPlugin(r.rules)
+        })
+      }
+      if (config.module && Array.isArray(config.module.rules)) {
+        addBabelPlugin(config.module.rules)
+      }
+    } catch (e) {
+      // Non-fatal: keep building even if structure changes
+    }
+
     // Silence source-map-loader errors for missing source maps in deps
     const walk = (rules) => {
       rules.forEach((r) => {

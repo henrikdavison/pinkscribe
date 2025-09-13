@@ -1,6 +1,6 @@
 import { findId } from '../utils.js'
-import Box from '@mui/material/Box/index.js'
-import Typography from '@mui/material/Typography/index.js'
+import Box from '@mui/material/Box'
+import Typography from '@mui/material/Typography'
 
 // Functional component to display categories as a comma-separated string
 const Categories = ({ categories }) => {

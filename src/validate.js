@@ -4,6 +4,10 @@ import pluralize from 'pluralize'
 
 import { findId, gatherCatalogues, getCatalogue, randomId, sumCosts } from './utils.js'
 
+// ID helpers: BS data may prefix IDs (e.g., "cat::id"). Normalize to tail for comparisons.
+const normalizeId = (id) => (id || '').split('::').pop()
+const idEquals = (a, b) => normalizeId(a) === normalizeId(b)
+
 // Lightweight debugging hooks to trace where validation messages come from
 const recordErrorDetail = (message, detail) => {
   try {
@@ -36,7 +40,7 @@ const collectSelectionMatches = (subject, entryId, currentPath = '') => {
   if (subject?.selections?.selection) {
     subject.selections.selection.forEach((sel, i) => {
       const path = `${currentPath ? currentPath + '.' : ''}selections.selection.${i}`
-      if (sel.entryId?.includes(entryId) || sel.entryGroupId?.includes(entryId) || hasCategory(sel, entryId)) {
+      if (idEquals(sel.entryId, entryId) || idEquals(sel.entryGroupId, entryId) || hasCategory(sel, entryId)) {
         add(sel, path)
       }
       // Recurse to find nested matches
@@ -204,7 +208,7 @@ const validateSelection = (roster, path, selection, gameData) => {
 }
 
 const hasCategory = (subject, categoryId) => {
-  return !!subject.categories?.category.some((c) => (c.entryId || '').includes(categoryId))
+  return !!subject.categories?.category.some((c) => idEquals(c.entryId, categoryId))
 }
 
 export const countBy = (subject, entryId, entry, groupIds) => {
@@ -216,9 +220,9 @@ export const countBy = (subject, entryId, entry, groupIds) => {
   }
 
   if (
-    subject.entryId?.includes(entryId) ||
-    subject.entryGroupId?.includes(entryId) ||
-    groupIds?.some((groupId) => subject.entryGroupId === groupId) ||
+    idEquals(subject.entryId, entryId) ||
+    idEquals(subject.entryGroupId, entryId) ||
+    groupIds?.some((groupId) => idEquals(subject.entryGroupId, groupId)) ||
     subject.type === entryId ||
     // Only count a direct category hit at the selection level, not for forces/roster
     (!subject.gameSystemId && !subject.catalogueId && hasCategory(subject, entryId))
@@ -226,7 +230,7 @@ export const countBy = (subject, entryId, entry, groupIds) => {
     return subject.number ?? 1
   }
 
-  let count = subject.forces?.force.filter((force) => force.entryId === entryId).length ?? 0
+  let count = subject.forces?.force.filter((force) => idEquals(force.entryId, entryId)).length ?? 0
 
   if (subject.forces) {
     if (entry.includeChildForces || entry.shared) {
@@ -243,8 +247,8 @@ export const countBy = (subject, entryId, entry, groupIds) => {
         _.map(
           subject.selections.selection.filter((selection) => {
             return (
-              selection.entryId.includes(entryId) ||
-              selection.entryGroupId?.includes(entryId) ||
+              idEquals(selection.entryId, entryId) ||
+              idEquals(selection.entryGroupId, entryId) ||
               hasCategory(selection, entryId)
             )
           }),
@@ -265,14 +269,14 @@ export const countBy = (subject, entryId, entry, groupIds) => {
 const countByCategory = (subject, category, entry) => {
   const categoryId = _.last(category.id.split('::'))
 
-  let count = (!subject.catalogueId && subject.categories?.category.some((c) => c.entryId === categoryId)) ?? 0
+  let count = (!subject.catalogueId && subject.categories?.category.some((c) => idEquals(c.entryId, categoryId))) ?? 0
 
   if (entry.includeChildSelections && subject.selections) {
     count += _.sum(subject.selections.selection.map((selection) => countByCategory(selection, category, entry)))
   } else {
     count +=
       subject.selections?.selection.filter((selection) => {
-        return selection.categories?.category.some((c) => c.entryId === categoryId)
+        return selection.categories?.category.some((c) => idEquals(c.entryId, categoryId))
       }).length ?? 0
   }
 
@@ -417,8 +421,11 @@ const checkConstraints = (roster, path, entry, gameData, group = false) => {
         if (constraint.type === 'max' && limit < max) {
           max = limit
         }
+        // Respect multiplicative limits for selections tied to a counted subject (e.g., per-model caps)
         const multiplicative = subject?.number ?? 1
-        if (constraint.type === 'max' && limit !== -1 && actual > (costConstraint ? limit : limit * multiplicative)) {
+        const allowed = costConstraint ? limit : limit * multiplicative
+        const overBy = actual - allowed
+        if (constraint.type === 'max' && limit !== -1 && overBy > 0) {
           if (limit === 0) {
             const msg = `${name} cannot have ${an(pluralize.singular(entryName))} selection`
             errors.push(msg)
@@ -427,21 +434,21 @@ const checkConstraints = (roster, path, entry, gameData, group = false) => {
               entry: entryName,
               constraint: JSON.parse(JSON.stringify(constraint)),
               occurances: actual,
-              allowed: limit,
+              allowed: allowed,
               subject: name,
               targetId: entry.id,
               targetName: entry.name,
               matches,
             })
           } else {
-            const msg = `${name} has ${actual - limit} too many ${entryName} selections`
+            const msg = `${name} has ${overBy} too many ${entryName} selections`
             errors.push(msg)
             recordErrorDetail(msg, {
               path,
               entry: entryName,
               constraint: JSON.parse(JSON.stringify(constraint)),
               occurances: actual,
-              allowed: limit,
+              allowed: allowed,
               subject: name,
               targetId: entry.id,
               targetName: entry.name,
@@ -684,7 +691,7 @@ const checkConditions = (roster, path, entry, gameData) => {
 
 const findByEntryId = (subject, entryId) => {
   if (typeof subject === 'object') {
-    if (subject.entryId?.includes(entryId)) {
+    if (idEquals(subject.entryId, entryId)) {
       return subject
     }
     for (let attr in subject) {
@@ -726,7 +733,7 @@ const getSubject = (roster, path, condition) => {
       }
     default: {
       const directAncestor = pathAncestors(path).find((startingPoint) =>
-        _.get(roster, startingPoint)?.entryId?.includes(condition.scope),
+        idEquals(_.get(roster, startingPoint)?.entryId, condition.scope),
       )
       if (directAncestor) {
         return _.get(roster, directAncestor)
@@ -788,12 +795,12 @@ const checkCondition = (roster, path, condition, gameData) => {
       return []
         .concat(subject)
         .filter(Boolean)
-        .some((s) => s.entryId?.endsWith(condition.childId) || hasCategory(s, condition.childId))
+        .some((s) => idEquals(s.entryId, condition.childId) || hasCategory(s, condition.childId))
     case 'notInstanceOf':
       return ![]
         .concat(subject)
         .filter(Boolean)
-        .some((s) => s.entryId?.endsWith(condition.childId) || hasCategory(s, condition.childId))
+        .some((s) => idEquals(s.entryId, condition.childId) || hasCategory(s, condition.childId))
     default: {
       debugger
       throw new Error('Unknown condition.type: ' + condition.type)
