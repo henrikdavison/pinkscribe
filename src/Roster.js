@@ -75,12 +75,11 @@ const Roster = ({ currentForce, setCurrentForce }) => {
 
   return (
     <Box component="article">
-      {/* Roster header (sticky) */}
+      {/* Roster header */}
       <Box
+        className="roster-header"
         sx={{
-          position: 'sticky',
-          top: 0,
-          zIndex: (t) => t.zIndex.appBar - 1,
+          // non-sticky header to avoid layout issues
           bgcolor: 'background.default',
           pb: 1,
           mb: 1,

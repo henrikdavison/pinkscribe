@@ -121,19 +121,10 @@ const AddUnit = () => {
           component="div"
           data-tooltip-id="tooltip"
           data-tooltip-html={error}
-          onClick={() =>
-            setOpenCategories({
-              ...openCategories,
-              [category.name]: !open,
-            })
-          }
           sx={{
-            position: 'sticky',
-            top: 8,
-            zIndex: (t) => t.zIndex.appBar + 2,
-            cursor: 'pointer',
+            // non-sticky to avoid layout issues
+            cursor: 'default',
             bgcolor: 'background.default',
-            boxShadow: (t) => `0 1px 0 ${t.palette.divider}`,
             px: 2,
             py: 0.75,
             borderBottom: 'none',
@@ -151,13 +142,19 @@ const AddUnit = () => {
                 transform: open ? 'rotate(0deg)' : 'rotate(-90deg)',
                 transition: 'transform 160ms ease',
               }}
+              onClick={() =>
+                setOpenCategories({
+                  ...openCategories,
+                  [category.name]: !open,
+                })
+              }
             >
               <ChevronDown size={18} />
             </IconButton>
           </Box>
         </ListSubheader>
         <Collapse in={open} timeout="auto" unmountOnExit>
-          {catEntries.map((entry) => {
+          {catEntries.map((entry, i) => {
             const error = hasMatchingError(rosterErrors[path], entry.name)
             const costsObj = sumDefaultCosts(entry)
             const cost = costString(costsObj)
@@ -189,7 +186,7 @@ const AddUnit = () => {
                   py: 1,
                   alignItems: 'center',
                   bgcolor: error
-                    ? (t) => alpha(t.palette.warning.main, t.palette.mode === 'dark' ? 0.14 : 0.08)
+                    ? (t) => alpha(t.palette.warning.main, t.palette.mode === 'dark' ? 0.22 : 0.16)
                     : selected
                     ? (t) => alpha(t.palette.primary.main, t.palette.mode === 'dark' ? 0.24 : 0.12)
                     : 'transparent',
@@ -256,7 +253,7 @@ const AddUnit = () => {
     )
   })
 
-  // Render the Add Unit list with sticky subheaders
+  // Render the Add Unit list (non-sticky subheaders)
   return (
     <Box>
       {/* Reserved for category-level errors */}

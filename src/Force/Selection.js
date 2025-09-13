@@ -241,9 +241,16 @@ const Selection = () => {
 
           {activeTab === 'rules' && (
             <Box sx={{ pt: 0.5 }}>
-              <Categories categories={collectCategories(selection, gameData, catalogue)} />
-              <Profiles profiles={collectSelectionProfiles(selection, gameData)} number={selection.number} />
+              <Profiles
+                profiles={collectSelectionProfiles(selection, gameData)}
+                number={selection.number}
+                rules={collectRules(selection)}
+                titleVariant="subtitle2"
+              />
               <Rules catalogue={catalogue} rules={collectRules(selection)} />
+              <Box sx={{ mt: 1 }}>
+                <Categories categories={collectCategories(selection, gameData, catalogue)} />
+              </Box>
             </Box>
           )}
 
@@ -254,9 +261,16 @@ const Selection = () => {
                 <header>
                   <h6>{selection.name}</h6>
                 </header>
-                <Categories categories={collectCategories(selection, gameData, catalogue)} />
-                <Profiles profiles={collectSelectionProfiles(selection, gameData)} number={selection.number} />
+                <Profiles
+                  profiles={collectSelectionProfiles(selection, gameData)}
+                  number={selection.number}
+                  rules={collectRules(selection)}
+                  titleVariant="subtitle2"
+                />
                 <Rules catalogue={catalogue} rules={collectRules(selection)} />
+                <Box sx={{ mt: 1 }}>
+                  <Categories categories={collectCategories(selection, gameData, catalogue)} />
+                </Box>
               </>
             )}
           </SelectionModal>
@@ -310,12 +324,22 @@ const Entry = memo(({ catalogue, entry, path, selection, selectionEntry, entryGr
   const min = getMinCount(entry) * selection.number
   const max = getMaxCount(entry) * selection.number
 
-  if (entry.hidden) {
+  const isSelected = !!(selection.selections?.selection || []).find(
+    (s) => _.last(s.entryId.split('::')) === _.last(entry.id.split('::')),
+  )
+  if (entry.hidden && !isSelected) {
     return null
   }
 
   return max === 1 ? (
-    <Checkbox selection={selection} option={entry} onSelect={onSelect} entryGroup={entryGroup} catalogue={catalogue} />
+    <Checkbox
+      selection={selection}
+      option={entry}
+      onSelect={onSelect}
+      entryGroup={entryGroup}
+      catalogue={catalogue}
+      readOnly={entry.hidden && isSelected}
+    />
   ) : (
     <Count
       selection={selection}
@@ -325,6 +349,7 @@ const Entry = memo(({ catalogue, entry, path, selection, selectionEntry, entryGr
       max={max}
       entryGroup={entryGroup}
       catalogue={catalogue}
+      readOnly={entry.hidden && isSelected}
     />
   )
 })
@@ -440,23 +465,29 @@ const Radio = memo(({ catalogue, selection, entryGroup, onSelect }) => {
             name={entryGroup.id}
           />
         ) : (
-          <MuiCheckbox checked={checked} onChange={() => onSelect(option, !isRadio && checked ? 0 : 1)} />
+          <MuiCheckbox
+            checked={checked}
+            onChange={() => onSelect(option, !isRadio && checked ? 0 : 1)}
+            disabled={entries.length === 1 && min === 1 && checked}
+          />
         )
+        const readonlyMark = (entries.length === 1 && min === 1 && checked) || (option.hidden && checked)
         return (
           <FormControlLabel
             key={option.id}
             control={control}
             sx={{ display: 'block', m: 0, py: 0.25 }}
             label={
-              <>
+              <Box sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.5 }}>
                 <span
+                  className={readonlyMark ? 'profile-link' : undefined}
                   data-tooltip-id="tooltip"
                   data-tooltip-html={textProfile(collectEntryProfiles(option, gameData, catalogue))}
                 >
                   {option.name}
                 </span>
                 {cost && ` (${cost})`}
-              </>
+              </Box>
             }
           />
         )
@@ -465,7 +496,7 @@ const Radio = memo(({ catalogue, selection, entryGroup, onSelect }) => {
   )
 })
 
-const Checkbox = memo(({ catalogue, selection, option, onSelect, entryGroup }) => {
+const Checkbox = memo(({ catalogue, selection, option, onSelect, entryGroup, readOnly = false }) => {
   const gameData = useSystem()
 
   const cost = costString(sumCosts(option))
@@ -474,9 +505,7 @@ const Checkbox = memo(({ catalogue, selection, option, onSelect, entryGroup }) =
   )
   const min = getMinCount(option)
 
-  if (checked && min === 1) {
-    return null
-  }
+  const readonlyMark = readOnly || (checked && min === 1)
 
   return (
     <FormControlLabel
@@ -484,26 +513,27 @@ const Checkbox = memo(({ catalogue, selection, option, onSelect, entryGroup }) =
         <MuiCheckbox
           checked={checked}
           onChange={() => onSelect(option, checked ? 0 : 1)}
-          disabled={checked && min === 1}
+          disabled={readOnly || (checked && min === 1)}
         />
       }
       sx={{ display: 'block', m: 0, py: 0.25 }}
       label={
-        <>
+        <Box sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.5 }}>
           <span
+            className={readonlyMark ? 'profile-link' : undefined}
             data-tooltip-id="tooltip"
             data-tooltip-html={textProfile(collectEntryProfiles(option, gameData, catalogue))}
           >
             {option.name}
           </span>
           {cost && ` (${cost})`}
-        </>
+        </Box>
       }
     />
   )
 })
 
-const Count = memo(({ catalogue, selection, option, min, max, onSelect, entryGroup }) => {
+const Count = memo(({ catalogue, selection, option, min, max, onSelect, entryGroup, readOnly = false }) => {
   const gameData = useSystem()
 
   const all = selection.selections?.selection || []
@@ -565,14 +595,18 @@ const Count = memo(({ catalogue, selection, option, min, max, onSelect, entryGro
         data-tooltip-id="tooltip"
         data-tooltip-html={numberTip}
         sx={{ width: 86 }}
+        disabled={readOnly}
       />
-      <span
-        data-tooltip-id="tooltip"
-        data-tooltip-html={textProfile(collectEntryProfiles(option, gameData, catalogue))}
-      >
-        {option.name}
-      </span>
-      {cost && ` (${cost})`}
+      <Box sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.5 }}>
+        <span
+          className={readOnly ? 'profile-link' : undefined}
+          data-tooltip-id="tooltip"
+          data-tooltip-html={textProfile(collectEntryProfiles(option, gameData, catalogue))}
+        >
+          {option.name}
+        </span>
+        {cost && ` (${cost})`}
+      </Box>
     </Box>
   )
 })

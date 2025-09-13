@@ -32,7 +32,7 @@ export const useRoster = () => {
       setRoster(
         r && {
           ...r,
-          __: { ...r.__, updated },
+          __: { ...r.__, updated, rev: (r.__?.rev || 0) + (recalcCosts ? 1 : 0) },
           ...(recalcCosts
             ? {
                 costs: {

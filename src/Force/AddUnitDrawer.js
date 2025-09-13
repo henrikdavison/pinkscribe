@@ -22,8 +22,19 @@ const AddUnitDrawer = ({ open, onClose }) => {
       }}
     >
       <Box sx={{ pt: 1, pb: 8, px: 2 }}>
-        {/* Handle */}
-        <Box sx={{ width: 36, height: 4, bgcolor: 'text.disabled', borderRadius: 2, mx: 'auto', mb: 1 }} />
+        {/* Handle (sticky) */}
+        <Box
+          sx={{
+            position: 'sticky',
+            top: 0,
+            zIndex: (t) => t.zIndex.appBar + 2,
+            bgcolor: 'background.default',
+            pt: 0.5,
+            pb: 1,
+          }}
+        >
+          <Box sx={{ width: 36, height: 4, bgcolor: 'text.disabled', borderRadius: 2, mx: 'auto' }} />
+        </Box>
         <AddUnit />
       </Box>
       {/* Bottom action bar */}
@@ -33,9 +44,12 @@ const AddUnitDrawer = ({ open, onClose }) => {
           bottom: 0,
           left: 0,
           right: 0,
-          p: 1,
+          pt: 1,
+          px: 1,
+          pb: (t) => `calc(${t.spacing(1)} + env(safe-area-inset-bottom, 0px))`,
           bgcolor: 'background.default',
           borderTop: (t) => `1px solid ${t.palette.divider}`,
+          zIndex: (t) => t.zIndex.appBar + 2,
         }}
       >
         <Button fullWidth variant="contained" onClick={onClose}>

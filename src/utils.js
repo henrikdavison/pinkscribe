@@ -125,6 +125,8 @@ export const createRoster = (name, gameSystem) => {
     __: {
       filename: name + '.rosz',
       updated: true,
+      // Structural revision for caching across cheap edits
+      rev: 0,
     },
     costs: {
       cost:

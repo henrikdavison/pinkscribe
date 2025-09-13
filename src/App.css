@@ -38,8 +38,36 @@
   z-index: 2000;
 }
 
+/* Subtle affordance for items with extra info (profiles/rules) */
+.profile-link {
+  cursor: help;
+  text-decoration: underline dotted;
+  text-underline-offset: 2px;
+}
+.profile-link:hover {
+  text-decoration-style: solid;
+}
+
 input[type='file'] {
   display: none;
+}
+
+/* Desktop right-side details drawer support */
+:root {
+  --details-drawer-width: 480px;
+  /* Comfortable reading width for long text blocks */
+  --content-max-width: 72ch;
+}
+@media (min-width: 900px) {
+  /* Reserve space on the right across the app when enabled */
+  .has-details-drawer {
+    padding-right: var(--details-drawer-width);
+  }
+  /* Allow the drawer content to control its own height/scrolling */
+  .details-drawer .selection {
+    max-height: none !important;
+    overflow: initial !important;
+  }
 }
 .text-roster {
   white-space: break-spaces;
@@ -47,6 +75,85 @@ input[type='file'] {
 .rule,
 .profile {
   white-space: break-spaces;
+}
+
+/*
+  Rules & Profiles readability
+  - Establish clear text hierarchy
+  - Prevent wide content from stretching containers
+  - Keep identical between on-screen and print (same components)
+*/
+
+/* Constrain long content to a readable width in both views */
+.selection .rule,
+.selection table.profile,
+.view-roster article .rule,
+.view-roster article table.profile {
+  max-width: var(--content-max-width);
+}
+
+/* Make profile tables scroll horizontally instead of expanding container */
+table.profile {
+  width: 100%;
+  display: block;
+  overflow-x: auto;
+}
+
+/* Section title: profile type (e.g., Unit, Ranged Weapons) */
+table.profile thead th:first-child,
+table.profile thead .MuiTableCell-root:first-child {
+  font-weight: 700;
+  font-size: 1rem;
+}
+
+/* Column labels in profile tables */
+table.profile thead th:not(:first-child),
+table.profile thead .MuiTableCell-root:not(:first-child) {
+  font-weight: 600;
+  color: var(--muted-color, rgba(127, 127, 127, 0.8));
+  font-size: 0.85rem;
+  white-space: nowrap;
+}
+
+/* Row heading: profile name (e.g., weapon name) */
+table.profile tbody td:first-child,
+table.profile tbody .MuiTableCell-root:first-child {
+  font-weight: 600;
+}
+
+/* Improve spacing between table sections */
+table.profile {
+  margin: 0.75rem 0 1rem;
+}
+table.profile thead tr th {
+  border-bottom: 0;
+}
+
+/* Individual rule blocks */
+details.rule {
+  margin: 0.5rem 0;
+  padding: 0.25rem 0;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+/* Rule title */
+details.rule > summary {
+  font-weight: 700;
+  font-size: 1rem;
+  list-style: disclosure-closed inside;
+  cursor: pointer;
+}
+
+/* Open state spacing */
+details.rule[open] > summary {
+  margin-bottom: 0.25rem;
+}
+
+/* Slight separation between stacked rules */
+details.rule + details.rule {
+  border-top: 1px solid var(--muted-border-color, rgba(127, 127, 127, 0.25));
+  padding-top: 0.5rem;
 }
 
 /* React-Select styling for data editor */
@@ -120,6 +227,18 @@ input.page {
     max-width: 100%;
     background: var(--card-background-color);
     min-height: 100vh;
+  }
+  /* Stronger selection titles in print */
+  .view-roster article > header h6,
+  dialog article > header h6 {
+    margin: 0 0 0.25rem;
+    font-weight: 700;
+    font-size: 1.05rem;
+  }
+  /* Maintain the same readable line length in print */
+  .view-roster article .rule,
+  .view-roster article table.profile {
+    max-width: var(--content-max-width);
   }
   .view-roster.onePerPage > article {
     break-after: page;
@@ -221,6 +340,12 @@ input.page {
     max-width: 100%;
     background: var(--card-background-color);
     min-height: 100vh;
+  }
+
+  /* Ensure dialog view matches roster layout and width constraints */
+  dialog article .rule,
+  dialog article table.profile {
+    max-width: var(--content-max-width);
   }
 
   dialog > article {

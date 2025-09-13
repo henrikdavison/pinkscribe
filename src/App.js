@@ -46,7 +46,7 @@ import IconButton from '@mui/material/IconButton'
 import Divider from '@mui/material/Divider'
 import { MoreVertical } from 'lucide-react'
 
-const Body = ({ children, systemInfo, setSystemInfo }) => {
+const Body = ({ children, systemInfo, setSystemInfo, reserveRightDrawer = false }) => {
   const [roster, setRoster] = useRoster()
   const confirmLeaveRoster = useConfirm(
     roster?.__.updated,
@@ -63,7 +63,7 @@ const Body = ({ children, systemInfo, setSystemInfo }) => {
   const isMobile = useMediaQuery(theme.breakpoints.down('md'))
 
   return (
-    <div>
+    <div className={!isMobile && reserveRightDrawer ? 'has-details-drawer' : undefined}>
       <Tooltip id="tooltip" />
       <AppBar position="static" color="transparent" elevation={0} sx={{ mb: 2 }}>
         <Toolbar sx={{ display: 'flex', gap: 2, px: { xs: 2, sm: 3 } }}>
@@ -268,7 +268,7 @@ function App() {
 
   if (loading) {
     return (
-      <Body systemInfo={systemInfo} setSystemInfo={setSystemInfo}>
+      <Body systemInfo={systemInfo} setSystemInfo={setSystemInfo} reserveRightDrawer={false}>
         <div className="container">
           <BounceLoader color="#36d7b7" className="loading" />
         </div>
@@ -278,7 +278,7 @@ function App() {
 
   if (!systemInfo?.battleScribeVersion) {
     return (
-      <Body systemInfo={systemInfo} setSystemInfo={setSystemInfo}>
+      <Body systemInfo={systemInfo} setSystemInfo={setSystemInfo} reserveRightDrawer={false}>
         <div className="container">
           <SelectSystem setSystemInfo={setSystemInfo} setMode={setMode} previouslySelected={systemInfo} />
         </div>
@@ -296,7 +296,7 @@ function App() {
         <RosterErrorsContext.Provider value={errors}>
           <OpenCategoriesContext.Provider value={[openCategories, setOpenCategories]}>
             <PathContext.Provider value={[currentPath, setCurrentPath]}>
-              <Body systemInfo={systemInfo} setSystemInfo={setSystemInfo}>
+              <Body systemInfo={systemInfo} setSystemInfo={setSystemInfo} reserveRightDrawer={true}>
                 <ErrorBoundary
                   fallbackRender={({ error, resetErrorBoundary }) => {
                     return (

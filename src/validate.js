@@ -808,7 +808,7 @@ const checkCondition = (roster, path, condition, gameData) => {
   }
 }
 
-let lastRoster
+let lastRev = -1
 let cache = {}
 try {
   if (typeof window !== 'undefined') {
@@ -823,9 +823,10 @@ export const getEntry = (roster, path, id, gameData, ignoreCache) => {
   }
 
   const cachePath = `${path}-${id}`
-  if (roster !== lastRoster) {
+  const rev = roster?.__?.rev || 0
+  if (rev !== lastRev) {
     cache = {}
-    lastRoster = roster
+    lastRev = rev
   } else if (!ignoreCache && cache[cachePath]) {
     try {
       if (typeof window !== 'undefined') window.cacheHits++

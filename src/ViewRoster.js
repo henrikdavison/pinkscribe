@@ -122,7 +122,11 @@ const ViewSelection = ({ catalogue, selection }) => {
         <h6>{selection.name}</h6>
       </header>
       <Categories categories={collectCategories(selection, gameData, catalogue)} />
-      <Profiles profiles={collectSelectionProfiles(selection, gameData)} number={selection.number} />
+      <Profiles
+        profiles={collectSelectionProfiles(selection, gameData)}
+        number={selection.number}
+        rules={collectRules(selection)}
+      />
       <Rules catalogue={catalogue} rules={collectRules(selection)} />
     </article>
   )

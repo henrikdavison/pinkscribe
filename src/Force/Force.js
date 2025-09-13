@@ -1,5 +1,5 @@
 import _ from 'lodash'
-import { Fragment, useState } from 'react'
+import { Fragment, useMemo, useState } from 'react'
 
 import { useRoster, useRosterErrors, useSystem, usePath } from '../Context.js'
 import AddUnit from './AddUnit.js'
@@ -28,8 +28,7 @@ import { TransitionGroup } from 'react-transition-group'
 import Fade from '@mui/material/Fade'
 import pluralize from 'pluralize'
 import SwipeableDrawer from '@mui/material/SwipeableDrawer'
-import Card from '@mui/material/Card'
-import CardContent from '@mui/material/CardContent'
+/* No card wrappers for selections or details on desktop */
 
 const Force = () => {
   const gameData = useSystem()
@@ -47,6 +46,26 @@ const Force = () => {
   const errorsMap = useRosterErrors()
   const errorsForce = errorsMap[forcePath]
 
+  // Pre-index selection-level issues once per force render. Must be before any early return.
+  const issuesBySelectionPath = useMemo(() => {
+    const map = new Map()
+    const prefix = `${forcePath}.selections.selection.`
+    Object.entries(errorsMap || {}).forEach(([key, value]) => {
+      if (!key.startsWith(prefix)) return
+      const rest = key.slice(prefix.length)
+      const idx = rest.split('.')[0]
+      const selPath = `${prefix}${idx}`
+      const arr = map.get(selPath) || []
+      arr.push(...(value || []))
+      map.set(selPath, arr)
+    })
+    const obj = {}
+    for (const [k, arr] of map) {
+      obj[k] = arr.map((e) => (typeof e === 'string' ? e : e?.message || String(e)))
+    }
+    return obj
+  }, [errorsMap, forcePath])
+
   if (!force) {
     return null
   }
@@ -60,6 +79,8 @@ const Force = () => {
     selections[primary] = selections[primary] || []
     selections[primary].push(s)
   })
+
+  // issuesBySelectionPath computed above
 
   // Helpers for list rendering
   const summarizeChildren = (selection /*, selectionPath */) => {
@@ -112,15 +133,10 @@ const Force = () => {
       <Fragment key={name}>
         <ListSubheader
           component="div"
-          onClick={() => setOpenSections({ ...openSections, [name]: !open })}
           sx={{
-            position: 'sticky',
-            // Stay below AppBar + roster header
-            top: { xs: 112, md: 120 },
-            zIndex: (t) => t.zIndex.appBar + 2,
-            cursor: 'pointer',
+            // non-sticky to avoid scroll issues
+            cursor: 'default',
             bgcolor: 'background.default',
-            boxShadow: (t) => `0 1px 0 ${t.palette.divider}`,
             px: 2,
             py: 0.75,
             borderBottom: 'none',
@@ -138,6 +154,7 @@ const Force = () => {
                 transform: open ? 'rotate(0deg)' : 'rotate(-90deg)',
                 transition: 'transform 160ms ease',
               }}
+              onClick={() => setOpenSections({ ...openSections, [name]: !open })}
             >
               <ChevronDown size={18} />
             </IconButton>
@@ -145,7 +162,7 @@ const Force = () => {
         </ListSubheader>
         <Collapse in={open} timeout="auto" unmountOnExit>
           <TransitionGroup component={null}>
-            {_.sortBy(selections[category.entryId], 'name').map((selection) => {
+            {_.sortBy(selections[category.entryId], 'name').map((selection, i) => {
               const idx = selectionIndex.get(selection)
               const selectionPath = `${forcePath}.selections.selection.${idx}`
               const summary = summarizeChildren(selection)
@@ -153,12 +170,8 @@ const Force = () => {
               const cost = costString(sumCosts(selection))
               const canDelete = canDeleteSelection(selection, selectionPath)
 
-              // Collect selection-specific issues
-              const selectionPathIssues = _.flatten(
-                Object.entries(errorsMap)
-                  .filter(([key]) => key === selectionPath || key.startsWith(selectionPath + '.'))
-                  .map(([, value]) => value || []),
-              )
+              // Pre-collected selection-specific issues
+              const selectionPathIssues = issuesBySelectionPath[selectionPath] || []
               const forceLevelMatches = (errorsForce || []).filter(
                 (e) =>
                   typeof e === 'string' &&
@@ -166,10 +179,7 @@ const Force = () => {
                     e.includes(pluralize(selection.name)) ||
                     e.includes(pluralize.singular(selection.name))),
               )
-              const selectionIssues = _.uniq([
-                ...selectionPathIssues.map((e) => (typeof e === 'string' ? e : e?.message || String(e))),
-                ...forceLevelMatches,
-              ])
+              const selectionIssues = _.uniq([...selectionPathIssues, ...forceLevelMatches])
               const selectionTooltip = selectionIssues.length ? selectionIssues.join('<br />') : null
               return (
                 <Collapse key={selection.id}>
@@ -184,11 +194,11 @@ const Force = () => {
                       display: 'flex',
                       bgcolor:
                         selectionIssues.length > 0
-                          ? (t) => alpha(t.palette.warning.main, t.palette.mode === 'dark' ? 0.14 : 0.08)
+                          ? (t) => alpha(t.palette.warning.main, t.palette.mode === 'dark' ? 0.22 : 0.16)
                           : 'transparent',
                       transition: 'background-color 160ms ease',
+                      zIndex: 0,
                     }}
-                    sx={{ zIndex: 0 }}
                   >
                     <Box sx={{ position: 'relative', flex: 1, minWidth: 0, mr: 1 }}>
                       {/* Primary line wrapper so icon can center against title, not the whole block */}
@@ -314,7 +324,7 @@ const Force = () => {
       <Box
         sx={{
           display: 'grid',
-          gridTemplateColumns: { xs: '1fr', md: '420px 1fr 0.8fr' },
+          gridTemplateColumns: { xs: '1fr', md: '420px minmax(0,1fr)' },
           gap: 2,
           px: { xs: 0, md: 3 },
         }}
@@ -326,39 +336,39 @@ const Force = () => {
           </Box>
         </Box>
 
-        {/* Middle: Selections list */}
+        {/* Middle: Selections list (no card on desktop) */}
         <Box className="selections">
-          {isMobile ? (
-            <Box>
-              <Typography variant="subtitle1" fontWeight={600} sx={{ px: 2, py: 1 }}>
-                Selections
-              </Typography>
-              <ConfigPills forcePath={forcePath} getEntry={getEntry} />
-              <List sx={{ pt: 0, pl: 0, listStyle: 'none' }}>{categories}</List>
-            </Box>
-          ) : (
-            <Card variant="outlined">
-              <CardContent sx={{ p: 0 }}>
-                <Typography variant="subtitle1" fontWeight={600} sx={{ px: 2, py: 1 }}>
-                  Selections
-                </Typography>
-                <ConfigPills forcePath={forcePath} getEntry={getEntry} />
-                <List sx={{ pt: 0, pl: 0, listStyle: 'none' }}>{categories}</List>
-              </CardContent>
-            </Card>
-          )}
+          <Box>
+            <Typography variant="subtitle1" fontWeight={600} sx={{ px: 2, py: 1 }}>
+              Selections
+            </Typography>
+            <ConfigPills forcePath={forcePath} />
+            <List sx={{ pt: 0, pl: 0, listStyle: 'none' }}>{categories}</List>
+          </Box>
         </Box>
-        {/* Right: Unit details (desktop only) */}
-        <Box sx={{ display: { xs: 'none', md: 'block' } }}>
-          {!isMobile && path !== forcePath ? (
-            <Card variant="outlined">
-              <CardContent>
-                <Selection />
-              </CardContent>
-            </Card>
-          ) : null}
-        </Box>
+        {/* Right column removed; space is reserved globally via body padding */}
       </Box>
+      {/* Desktop right-side drawer with fixed width and full height */}
+      {!isMobile && (
+        <Box
+          className="details-drawer"
+          sx={{
+            position: 'fixed',
+            right: 0,
+            top: 0,
+            height: '100vh',
+            width: 'var(--details-drawer-width, 480px)',
+            borderLeft: (t) => `1px solid ${t.palette.divider}`,
+            bgcolor: 'background.paper',
+            zIndex: (t) => t.zIndex.appBar - 1,
+            overflow: 'auto',
+            px: 2,
+            py: 2,
+          }}
+        >
+          {path !== forcePath ? <Selection /> : null}
+        </Box>
+      )}
       {isMobile && (
         <>
           <Fab
@@ -377,9 +387,10 @@ const Force = () => {
                 xs: 'calc(env(safe-area-inset-right, 0px) + 16px)',
                 sm: theme.spacing(3),
               },
+              zIndex: (t) => t.zIndex.appBar + 2,
               height: 48,
-              // Ensure icon sits optically centered
-              '& svg': { marginRight: 8 },
+              // Material 3: 8dp gap between icon and label
+              '& svg': { mr: 1 },
             }}
           >
             <Plus size={18} />
@@ -404,8 +415,19 @@ const Force = () => {
             }}
           >
             <Box sx={{ pt: 1, pb: 8, px: 2 }}>
-              {/* Handle */}
-              <Box sx={{ width: 36, height: 4, bgcolor: 'text.disabled', borderRadius: 2, mx: 'auto', mb: 1 }} />
+              {/* Handle (sticky) */}
+              <Box
+                sx={{
+                  position: 'sticky',
+                  top: 0,
+                  zIndex: (t) => t.zIndex.appBar + 2,
+                  bgcolor: 'background.default',
+                  pt: 0.5,
+                  pb: 1,
+                }}
+              >
+                <Box sx={{ width: 36, height: 4, bgcolor: 'text.disabled', borderRadius: 2, mx: 'auto' }} />
+              </Box>
               {selectionOpen ? <Selection /> : null}
             </Box>
             {/* Bottom actions */}
@@ -417,7 +439,10 @@ const Force = () => {
                 right: 0,
                 borderTop: (t) => `1px solid ${t.palette.divider}`,
                 bgcolor: 'background.default',
-                p: 1.25,
+                pt: 1.25,
+                px: 1.25,
+                pb: (t) => `calc(${t.spacing(1.25)} + env(safe-area-inset-bottom, 0px))`,
+                zIndex: (t) => t.zIndex.appBar + 2,
                 display: 'flex',
                 gap: 1,
                 justifyContent: 'space-between',

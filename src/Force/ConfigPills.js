@@ -7,12 +7,10 @@ import { usePath, useRoster, useSystem } from '../Context.js'
 // no quick-edit menu; chips navigate to selection for editing
 import config from '../config/configPills.json'
 
-const summarizeChildren = (roster, selection, selectionPath, gameData, getEntry) => {
+const summarizeChildren = (selection) => {
   const children = selection.selections?.selection || []
   const counts = {}
-  children.forEach((child, i) => {
-    const entry = getEntry(roster, `${selectionPath}.selections.selection.${i}`, child.entryId, gameData)
-    if (!entry) return
+  children.forEach((child) => {
     const amount = typeof child.number === 'number' ? child.number : 1
     counts[child.name] = (counts[child.name] || 0) + amount
   })
@@ -22,7 +20,7 @@ const summarizeChildren = (roster, selection, selectionPath, gameData, getEntry)
     .join(' · ')
 }
 
-const ConfigPills = ({ forcePath, getEntry }) => {
+const ConfigPills = ({ forcePath }) => {
   const gameData = useSystem()
   const [roster] = useRoster()
   const [, setPath] = usePath()
@@ -51,7 +49,7 @@ const ConfigPills = ({ forcePath, getEntry }) => {
   return (
     <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, px: 2, pb: 1 }}>
       {configSelections.map(({ s, path: selPath }) => {
-        const summary = summarizeChildren(roster, s, selPath, gameData, getEntry)
+        const summary = summarizeChildren(s)
         return (
           <Box key={s.id}>
             <Button

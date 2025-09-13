@@ -19,8 +19,7 @@ import MSelect from '@mui/material/Select'
 import MenuItem from '@mui/material/MenuItem'
 import Autocomplete from '@mui/material/Autocomplete'
 import { Trash2, Plus, Upload, Copy } from 'lucide-react'
-import { alpha, useTheme } from '@mui/material/styles'
-import useMediaQuery from '@mui/material/useMediaQuery'
+import { alpha } from '@mui/material/styles'
 
 import {
   listRosters,
@@ -34,8 +33,6 @@ import { useFs, useNative, useRoster, useSystem, useConfirm } from './Context.js
 import { createRoster } from './utils.js'
 
 const SelectRoster = () => {
-  const theme = useTheme()
-  const isSmUp = useMediaQuery(theme.breakpoints.up('sm'))
   const [, setRoster] = useRoster()
   const [rosters, setRosters] = useState(null)
   const gameData = useSystem()
@@ -117,7 +114,17 @@ const SelectRoster = () => {
       </Typography>
       <Grid container spacing={2} sx={{ mb: 3 }} alignItems="stretch">
         {/* Create new roster card */}
-        <Grid item xs={12} sm={6} md={3} lg={3}>
+        <Grid
+          item
+          xs={12}
+          sm={6}
+          md={3}
+          lg={3}
+          sx={{
+            flexBasis: { xs: '100%', sm: '50%', md: '25%' },
+            maxWidth: { xs: '100%', sm: '50%', md: '25%' },
+          }}
+        >
           <Card
             elevation={4}
             sx={{
@@ -159,69 +166,78 @@ const SelectRoster = () => {
         </Grid>
 
         {/* Import roster card (hidden on mobile) */}
-        {isSmUp && (
-          <Grid item xs={12} sm={6} md={3} lg={3}>
-            <Card variant="outlined" sx={{ height: '100%' }}>
-              <CardActionArea
-                sx={{ height: '100%', minHeight: 200, display: 'flex' }}
-                onClick={() => document.getElementById('import-roster').click()}
-              >
-                <FileDrop
-                  onFrameDrop={async (event) => {
-                    if (event.dataTransfer?.items[0]?.kind === 'file') {
-                      const file = event.dataTransfer.items[0].getAsFile()
-                      const systemRosterPath = path.join(rosterPath, gameData.gameSystem.id)
-                      await importRoster(file, fs, systemRosterPath)
-                      setRosters(null)
-                    }
-                  }}
-                  style={{ display: 'block', width: '100%', height: '100%' }}
-                >
-                  <CardContent
-                    sx={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      flexDirection: 'column',
-                      py: 6,
-                    }}
-                  >
-                    <Box aria-hidden="true" sx={{ color: 'primary.main' }}>
-                      <Upload />
-                    </Box>
-                    <Typography variant="subtitle1" sx={{ mt: 1 }}>
-                      Import roster
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
-                      Drop a .ros/.rosz file here, or{' '}
-                      <Button
-                        variant="text"
-                        size="small"
-                        component="span"
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          document.getElementById('import-roster').click()
-                        }}
-                      >
-                        choose a file
-                      </Button>
-                    </Typography>
-                  </CardContent>
-                </FileDrop>
-              </CardActionArea>
-              <input
-                type="file"
-                accept=".rosz,.ros"
-                id="import-roster"
-                onChange={async (e) => {
-                  const systemRosterPath = path.join(rosterPath, gameData.gameSystem.id)
-                  await importRoster(e.target.files[0], fs, systemRosterPath)
-                  setRosters(null)
+        <Grid
+          item
+          xs={12}
+          sm={6}
+          md={3}
+          lg={3}
+          sx={{
+            display: { xs: 'none', sm: 'block' },
+            flexBasis: { xs: '100%', sm: '50%', md: '25%' },
+            maxWidth: { xs: '100%', sm: '50%', md: '25%' },
+          }}
+        >
+          <Card variant="outlined" sx={{ height: '100%' }}>
+            <CardActionArea
+              sx={{ height: '100%', minHeight: 200, display: 'flex' }}
+              onClick={() => document.getElementById('import-roster').click()}
+            >
+              <FileDrop
+                onFrameDrop={async (event) => {
+                  if (event.dataTransfer?.items[0]?.kind === 'file') {
+                    const file = event.dataTransfer.items[0].getAsFile()
+                    const systemRosterPath = path.join(rosterPath, gameData.gameSystem.id)
+                    await importRoster(file, fs, systemRosterPath)
+                    setRosters(null)
+                  }
                 }}
-              />
-            </Card>
-          </Grid>
-        )}
+                style={{ display: 'block', width: '100%', height: '100%' }}
+              >
+                <CardContent
+                  sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    flexDirection: 'column',
+                    py: 6,
+                  }}
+                >
+                  <Box aria-hidden="true" sx={{ color: 'primary.main' }}>
+                    <Upload />
+                  </Box>
+                  <Typography variant="subtitle1" sx={{ mt: 1 }}>
+                    Import roster
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+                    Drop a .ros/.rosz file here, or{' '}
+                    <Button
+                      variant="text"
+                      size="small"
+                      component="span"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        document.getElementById('import-roster').click()
+                      }}
+                    >
+                      choose a file
+                    </Button>
+                  </Typography>
+                </CardContent>
+              </FileDrop>
+            </CardActionArea>
+            <input
+              type="file"
+              accept=".rosz,.ros"
+              id="import-roster"
+              onChange={async (e) => {
+                const systemRosterPath = path.join(rosterPath, gameData.gameSystem.id)
+                await importRoster(e.target.files[0], fs, systemRosterPath)
+                setRosters(null)
+              }}
+            />
+          </Card>
+        </Grid>
       </Grid>
 
       {/* Saved rosters */}
@@ -292,7 +308,18 @@ const SelectRoster = () => {
       ) : (
         <Grid container spacing={2} alignItems="stretch">
           {filteredSortedEntries.map(([filename, summary]) => (
-            <Grid item xs={12} sm={6} md={3} lg={3} key={filename}>
+            <Grid
+              item
+              xs={12}
+              sm={6}
+              md={3}
+              lg={3}
+              key={filename}
+              sx={{
+                flexBasis: { xs: '100%', sm: '50%', md: '25%' },
+                maxWidth: { xs: '100%', sm: '50%', md: '25%' },
+              }}
+            >
               <Card variant="outlined" sx={{ position: 'relative', height: '100%' }}>
                 {/* Actions in top-right: duplicate and delete */}
                 <IconButton
@@ -329,14 +356,14 @@ const SelectRoster = () => {
 
                 {/* Whole card clickable to load */}
                 <CardActionArea
-                  sx={{ height: '100%', minHeight: 200, display: 'flex' }}
+                  sx={{ height: '100%', minHeight: 200 }}
                   onClick={async () => {
                     if (summary?.error) return
                     const systemRosterPath = path.join(rosterPath, gameData.gameSystem.id)
                     setRoster(await loadRoster(filename, fs, systemRosterPath), false)
                   }}
                 >
-                  <CardContent>
+                  <CardContent sx={{ width: '100%' }}>
                     <Typography variant="subtitle1" fontWeight={600} gutterBottom noWrap>
                       {summary?.name || 'Unknown roster'}
                     </Typography>
@@ -349,7 +376,7 @@ const SelectRoster = () => {
                       </Typography>
                     ) : (
                       <Box sx={{ minHeight: 44, mb: 1 }}>
-                        <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap sx={{ gap: 0.5 }}>
+                        <Stack direction="row" spacing={0.5} flexWrap="wrap" useFlexGap>
                           {(summary?.forces || []).slice(0, 5).map((f, i) => (
                             <Chip key={i} size="small" label={f?.catalogueName || f?.name || 'Force'} />
                           ))}
